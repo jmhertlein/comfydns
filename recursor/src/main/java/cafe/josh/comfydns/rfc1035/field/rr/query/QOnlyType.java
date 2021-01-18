@@ -2,7 +2,7 @@ package cafe.josh.comfydns.rfc1035.field.rr.query;
 
 public enum QOnlyType implements QType {
     AXFR("AXFR", (byte) 252, "A request for a transfer of an entire zone"),
-    MAILB("MAILB", (byte) 253, "A request for mailbox-related records (MB, MG or MR)", false),
+    MAILB("MAILB", (byte) 253, "A request for mailbox-related records (MB, MG or MR)"),
     MAILA("MAILA", (byte) 254, "A request for mail agent RRs (Obsolete - see MX)", false),
     STAR("*", (byte) 255, "A request for all records"),
     ;
