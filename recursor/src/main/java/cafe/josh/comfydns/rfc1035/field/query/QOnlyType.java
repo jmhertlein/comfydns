@@ -1,4 +1,4 @@
-package cafe.josh.comfydns.rfc1035.field.rr.query;
+package cafe.josh.comfydns.rfc1035.field.query;
 
 public enum QOnlyType implements QType {
     AXFR("AXFR", (byte) 252, "A request for a transfer of an entire zone"),

@@ -1,6 +1,6 @@
 package cafe.josh.comfydns.rfc1035.field.rr;
 
-import cafe.josh.comfydns.rfc1035.field.rr.query.QType;
+import cafe.josh.comfydns.rfc1035.field.query.QType;
 
 public enum RRType implements QType {
     A("A", (byte) 1, "a host address"),

@@ -1,4 +1,4 @@
-package cafe.josh.comfydns.rfc1035.field.rr.query;
+package cafe.josh.comfydns.rfc1035.field.query;
 
 public interface QClass {
     public String getType();

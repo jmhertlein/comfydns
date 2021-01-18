@@ -1,6 +1,6 @@
 package cafe.josh.comfydns.rfc1035.field.rr;
 
-import cafe.josh.comfydns.rfc1035.field.rr.query.QClass;
+import cafe.josh.comfydns.rfc1035.field.query.QClass;
 
 public enum RRClass implements QClass {
     IN("IN", (byte) 1, "the Internet"),
