@@ -33,15 +33,25 @@ public class LabelCache {
         return suffixes;
     }
 
-    public Optional<Integer> findBestIndex(String name) {
+    public Optional<LabelPointer> findBestIndex(String name) {
         List<String> suffixes = genSuffixes(name);
 
         for(String suffix : suffixes) {
             if(nameToOctetIndex.containsKey(suffix)) {
-                return Optional.of(nameToOctetIndex.get(suffix));
+                return Optional.of(new LabelPointer(suffix, nameToOctetIndex.get(suffix)));
             }
         }
 
         return Optional.empty();
+    }
+
+    public static class LabelPointer {
+        public final String name;
+        public final int index;
+
+        public LabelPointer(String name, int index) {
+            this.name = name;
+            this.index = index;
+        }
     }
 }

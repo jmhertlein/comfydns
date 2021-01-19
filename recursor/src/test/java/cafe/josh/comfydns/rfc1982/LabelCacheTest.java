@@ -1,4 +1,4 @@
-package cafe.josh.comfydns;
+package cafe.josh.comfydns.rfc1982;
 
 import cafe.josh.comfydns.rfc1035.LabelCache;
 import org.junit.jupiter.api.Assertions;
@@ -26,19 +26,19 @@ public class LabelCacheTest {
         Assertions.assertTrue(c.findBestIndex("maps.google.com").isEmpty());
         c.addSuffixes("maps.google.com", 0);
 
-        Optional<Integer> calIndex = c.findBestIndex("calendar.google.com");
+        Optional<LabelCache.LabelPointer> calIndex = c.findBestIndex("calendar.google.com");
         Assertions.assertTrue(calIndex.isPresent());
-        Assertions.assertEquals(5, calIndex.get());
+        Assertions.assertEquals(5, calIndex.get().index);
         c.addSuffixes("calendar.google.com", 50);
 
-        Optional<Integer> cal2Index = c.findBestIndex("srv2.smth.calendar.google.com");
+        Optional<LabelCache.LabelPointer> cal2Index = c.findBestIndex("srv2.smth.calendar.google.com");
         Assertions.assertTrue(cal2Index.isPresent());
-        Assertions.assertEquals(50, cal2Index.get());
+        Assertions.assertEquals(50, cal2Index.get().index);
         c.addSuffixes("srv2.smth.calendar.google.com", 100);
 
-        Optional<Integer> smthIndex = c.findBestIndex("smth.calendar.google.com");
+        Optional<LabelCache.LabelPointer> smthIndex = c.findBestIndex("smth.calendar.google.com");
         Assertions.assertTrue(smthIndex.isPresent());
-        Assertions.assertEquals(105, smthIndex.get());
+        Assertions.assertEquals(105, smthIndex.get().index);
         c.addSuffixes("smth.calendar.google.com", 200);
     }
 }
