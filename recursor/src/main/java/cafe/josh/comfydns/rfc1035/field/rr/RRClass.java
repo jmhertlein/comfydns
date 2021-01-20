@@ -29,8 +29,8 @@ public enum RRClass implements QClass {
         return type;
     }
 
-    public byte getValue() {
-        return value;
+    public byte[] getValue() {
+        return new byte[]{0, value};
     }
 
     public String getMeaning() {

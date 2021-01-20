@@ -1,6 +1,6 @@
 package cafe.josh.comfydns.rfc1035.field.query;
 
-public enum QOnlyClass {
+public enum QOnlyClass implements QClass {
     STAR("*", (byte) 255, "any class");
 
     private final String type;
@@ -17,8 +17,8 @@ public enum QOnlyClass {
         return type;
     }
 
-    public byte getValue() {
-        return value;
+    public byte[] getValue() {
+        return new byte[]{0, value};
     }
 
     public String getMeaning() {

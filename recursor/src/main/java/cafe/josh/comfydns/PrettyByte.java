@@ -23,4 +23,23 @@ public class PrettyByte {
 
         return ret;
     }
+
+    public static void writeNBitUnsignedInt(long l, int bits, byte[] dest, int pos) {
+        if(!RangeCheck.uint(bits, l)) {
+            throw new IllegalArgumentException("Value " + l + " out of range for uint" + bits);
+        }
+
+
+        if(bits % 8 > 0) {
+            byte msb = (byte) (l >> (bits - (bits % 8)));
+            dest[pos] = msb;
+            pos++;
+            bits -= (bits % 8);
+        }
+
+        while(bits > 0) {
+            dest[pos] = (byte) (l >> (bits - 8));
+            bits -= 8;
+        }
+    }
 }

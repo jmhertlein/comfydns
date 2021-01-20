@@ -1,5 +1,6 @@
 package cafe.josh.comfydns.rfc1035.field.rr.rdata;
 
+import cafe.josh.comfydns.rfc1035.LabelCache;
 import cafe.josh.comfydns.rfc1035.field.rr.RData;
 import cafe.josh.comfydns.rfc1035.field.rr.RRType;
 
@@ -19,5 +20,10 @@ public class ARData implements RData {
     @Override
     public RRType getRRType() {
         return RRType.A;
+    }
+
+    @Override
+    public byte[] write(LabelCache c, int index) {
+        return address.getAddress();
     }
 }

@@ -1,5 +1,6 @@
 package cafe.josh.comfydns.rfc1035.field.rr.rdata;
 
+import cafe.josh.comfydns.rfc1035.LabelCache;
 import cafe.josh.comfydns.rfc1035.field.rr.RData;
 import cafe.josh.comfydns.rfc1035.field.rr.RRType;
 
@@ -20,5 +21,21 @@ public class TXTRData implements RData {
     @Override
     public RRType getRRType() {
         return RRType.TXT;
+    }
+
+    @Override
+    public byte[] write(LabelCache c, int index) {
+        byte[] ret = new byte[text.length()+1];
+        ret[0] = (byte) text.length();
+        int pos = 1;
+        for(char ch : text.toCharArray()) {
+            if(ch > 255) {
+                throw new IllegalArgumentException("Non-ascii character is illegal: " + ch);
+            }
+            ret[pos] = (byte) ch;
+            pos++;
+        }
+
+        return ret;
     }
 }

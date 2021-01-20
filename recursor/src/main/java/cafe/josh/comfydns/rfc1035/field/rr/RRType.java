@@ -41,8 +41,8 @@ public enum RRType implements QType {
         return type;
     }
 
-    public byte getValue() {
-        return value;
+    public byte[] getValue() {
+        return new byte[]{0, value};
     }
 
     public String getMeaning() {

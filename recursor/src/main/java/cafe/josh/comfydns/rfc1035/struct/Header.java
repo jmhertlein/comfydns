@@ -1,11 +1,13 @@
 package cafe.josh.comfydns.rfc1035.struct;
 
+import cafe.josh.comfydns.rfc1035.LabelCache;
 import cafe.josh.comfydns.rfc1035.field.header.OpCode;
 import cafe.josh.comfydns.rfc1035.field.header.RCode;
+import cafe.josh.comfydns.rfc1035.write.Writeable;
 
 import static cafe.josh.comfydns.RangeCheck.*;
 
-public class Header {
+public class Header implements Writeable {
     private final byte[] content;
 
     public Header() {
@@ -121,5 +123,10 @@ public class Header {
 
     public byte[] getNetworkForm() {
         return this.content;
+    }
+
+    @Override
+    public byte[] write(LabelCache c, int index) {
+        return getNetworkForm();
     }
 }

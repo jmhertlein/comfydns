@@ -1,10 +1,14 @@
 package cafe.josh.comfydns.rfc1035.struct;
 
+import cafe.josh.comfydns.PrettyByte;
 import cafe.josh.comfydns.RangeCheck;
+import cafe.josh.comfydns.rfc1035.LabelCache;
+import cafe.josh.comfydns.rfc1035.LabelMaker;
 import cafe.josh.comfydns.rfc1035.field.rr.RRClass;
 import cafe.josh.comfydns.rfc1035.field.rr.RRType;
+import cafe.josh.comfydns.rfc1035.write.Writeable;
 
-public class RR<T> {
+public class RR<T> implements Writeable {
     private final String name;
     private final RRType rrType;
     private final RRClass rrClass;
@@ -49,5 +53,20 @@ public class RR<T> {
 
     public T gettData() {
         return tData;
+    }
+
+    @Override
+    public byte[] write(LabelCache c, int index) {
+        byte[] NAME = LabelMaker.makeLabel(name, c);
+        c.addSuffixes(name, index);
+        index += NAME.length;
+
+        byte[] RRTYPE = rrType.getValue();
+        byte[] RRCLASS = rrClass.getValue();
+        byte[] TTL = new byte[4];
+        PrettyByte.writeNBitUnsignedInt(ttl, 32, TTL, 0);
+        // TODO why the fuck is TTL a signed int
+
+
     }
 }
