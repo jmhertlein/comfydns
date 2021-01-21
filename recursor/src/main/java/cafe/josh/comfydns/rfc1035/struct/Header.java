@@ -1,5 +1,7 @@
 package cafe.josh.comfydns.rfc1035.struct;
 
+import cafe.josh.comfydns.rfc1035.InvalidHeaderException;
+import cafe.josh.comfydns.rfc1035.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.LabelCache;
 import cafe.josh.comfydns.rfc1035.field.header.OpCode;
 import cafe.josh.comfydns.rfc1035.field.header.RCode;
@@ -8,10 +10,24 @@ import cafe.josh.comfydns.rfc1035.write.Writeable;
 import static cafe.josh.comfydns.RangeCheck.*;
 
 public class Header implements Writeable {
+    public static final int FIXED_LENGTH_OCTETS = 12;
     private final byte[] content;
 
     public Header() {
-        this.content = new byte[12];
+        this.content = new byte[FIXED_LENGTH_OCTETS];
+    }
+
+    /**
+     *
+     * @param content
+     * @throws IllegalArgumentException if content is not Header.FIXED_LENGTH_OCTETS long
+     */
+    public Header(byte[] content) {
+        if(content.length != FIXED_LENGTH_OCTETS) {
+            throw new IllegalArgumentException("Content length must be 12 octets, but was " + content.length);
+        }
+
+        this.content = content;
     }
 
     public void setId(int id) throws IllegalArgumentException {
@@ -123,6 +139,10 @@ public class Header implements Writeable {
 
     public byte[] getNetworkForm() {
         return this.content;
+    }
+
+    public void validate() throws InvalidHeaderException {
+
     }
 
     @Override

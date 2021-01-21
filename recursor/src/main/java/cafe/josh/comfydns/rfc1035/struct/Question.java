@@ -31,11 +31,12 @@ public class Question implements Writeable {
 
     @Override
     public byte[] write(LabelCache c, int index) {
-        byte[] QNAME = LabelMaker.makeLabel(qName, c);
+        byte[] QNAME = LabelMaker.makeLabels(qName, c);
+        c.addSuffixes(qName, index);
         byte[] ret = new byte[QNAME.length + 4];
         System.arraycopy(QNAME, 0, ret, 0, QNAME.length);
         System.arraycopy(qType.getValue(), 0, ret, QNAME.length, 2);
-        System.arraycopy(qClass.getValue(), 0, ret, QNAME.length, 2);
+        System.arraycopy(qClass.getValue(), 0, ret, QNAME.length+2, 2);
         return ret;
     }
 }

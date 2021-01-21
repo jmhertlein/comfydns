@@ -1,5 +1,6 @@
 package cafe.josh.comfydns.rfc1035.struct;
 
+import cafe.josh.comfydns.rfc1035.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.LabelCache;
 import cafe.josh.comfydns.rfc1035.write.Writeable;
 
@@ -85,5 +86,23 @@ public class Message {
         }
 
         return ret;
+    }
+
+    public static Message read(byte[] bytes) throws InvalidMessageException {
+        if(bytes.length < Header.FIXED_LENGTH_OCTETS) {
+            throw new InvalidMessageException("Message too short to have valid header. Must be " + Header.FIXED_LENGTH_OCTETS + " octets but only found " + bytes.length);
+        }
+
+        byte[] headerContents = new byte[Header.FIXED_LENGTH_OCTETS];
+        System.arraycopy(bytes, 0, headerContents, 0, Header.FIXED_LENGTH_OCTETS);
+        Header h = new Header(headerContents);
+        h.validate();
+
+        int index = Header.FIXED_LENGTH_OCTETS;
+        for(int i = 0; i < h.getQDCount(); i++) {
+
+        }
+
+        return null;
     }
 }

@@ -6,8 +6,6 @@ import cafe.josh.comfydns.rfc1035.LabelMaker;
 import cafe.josh.comfydns.rfc1035.field.rr.RData;
 import cafe.josh.comfydns.rfc1035.field.rr.RRType;
 
-import java.util.NavigableMap;
-
 public class SOARecord implements RData {
     private final String mName, rName;
     private final long serial, refresh, retry, expire, minimum;
@@ -57,11 +55,11 @@ public class SOARecord implements RData {
 
     @Override
     public byte[] write(LabelCache c, int index) {
-        byte[] MNAME = LabelMaker.makeLabel(mName, c);
+        byte[] MNAME = LabelMaker.makeLabels(mName, c);
         c.addSuffixes(mName, index);
         index += MNAME.length;
 
-        byte[] RNAME = LabelMaker.makeLabel(rName, c);
+        byte[] RNAME = LabelMaker.makeLabels(rName, c);
         c.addSuffixes(rName, index);
         index += RNAME.length;
 
@@ -74,7 +72,7 @@ public class SOARecord implements RData {
         pos += RNAME.length;
 
         for(long l : new long[]{serial, refresh, retry, expire, minimum}) {
-            PrettyByte.writeNBitUnsignedInt(l, 32, ret, index);
+            PrettyByte.writeNBitUnsignedInt(l, 32, ret, index, 0);
             pos += 4;
         }
 

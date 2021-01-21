@@ -1,5 +1,6 @@
 package cafe.josh.comfydns.rfc1035;
 
+import cafe.josh.comfydns.PrettyByte;
 import cafe.josh.comfydns.RangeCheck;
 
 import java.util.Optional;
@@ -7,7 +8,52 @@ import java.util.Optional;
 public class LabelMaker {
     private LabelMaker() {}
 
-    public static byte[] makeLabel(String domainName, LabelCache cache) {
+    public static ReadLabels readLabels(byte[] content, int startPos) throws MalformedLabelException {
+        int pos = startPos;
+        StringBuilder b = new StringBuilder();
+        Integer endOfCurrentLabel = null;
+        byte cur;
+        do {
+            cur = content[pos];
+            if(cur == 0) {
+                continue;
+            } else if((cur & (byte) 0b1100_0000) == (byte) 0b1100_0000) {
+                // it's a pointer.
+                if(endOfCurrentLabel == null) {
+                    endOfCurrentLabel = pos + 1;
+                }
+                if(pos+1 >= content.length) {
+                    throw new MalformedLabelException("Malformed pointer had no second octet, unable to follow.");
+                }
+                pos = (int) PrettyByte.readNBitUnsignedInt(14, content, pos, 2);
+                if(pos >= content.length) {
+                    throw new MalformedLabelException("Pointer described invalid jump index: " + pos + "(length is " + content.length + ")");
+                }
+                continue;
+            }
+
+            int length = content[pos];
+            pos++;
+            for(int i = pos; i < pos+length &&  i < content.length; i++) {
+                b.append((char) content[i]);
+            }
+            b.append('.');
+            pos += length;
+
+        } while(cur != 0 && pos < content.length);
+
+        if(cur != 0) {
+            throw new MalformedLabelException("Label does not end in a 0 octet. Label start position was " + startPos + " and end position was " + pos + " and message length was " + content.length);
+        }
+
+        if(b.length() > 0) {
+            b.deleteCharAt(b.length()-1);
+        }
+
+        return new ReadLabels(b.toString(), endOfCurrentLabel == null ? pos : endOfCurrentLabel);
+    }
+
+    public static byte[] makeLabels(String domainName, LabelCache cache) {
         Optional<LabelCache.LabelPointer> bestIndex = cache.findBestIndex(domainName);
         if(bestIndex.isPresent()) {
             LabelCache.LabelPointer p = bestIndex.get();
@@ -70,5 +116,15 @@ public class LabelMaker {
         byte lsb = (byte) index;
 
         return new byte[]{msb, lsb};
+    }
+
+    public static class ReadLabels {
+        public final String name;
+        public final int zeroOctetPosition;
+
+        public ReadLabels(String name, int zeroOctetPosition) {
+            this.name = name;
+            this.zeroOctetPosition = zeroOctetPosition;
+        }
     }
 }
