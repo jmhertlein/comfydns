@@ -7,6 +7,8 @@ import cafe.josh.comfydns.rfc1035.field.header.OpCode;
 import cafe.josh.comfydns.rfc1035.field.header.RCode;
 import cafe.josh.comfydns.rfc1035.write.Writeable;
 
+import java.util.Optional;
+
 import static cafe.josh.comfydns.RangeCheck.*;
 
 public class Header implements Writeable {
@@ -51,6 +53,17 @@ public class Header implements Writeable {
         content[2] |= (((byte) code.getCode()) << 3);
     }
 
+    private int extractOpCode() {
+        byte tmp = content[2];
+        tmp &= 0b0111_1000;
+        tmp >>= 3;
+        return tmp;
+    }
+
+    public OpCode getOpCode() {
+        return OpCode.match(extractOpCode()).get();
+    }
+
     public void setAA(boolean authoritative) {
         if(authoritative) {
             content[2] |= 0b00000100;
@@ -87,6 +100,14 @@ public class Header implements Writeable {
         int val = code.getCode();
         content[3] &= 0b11110000;
         content[3] |= (byte) val;
+    }
+
+    private int extractRCode() {
+        return content[3] & 0b00001111;
+    }
+
+    public RCode getRCode() {
+        return RCode.match(extractRCode()).get();
     }
 
     public void setQDCount(int questionEntryCount) throws IllegalArgumentException {
@@ -142,7 +163,13 @@ public class Header implements Writeable {
     }
 
     public void validate() throws InvalidHeaderException {
+        if(OpCode.match(extractOpCode()).isEmpty()) {
+            throw new InvalidHeaderException("OpCode is invalid: " + extractOpCode());
+        }
 
+        if(RCode.match(extractRCode()).isEmpty()) {
+            throw new InvalidHeaderException("RCode is invalid: " + extractRCode());
+        }
     }
 
     @Override

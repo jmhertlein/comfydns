@@ -1,5 +1,7 @@
 package cafe.josh.comfydns.rfc1035.field.header;
 
+import java.util.Optional;
+
 public enum RCode {
     NO_ERROR(0, "No error condition"),
     FORMAT_ERROR(1, "Format error - The name server wasunable to interpret the query."),
@@ -14,6 +16,16 @@ public enum RCode {
     RCode(int code, String explanation) {
         this.code = code;
         this.explanation = explanation;
+    }
+
+    public static Optional<RCode> match(int code) {
+        for (RCode c : RCode.values()) {
+            if(c.code == code) {
+                return Optional.of(c);
+            }
+        }
+
+        return Optional.empty();
     }
 
     public int getCode() {
