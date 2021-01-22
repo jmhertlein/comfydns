@@ -1,9 +1,9 @@
 package cafe.josh.comfydns.rfc1982;
 
-import cafe.josh.comfydns.PrettyByte;
-import cafe.josh.comfydns.rfc1035.LabelCache;
-import cafe.josh.comfydns.rfc1035.LabelMaker;
-import cafe.josh.comfydns.rfc1035.MalformedLabelException;
+import cafe.josh.comfydns.butil.PrettyByte;
+import cafe.josh.comfydns.rfc1035.message.LabelCache;
+import cafe.josh.comfydns.rfc1035.message.LabelMaker;
+import cafe.josh.comfydns.rfc1035.message.MalformedLabelException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

@@ -1,5 +1,6 @@
 package cafe.josh.comfydns;
 
+import cafe.josh.comfydns.butil.PrettyByte;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

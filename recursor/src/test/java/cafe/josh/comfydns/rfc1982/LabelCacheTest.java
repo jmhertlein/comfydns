@@ -1,6 +1,6 @@
 package cafe.josh.comfydns.rfc1982;
 
-import cafe.josh.comfydns.rfc1035.LabelCache;
+import cafe.josh.comfydns.rfc1035.message.LabelCache;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

@@ -1,13 +1,13 @@
 package cafe.josh.comfydns;
 
+import cafe.josh.comfydns.net.DNSChannelInitializer;
+import cafe.josh.comfydns.net.SimpleConnectionPool;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.postgresql.ds.PGConnectionPoolDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
