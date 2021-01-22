@@ -18,6 +18,6 @@ public class DNSChannelInitializer extends ChannelInitializer<SocketChannel> {
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         log.debug("Initializing channel: {}", socketChannel.remoteAddress());
         ChannelPipeline p = socketChannel.pipeline();
-        p.addLast(new DNSHandler(this.pool));
+        p.addLast(new UDPDNSHandler(this.pool));
     }
 }
