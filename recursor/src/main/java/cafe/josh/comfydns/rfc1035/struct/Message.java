@@ -2,6 +2,7 @@ package cafe.josh.comfydns.rfc1035.struct;
 
 import cafe.josh.comfydns.rfc1035.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.LabelCache;
+import cafe.josh.comfydns.rfc1035.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.write.Writeable;
 
 import java.util.ArrayList;
@@ -88,7 +89,7 @@ public class Message {
         return ret;
     }
 
-    public static Message read(byte[] bytes) throws InvalidMessageException {
+    public static Message read(byte[] bytes) throws InvalidMessageException, UnsupportedRRTypeException {
         if(bytes.length < Header.FIXED_LENGTH_OCTETS) {
             throw new InvalidMessageException("Message too short to have valid header. Must be " + Header.FIXED_LENGTH_OCTETS + " octets but only found " + bytes.length);
         }
@@ -98,11 +99,41 @@ public class Message {
         Header h = new Header(headerContents);
         h.validate();
 
-        int index = Header.FIXED_LENGTH_OCTETS;
-        for(int i = 0; i < h.getQDCount(); i++) {
+        int pos = Header.FIXED_LENGTH_OCTETS;
 
+        List<Question> questions = new ArrayList<>();
+        for(int i = 0; i < h.getQDCount(); i++) {
+            Question.ReadQuestion read = Question.read(bytes, pos);
+            pos += read.length;
+            questions.add(read.read);
         }
 
-        return null;
+        List<RR<?>> answers = new ArrayList<>(), authorities = new ArrayList<>(), additional = new ArrayList<>();
+        for(int i = 0; i < h.getANCount(); i++) {
+            RR.ReadRR<?> readRR = RR.read(bytes, pos);
+            answers.add(readRR.read);
+            pos += readRR.length;
+        }
+
+        for(int i = 0; i < h.getNSCount(); i++) {
+            RR.ReadRR<?> readRR = RR.read(bytes, pos);
+            authorities.add(readRR.read);
+            pos += readRR.length;
+        }
+
+        for(int i = 0; i < h.getARCount(); i++) {
+            RR.ReadRR<?> readRR = RR.read(bytes, pos);
+            additional.add(readRR.read);
+            pos += readRR.length;
+        }
+
+        Message m = new Message();
+        m.setHeader(h);
+        m.getQuestions().addAll(questions);
+        m.getAnswerRecords().addAll(answers);
+        m.getAuthorityRecords().addAll(authorities);
+        m.getAdditionalRecords().addAll(additional);
+
+        return m;
     }
 }

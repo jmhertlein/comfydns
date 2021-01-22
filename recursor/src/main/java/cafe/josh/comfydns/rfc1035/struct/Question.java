@@ -2,6 +2,7 @@ package cafe.josh.comfydns.rfc1035.struct;
 
 import cafe.josh.comfydns.rfc1035.LabelCache;
 import cafe.josh.comfydns.rfc1035.LabelMaker;
+import cafe.josh.comfydns.rfc1035.MalformedLabelException;
 import cafe.josh.comfydns.rfc1035.field.query.QClass;
 import cafe.josh.comfydns.rfc1035.field.query.QType;
 import cafe.josh.comfydns.rfc1035.write.Writeable;
@@ -17,7 +18,7 @@ public class Question implements Writeable {
         this.qClass = qClass;
     }
 
-    public String getqName() {
+    public String getQName() {
         return qName;
     }
 
@@ -38,5 +39,27 @@ public class Question implements Writeable {
         System.arraycopy(qType.getValue(), 0, ret, QNAME.length, 2);
         System.arraycopy(qClass.getValue(), 0, ret, QNAME.length+2, 2);
         return ret;
+    }
+
+    public static ReadQuestion read(byte[] content, int startPos) throws MalformedLabelException {
+        int pos = startPos;
+        LabelMaker.ReadLabels readLabels = LabelMaker.readLabels(content, pos);
+        pos = readLabels.zeroOctetPosition + 1;
+        QType QTYPE = QType.match(content, pos);
+        pos += 2;
+        QClass QCLASS = QClass.match(content, pos);
+        pos += 2;
+
+        return new ReadQuestion(new Question(readLabels.name, QTYPE, QCLASS), pos - startPos);
+    }
+
+    public static class ReadQuestion {
+        public final Question read;
+        public final int length;
+
+        public ReadQuestion(Question read, int length) {
+            this.read = read;
+            this.length = length;
+        }
     }
 }

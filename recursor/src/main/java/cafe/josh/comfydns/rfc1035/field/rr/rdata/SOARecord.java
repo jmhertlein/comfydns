@@ -4,7 +4,7 @@ import cafe.josh.comfydns.PrettyByte;
 import cafe.josh.comfydns.rfc1035.LabelCache;
 import cafe.josh.comfydns.rfc1035.LabelMaker;
 import cafe.josh.comfydns.rfc1035.field.rr.RData;
-import cafe.josh.comfydns.rfc1035.field.rr.RRType;
+import cafe.josh.comfydns.rfc1035.field.rr.KnownRRType;
 
 public class SOARecord implements RData {
     private final String mName, rName;
@@ -49,8 +49,8 @@ public class SOARecord implements RData {
     }
 
     @Override
-    public RRType getRRType() {
-        return RRType.SOA;
+    public KnownRRType getRRType() {
+        return KnownRRType.SOA;
     }
 
     @Override

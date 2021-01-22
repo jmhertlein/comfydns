@@ -2,38 +2,19 @@ package cafe.josh.comfydns.rfc1035.field.rr;
 
 import cafe.josh.comfydns.rfc1035.field.query.QClass;
 
-public enum RRClass implements QClass {
-    IN("IN", (byte) 1, "the Internet"),
-    CS("CS", (byte) 2, "the CSNET class (Obsolete - used only for examples in some obsolete RFCs)", false),
-    CH("CH", (byte) 3, "the CHAOS class"),
-    HS("HS", (byte) 4, "Hesiod [Dyer 87]")
-    ;
+import java.util.Optional;
 
-    private final String type;
-    private final byte value;
-    private final String meaning;
-    private final boolean supported;
+public interface RRClass extends QClass {
+    public boolean isWellKnown();
 
-    RRClass(String type, byte value, String meaning) {
-        this(type, value, meaning, true);
-    }
+    public static RRClass match(byte[] content, int pos) {
+        for (KnownRRClass v : KnownRRClass.values()) {
+            byte[] value = v.getValue();
+            if(value[0] == content[pos] && value[1] == content[pos+1]) {
+                return v;
+            }
+        }
 
-    RRClass(String type, byte value, String meaning, boolean supported) {
-        this.type = type;
-        this.value = value;
-        this.meaning = meaning;
-        this.supported = supported;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public byte[] getValue() {
-        return new byte[]{0, value};
-    }
-
-    public String getMeaning() {
-        return meaning;
+        return new UnknownRRClass(new byte[]{content[pos], content[pos+1]});
     }
 }

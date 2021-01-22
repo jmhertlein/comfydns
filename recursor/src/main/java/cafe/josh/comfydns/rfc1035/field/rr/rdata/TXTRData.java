@@ -2,7 +2,7 @@ package cafe.josh.comfydns.rfc1035.field.rr.rdata;
 
 import cafe.josh.comfydns.rfc1035.LabelCache;
 import cafe.josh.comfydns.rfc1035.field.rr.RData;
-import cafe.josh.comfydns.rfc1035.field.rr.RRType;
+import cafe.josh.comfydns.rfc1035.field.rr.KnownRRType;
 
 public class TXTRData implements RData {
     private final String text;
@@ -19,8 +19,8 @@ public class TXTRData implements RData {
     }
 
     @Override
-    public RRType getRRType() {
-        return RRType.TXT;
+    public KnownRRType getRRType() {
+        return KnownRRType.TXT;
     }
 
     @Override
