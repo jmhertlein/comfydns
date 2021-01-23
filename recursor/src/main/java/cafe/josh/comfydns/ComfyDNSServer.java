@@ -94,7 +94,6 @@ public class ComfyDNSServer implements Runnable {
         Bootstrap b = new Bootstrap();
         b.group(bossGroup)
                 .channel(NioDatagramChannel.class)
-                .option(ChannelOption.SO_BROADCAST, true)
                 .handler(new DNSChannelInitializer(pool));
 
         return b;
