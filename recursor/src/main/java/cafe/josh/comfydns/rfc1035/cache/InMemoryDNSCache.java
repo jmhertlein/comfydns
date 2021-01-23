@@ -20,7 +20,7 @@ public class InMemoryDNSCache implements DNSCache {
     }
 
     @Override
-    public List<RR<?>> search(String name, QType qType, QClass qClass) throws CacheAccessException {
+    public List<RR<?>> search(String name, QType qType, QClass qClass, OffsetDateTime now) throws CacheAccessException {
         List<RR<?>> ret = new ArrayList<>();
         try {
             lock.readLock().lock();
@@ -32,7 +32,8 @@ public class InMemoryDNSCache implements DNSCache {
             for (Map.Entry<RR2Tuple, List<CachedRR<?>>> e : rr2TupleRRMap.entrySet()) {
                 if(qType.queryMatches(e.getKey().rrType) && qClass.queryMatches(e.getKey().rrClass)) {
                     ret.addAll(e.getValue().stream()
-                            .map(rr -> rr.getRr().adjustTTL(rr.getCacheTime()))
+                            .map(rr -> rr.getRr().adjustTTL(rr.getCacheTime(), now))
+                            .filter(rr -> rr.getTtl() > 0)
                             .collect(Collectors.toList())
                     );
                 }

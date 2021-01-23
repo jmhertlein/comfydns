@@ -24,9 +24,9 @@ public class InMemoryCacheTest {
     @Test
     public void test() throws CacheAccessException {
         InMemoryDNSCache c = new InMemoryDNSCache();
-        Assertions.assertTrue(c.search("stripe.com", KnownRRType.A, KnownRRClass.IN).isEmpty());
+        Assertions.assertTrue(c.search("stripe.com", KnownRRType.A, KnownRRClass.IN, OffsetDateTime.now()).isEmpty());
         c.cache(A, OffsetDateTime.now());
-        List<RR<?>> search = c.search("stripe.com", KnownRRType.A, KnownRRClass.IN);
+        List<RR<?>> search = c.search("stripe.com", KnownRRType.A, KnownRRClass.IN, OffsetDateTime.now());
         Assertions.assertFalse(search.isEmpty());
         Assertions.assertEquals("192.168.10.10", ((ARData) search.get(0).getTData()).getAddress().getHostAddress());
     }
@@ -36,12 +36,11 @@ public class InMemoryCacheTest {
         OffsetDateTime now = OffsetDateTime.now();
         InMemoryDNSCache c = new InMemoryDNSCache();
         c.cache(A, now);
-        List<RR<?>> search = c.search(A.getName(), A.getRrType(), A.getRrClass());
+        List<RR<?>> search = c.search(A.getName(), A.getRrType(), A.getRrClass(), now);
         Assertions.assertEquals(1, search.size());
 
         c.prune(now.plusSeconds(A.getTtl()));
-        search = c.search(A.getName(), A.getRrType(), A.getRrClass());
+        search = c.search(A.getName(), A.getRrType(), A.getRrClass(), now.plusSeconds(A.getTtl()));
         Assertions.assertEquals(0, search.size());
-
     }
 }

@@ -35,8 +35,8 @@ public class RR<T extends RData> implements Writeable {
         this.classAndType = new RR2Tuple(rrClass.getValue(), rrType.getValue());
     }
 
-    public RR<T> adjustTTL(OffsetDateTime cachedAt) {
-        long age = cachedAt.until(OffsetDateTime.now(), ChronoUnit.SECONDS);
+    public RR<T> adjustTTL(OffsetDateTime cachedAt, OffsetDateTime now) {
+        long age = cachedAt.until(now, ChronoUnit.SECONDS);
         int newTTL;
         if(age > Integer.MAX_VALUE) {
             newTTL = 0;
