@@ -14,18 +14,14 @@ import java.nio.ByteBuffer;
 public class RR<T extends RData> implements Writeable {
     private final String name;
     private final RRType rrType;
-    private final byte[] rawType;
     private final RRClass rrClass;
-    private final byte[] rawClass;
     private final int ttl;
     private final T tData;
 
     public RR(String name, RRType rrType, RRClass rrClass, int ttl, T tData) {
         this.name = name;
         this.rrType = rrType;
-        this.rawType = rrType.getValue();
         this.rrClass = rrClass;
-        this.rawClass = rrClass.getValue();
         if(!RangeCheck.uint(32, ttl)) {
             throw new IllegalArgumentException("ttl must be 32-bit unsigned int");
         }
@@ -80,6 +76,12 @@ public class RR<T extends RData> implements Writeable {
         byte[] ret = new byte[length];
         PrettyByte.copyAll(ret, 0, NAME, RRTYPE, RRCLASS, TTL, RDLENGTH, RDATA);
         return ret;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("NAME: %s, TYPE: %s, CLASS: %s, TTL: %s, RDATA:\n %s",
+                name, rrType.getType(), rrClass.getType(), ttl, this.tData.toString());
     }
 
     public static ReadRR<?> read(byte[] bytes, int startPos) throws InvalidMessageException, UnsupportedRRTypeException {

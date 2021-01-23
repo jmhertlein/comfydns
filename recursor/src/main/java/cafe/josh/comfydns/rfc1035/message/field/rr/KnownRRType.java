@@ -2,11 +2,13 @@ package cafe.josh.comfydns.rfc1035.message.field.rr;
 
 import cafe.josh.comfydns.rfc1035.message.RDataConstructionFunction;
 import cafe.josh.comfydns.rfc1035.message.field.query.QType;
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.AAAARData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.ARData;
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
 
 public enum KnownRRType implements QType,RRType {
     A("A", (byte) 1, "a host address", ARData::read),
-    NS("NS", (byte) 2, "an authoritative name server"),
+    NS("NS", (byte) 2, "an authoritative name server", NSRData::read),
     MD("MD", (byte) 3, "a mail destination (Obsolete - use MX)"),
     MF("MF", (byte) 4, "a mail forwarder (Obsolete - use MX)"),
     CNAME("CNAME", (byte) 5, "the canonical name for an alias"),
@@ -21,6 +23,7 @@ public enum KnownRRType implements QType,RRType {
     MINFO("MINFO", (byte) 14, "mailbox or mail list information"),
     MX("MX", (byte) 15, "mail exchange"),
     TXT("TXT", (byte) 16, "text strings"),
+    AAAA("AAAA", (byte) 28, "a host address (ipv6)", AAAARData::read),
     ;
 
     private final String type;

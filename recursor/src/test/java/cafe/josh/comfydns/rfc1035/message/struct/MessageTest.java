@@ -44,7 +44,7 @@ public class MessageTest {
         m.getQuestions().add(q);
         m.getAnswerRecords().add(answer);
 
-        byte[] found = m.write(new LabelCache());
+        byte[] found = m.write();
 
         if(!Arrays.equals(expected, found)) {
             System.out.println(PrettyByte.toComparison(expected, found));
@@ -64,7 +64,7 @@ public class MessageTest {
         Message m = Message.read(sample);
         Assertions.assertEquals("ajax.googleapis.com", m.getQuestions().get(0).getQName());
 
-        byte[] out = m.write(new LabelCache());
+        byte[] out = m.write();
         Assertions.assertArrayEquals(sample, out);
     }
 }

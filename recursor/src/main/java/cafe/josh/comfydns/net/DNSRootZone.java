@@ -14,9 +14,9 @@ import java.util.regex.Pattern;
 
 public class DNSRootZone {
     private static final Logger log = LoggerFactory.getLogger(DNSRootZone.class);
-    private static final Pattern PING_PATTERN = Pattern.compile("^rtt min\\/avg\\/max\\/mdev = (?<min>[\\d.]+)\\/(?<avg>[\\d.]+)\\/(?<max>[\\d.]+)\\/(?<mdev>[\\d.]+) ms$");
+    //private static final Pattern PING_PATTERN = Pattern.compile("^rtt min\\/avg\\/max\\/mdev = (?<min>[\\d.]+)\\/(?<avg>[\\d.]+)\\/(?<max>[\\d.]+)\\/(?<mdev>[\\d.]+) ms$");
     public static final List<Server> ROOT_SERVERS;
-    public static final List<Server> ROOT_SERVER_BY_PING_TIME;
+    //public static final List<Server> ROOT_SERVER_BY_PING_TIME;
     static {
         ROOT_SERVERS = List.of(
                 new Server("198.41.0.4", "a", "Verisign, Inc."),
@@ -34,43 +34,48 @@ public class DNSRootZone {
                 new Server("202.12.27.33", "m", "WIDE Project")
         );
 
-        // TODO I like this but it needs to be done on a bg thread in
-        // a singleton that atomically swaps the unsorted list for the sorted
-        // when the process is done.
-        List<Server> sorted;
-        try {
-            sorted = sortByPingTime(ROOT_SERVERS);
-        } catch (Throwable t) {
-            log.warn("Unable to sort root dns servers.", t);
-            sorted = ROOT_SERVERS;
-        }
-
-        ROOT_SERVER_BY_PING_TIME = sorted;
+//        // TODO I like this but it needs to be done on a bg thread in
+//        // a singleton that atomically swaps the unsorted list for the sorted
+//        // when the process is done.
+          // or maybe just gather this in realtime from live data
+//        List<Server> sorted;
+//        try {
+//            sorted = sortByPingTime(ROOT_SERVERS);
+//        } catch (Throwable t) {
+//            log.warn("Unable to sort root dns servers.", t);
+//            sorted = ROOT_SERVERS;
+//        }
+//
+//        ROOT_SERVER_BY_PING_TIME = sorted;
     }
 
-    public static List<Server> sortByPingTime(List<Server> servers) throws IOException, InterruptedException {
-        servers = new ArrayList<>(servers);
-        Map<Server, Double> times = new HashMap<>();
-        for (Server s : servers) {
-            ProcessBuilder b = new ProcessBuilder("ping", "-c", "3", s.getAddress().getHostAddress());
-            Process start = b.start();
-            start.waitFor();
-            try(InputStreamReader r = new InputStreamReader(start.getInputStream());
-                BufferedReader reader = new BufferedReader(r)) {
-                String line = reader.readLine();
-                while(line != null) {
-                    Matcher m = PING_PATTERN.matcher(line);
-                    if(m.matches()) {
-                        times.put(s, Double.parseDouble(m.group("avg")));
-                        log.info(line);
-                    }
-                    line = reader.readLine();
-                }
-            }
-        }
+//    public static List<Server> sortByPingTime(List<Server> servers) throws IOException, InterruptedException {
+//        servers = new ArrayList<>(servers);
+//        Map<Server, Double> times = new HashMap<>();
+//        for (Server s : servers) {
+//            ProcessBuilder b = new ProcessBuilder("ping", "-c", "3", s.getAddress().getHostAddress());
+//            Process start = b.start();
+//            start.waitFor();
+//            try(InputStreamReader r = new InputStreamReader(start.getInputStream());
+//                BufferedReader reader = new BufferedReader(r)) {
+//                String line = reader.readLine();
+//                while(line != null) {
+//                    Matcher m = PING_PATTERN.matcher(line);
+//                    if(m.matches()) {
+//                        times.put(s, Double.parseDouble(m.group("avg")));
+//                        log.info(line);
+//                    }
+//                    line = reader.readLine();
+//                }
+//            }
+//        }
+//
+//        servers.sort(Comparator.comparingDouble(l -> times.getOrDefault(l, Double.MAX_VALUE)));
+//        return servers;
+//    }
 
-        servers.sort(Comparator.comparingDouble(l -> times.getOrDefault(l, Double.MAX_VALUE)));
-        return servers;
+    public static Server getRandomRootServer() {
+        return ROOT_SERVERS.get((int) (Math.random()*ROOT_SERVERS.size()));
     }
 
     public static class Server {
@@ -98,9 +103,5 @@ public class DNSRootZone {
         public String getOperator() {
             return operator;
         }
-    }
-
-    public static void main(String... args ) {
-
     }
 }

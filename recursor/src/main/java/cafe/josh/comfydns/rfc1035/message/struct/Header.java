@@ -45,6 +45,10 @@ public class Header implements Writeable {
         }
     }
 
+    public boolean getQR() {
+        return (content[2] & (byte) 0b1000_0000) != 0;
+    }
+
     public void setOpCode(OpCode code) {
         content[2] &= 0b10000111;
         content[2] |= (((byte) code.getCode()) << 3);
@@ -69,12 +73,20 @@ public class Header implements Writeable {
         }
     }
 
+    public boolean getAA() {
+        return (content[2] & 0b00000100) != 0;
+    }
+
     public void setTC(boolean truncation) {
         if(truncation) {
             content[2] |= 0b00000010;
         } else {
             content[2] &= 0b11111101;
         }
+    }
+
+    public boolean getTC() {
+        return (content[2] & 0b00000010) != 0;
     }
 
     public void setRD(boolean recursionDesired) {
@@ -85,12 +97,20 @@ public class Header implements Writeable {
         }
     }
 
+    public boolean getRD() {
+        return (content[2] & 0b00000001) != 0;
+    }
+
     public void setRA(boolean recursionAvailable) {
         if(recursionAvailable) {
             content[3] |= 0b10000000;
         } else {
             content[3] &= 0b01111111;
         }
+    }
+
+    public boolean getRA() {
+        return (content[3] & 0b10000000) != 0;
     }
 
     public void setRCode(RCode code) {
@@ -167,6 +187,14 @@ public class Header implements Writeable {
         if(RCode.match(extractRCode()).isEmpty()) {
             throw new InvalidHeaderException("RCode is invalid: " + extractRCode());
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("ID: %s, QR: %s, OPCODE: %s, AA: %s, TC: %s, RD: %s, RA: %s, RCODE: %s\n"
+        + "QDCOUNT: %s, ANCOUNT: %s, NSCOUNT: %s, ARCOUNT: %s",
+                getId(), getQR() ? "query" : "response", getOpCode().name(), getAA(), getTC(), getRD(), getRA(), getRCode().name(),
+                getQDCount(), getANCount(), getNSCount(), getARCount());
     }
 
     @Override

@@ -1,5 +1,6 @@
 package cafe.josh.comfydns.rfc1035.message.struct;
 
+import cafe.josh.comfydns.rfc1035.message.InvalidHeaderException;
 import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.LabelCache;
 import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
@@ -45,7 +46,8 @@ public class Message {
         return additionalRecords;
     }
 
-    public byte[] write(LabelCache c) {
+    public byte[] write() {
+        LabelCache c = new LabelCache();
         ArrayList<byte[]> parts = new ArrayList<>();
         int index = 0;
         parts.add(getHeader().write(c, index));
@@ -132,5 +134,40 @@ public class Message {
         m.getAdditionalRecords().addAll(additional);
 
         return m;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder b = new StringBuilder();
+        b.append(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+        b.append(header.toString()).append("\n");
+        for(List<RR<?>> section : List.of(answerRecords, authorityRecords, additionalRecords)) {
+            b.append("===========================================================\n");
+            for(RR<?> rr : section) {
+                b.append("----------------------------------------------------------\n");
+                b.append(rr.toString()).append("\n");
+            }
+        }
+        b.append("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+
+        return b.toString();
+    }
+
+    public void validateHeader() throws InvalidHeaderException {
+        if(header.getQDCount() != questions.size()) {
+            throw new InvalidHeaderException("QDCOUNT != number of questions");
+        }
+
+        if(header.getANCount() != answerRecords.size()) {
+            throw new InvalidHeaderException("ANCOUNT != number of answer RRs");
+        }
+
+        if(header.getNSCount() != authorityRecords.size()) {
+            throw new InvalidHeaderException("NSCOUNT != number of authority RRs");
+        }
+
+        if(header.getARCount() != additionalRecords.size()) {
+            throw new InvalidHeaderException("ARCOUNT != number of additional RRs");
+        }
     }
 }

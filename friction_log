@@ -1,0 +1,3 @@
+building a message when all I want to do is just send a dang message:
+1. A builder interface would be nice to avoid making a ton of intermediate objects and lins
+2. a function to auto-gen a header would be especially nice: message.genHeader() or something - even if I don't do a builder pattern

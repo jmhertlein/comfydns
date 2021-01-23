@@ -41,6 +41,11 @@ public class Question implements Writeable {
         return ret;
     }
 
+    @Override
+    public String toString() {
+        return String.format("QNAME: %s, QTYPE: %s, QCLASS: %s", qName, qType, qClass);
+    }
+
     public static ReadQuestion read(byte[] content, int startPos) throws MalformedLabelException {
         int pos = startPos;
         LabelMaker.ReadLabels readLabels = LabelMaker.readLabels(content, pos);
