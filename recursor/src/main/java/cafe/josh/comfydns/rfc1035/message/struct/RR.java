@@ -2,6 +2,7 @@ package cafe.josh.comfydns.rfc1035.message.struct;
 
 import cafe.josh.comfydns.butil.PrettyByte;
 import cafe.josh.comfydns.butil.RangeCheck;
+import cafe.josh.comfydns.rfc1035.cache.RR2Tuple;
 import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.LabelCache;
 import cafe.josh.comfydns.rfc1035.message.LabelMaker;
@@ -10,6 +11,8 @@ import cafe.josh.comfydns.rfc1035.message.field.rr.*;
 import cafe.josh.comfydns.rfc1035.message.write.Writeable;
 
 import java.nio.ByteBuffer;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class RR<T extends RData> implements Writeable {
     private final String name;
@@ -17,6 +20,8 @@ public class RR<T extends RData> implements Writeable {
     private final RRClass rrClass;
     private final int ttl;
     private final T tData;
+
+    private final RR2Tuple classAndType;
 
     public RR(String name, RRType rrType, RRClass rrClass, int ttl, T tData) {
         this.name = name;
@@ -27,6 +32,18 @@ public class RR<T extends RData> implements Writeable {
         }
         this.ttl = ttl;
         this.tData = tData;
+        this.classAndType = new RR2Tuple(rrClass.getValue(), rrType.getValue());
+    }
+
+    public RR<T> adjustTTL(OffsetDateTime cachedAt) {
+        long age = cachedAt.until(OffsetDateTime.now(), ChronoUnit.SECONDS);
+        int newTTL;
+        if(age > Integer.MAX_VALUE) {
+            newTTL = 0;
+        } else {
+            newTTL = ttl - ((int) age);
+        }
+        return new RR<>(name, rrType, rrClass, newTTL, tData);
     }
 
     public String getName() {
@@ -47,6 +64,10 @@ public class RR<T extends RData> implements Writeable {
 
     public T getTData() {
         return tData;
+    }
+
+    public RR2Tuple getClassAndType() {
+        return classAndType;
     }
 
     @Override

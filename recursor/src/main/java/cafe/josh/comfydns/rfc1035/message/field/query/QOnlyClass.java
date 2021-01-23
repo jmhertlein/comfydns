@@ -1,5 +1,7 @@
 package cafe.josh.comfydns.rfc1035.message.field.query;
 
+import cafe.josh.comfydns.rfc1035.message.field.rr.RRClass;
+
 public enum QOnlyClass implements QClass {
     STAR("*", (byte) 255, "any class");
 
@@ -24,4 +26,15 @@ public enum QOnlyClass implements QClass {
     public String getMeaning() {
         return meaning;
     }
+
+    @Override
+    public boolean queryMatches(byte[] c) {
+        if(this == STAR) {
+            return true;
+        } else {
+            return QClass.super.queryMatches(c);
+        }
+    }
+
+
 }

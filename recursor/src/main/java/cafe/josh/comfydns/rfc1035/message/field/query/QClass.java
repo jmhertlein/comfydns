@@ -1,6 +1,9 @@
 package cafe.josh.comfydns.rfc1035.message.field.query;
 
 import cafe.josh.comfydns.rfc1035.message.field.rr.RRClass;
+import cafe.josh.comfydns.rfc1035.message.field.rr.RRType;
+
+import java.util.Arrays;
 
 public interface QClass {
     public String getType();
@@ -8,6 +11,10 @@ public interface QClass {
     public String getMeaning();
     public default boolean isSupported() {
         return true;
+    }
+
+    public default boolean queryMatches(byte[] c) {
+        return Arrays.equals(c, getValue());
     }
 
     public static QClass match(byte[] content, int pos) {

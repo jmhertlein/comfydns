@@ -1,5 +1,7 @@
 package cafe.josh.comfydns.rfc1035.message.field.query;
 
+import cafe.josh.comfydns.rfc1035.message.field.rr.RRType;
+
 public enum QOnlyType implements QType {
     AXFR("AXFR", (byte) 252, "A request for a transfer of an entire zone"),
     MAILB("MAILB", (byte) 253, "A request for mailbox-related records (MB, MG or MR)"),
@@ -38,6 +40,15 @@ public enum QOnlyType implements QType {
     @Override
     public boolean isSupported() {
         return this.supported;
+    }
+
+    @Override
+    public boolean queryMatches(byte[] t) {
+        if(this == STAR) {
+            return true;
+        } else {
+            return QType.super.queryMatches(t);
+        }
     }
 
 
