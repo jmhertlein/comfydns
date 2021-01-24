@@ -52,12 +52,12 @@ public class SendServerQuery implements RequestState {
         m.getQuestions().add(new Question(q.getQName(), q.getqType(), q.getqClass()));
 
         Consumer<byte[]> onSuccess = payload -> {
-            self.setState(new HandleResponseToZoneQuery(bestServer, payload));
+            self.setState(new HandleResponseToZoneQuery(bestServer, m, payload));
             rCtx.getPool().submit(self);
         };
 
         Consumer<Throwable> onError = e -> {
-            self.setState(new HandleResponseToZoneQuery(bestServer, e));
+            self.setState(new HandleResponseToZoneQuery(bestServer, m, e));
             rCtx.getPool().submit(self);
         };
 

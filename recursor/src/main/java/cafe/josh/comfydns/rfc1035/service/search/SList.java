@@ -27,6 +27,10 @@ public class SList {
         this.servers.remove(s);
     }
 
+    public List<SListServer> getServers() {
+        return servers;
+    }
+
     public Optional<SListServer> getBestServer() {
         List<SListServer> eligible = servers.stream().filter(s -> s.failureCount < FAILURE_LIMIT).collect(Collectors.toList());
         Optional<SListServer> best = eligible.stream().filter(s -> s.ip != null).sorted().findFirst();

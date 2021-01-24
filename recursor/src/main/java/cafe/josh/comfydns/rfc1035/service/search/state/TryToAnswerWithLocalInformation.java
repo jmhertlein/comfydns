@@ -24,9 +24,12 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             if(questionIndex >= sCtx.getRequest().getMessage().getHeader().getQDCount()) {
                 sCtx.sendAnswer();
             } else {
-                self.setState(new FindBestServerToAsk());
+                self.setState(new TryToAnswerWithLocalInformation());
                 self.run();
             }
+        } else {
+            self.setState(new FindBestServerToAsk());
+            self.run();
         }
     }
 

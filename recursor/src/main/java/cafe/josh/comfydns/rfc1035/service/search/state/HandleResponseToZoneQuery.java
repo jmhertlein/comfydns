@@ -19,17 +19,20 @@ public class HandleResponseToZoneQuery implements RequestState {
     private static final Logger log = LoggerFactory.getLogger(HandleResponseToZoneQuery.class);
 
     private final SList.SListServer serverQueried;
+    private final Message sent;
     private final byte[] response;
     private final Throwable error;
 
-    public HandleResponseToZoneQuery(SList.SListServer serverQueried, byte[] response) {
+    public HandleResponseToZoneQuery(SList.SListServer serverQueried, Message sent, byte[] response) {
         this.serverQueried = serverQueried;
+        this.sent = sent;
         this.response = response;
         this.error = null;
     }
 
-    public HandleResponseToZoneQuery(SList.SListServer serverQueried, Throwable error) {
+    public HandleResponseToZoneQuery(SList.SListServer serverQueried, Message sent, Throwable error) {
         this.serverQueried = serverQueried;
+        this.sent = sent;
         this.error = error;
         this.response = null;
     }
@@ -60,6 +63,11 @@ public class HandleResponseToZoneQuery implements RequestState {
         } catch (UnsupportedRRTypeException e) {
             throw new NameResolutionException("Encountered an unsupported RRType while reading zone response",
                     e);
+        }
+
+        if(m.getHeader().getId() != sent.getHeader().getId()) {
+            throw new NameResolutionException("Received message with nonmatching ID: expected " +
+                    sent.getHeader().getId() + ", but found " + m.getHeader().getId());
         }
 
         if(m.getHeader().getTC()) {
