@@ -7,6 +7,7 @@ import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Message {
     private Header header;
@@ -168,6 +169,18 @@ public class Message {
 
         if(header.getARCount() != additionalRecords.size()) {
             throw new InvalidHeaderException("ARCOUNT != number of additional RRs");
+        }
+    }
+
+    public void forEach(Consumer<RR<?>> fn) {
+        for (RR<?> r : answerRecords) {
+            fn.accept(r);
+        }
+        for (RR<?> r : authorityRecords) {
+            fn.accept(r);
+        }
+        for (RR<?> r : additionalRecords) {
+            fn.accept(r);
         }
     }
 }

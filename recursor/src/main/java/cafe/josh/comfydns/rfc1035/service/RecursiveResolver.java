@@ -7,6 +7,7 @@ import cafe.josh.comfydns.rfc1035.message.struct.Header;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
+import cafe.josh.comfydns.rfc1035.service.search.SearchContext;
 import cafe.josh.comfydns.rfc1035.service.transport.NonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.TruncatingTransport;
 
@@ -14,7 +15,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 public class RecursiveResolver {
     private final ExecutorService pool;
@@ -44,7 +44,7 @@ public class RecursiveResolver {
         for(Question q : r.getMessage().getQuestions()) {
             List<RR<?>> fastPath = cache.search(q.getQName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
             if(fastPath.isEmpty()) {
-                RequestProgress p = new RequestProgress(r);
+                SearchContext p = new SearchContext(r);
             } else {
                 Message ret = new Message();
                 Header h = new Header(r.getMessage().getHeader());
@@ -62,7 +62,7 @@ public class RecursiveResolver {
         return null;
     }
 
-    public void resolveRecursively(RequestProgress r) throws CacheAccessException {
+    public void resolveRecursively(SearchContext r) throws CacheAccessException {
         Question q = r.getRequest().getMessage().getQuestions().get(r.getQuestionIndex().get());
         // first try to answer the question
         List<RR<?>> potentialAnswer = cache.search(q.getQName(), q.getqType(), q.getqClass(), OffsetDateTime.now());

@@ -68,6 +68,9 @@ public class AsyncNonTruncatingTransport implements NonTruncatingTransport {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            ByteBuf lengthOctets = Unpooled.buffer(2);
+            PrettyByte.writeNBitUnsignedInt(payload.length, 16, lengthOctets.array(), 0, 0);
+            ctx.write(lengthOctets);
             ctx.writeAndFlush(Unpooled.wrappedBuffer(payload));
         }
 
