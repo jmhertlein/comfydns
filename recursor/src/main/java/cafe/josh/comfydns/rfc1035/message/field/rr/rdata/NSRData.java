@@ -7,6 +7,8 @@ import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
 
+import java.util.Objects;
+
 public class NSRData implements RData {
     private final String nsDName;
 
@@ -38,5 +40,18 @@ public class NSRData implements RData {
     @Override
     public String toString() {
         return "NSDNAME: " + nsDName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NSRData nsrData = (NSRData) o;
+        return nsDName.equals(nsrData.nsDName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nsDName);
     }
 }

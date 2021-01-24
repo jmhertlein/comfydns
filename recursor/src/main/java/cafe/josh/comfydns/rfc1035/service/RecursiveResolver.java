@@ -44,15 +44,7 @@ public class RecursiveResolver {
         for(Question q : r.getMessage().getQuestions()) {
             List<RR<?>> fastPath = cache.search(q.getQName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
             if(fastPath.isEmpty()) {
-                // recursion time
-                List<String> domains = LabelCache.genSuffixes(q.getQName());
-                List<RR<?>> search = null;
-                for (String d : domains) {
-                    search = cache.search(d, q.getqType(), q.getqClass(), OffsetDateTime.now());
-                    if(!search.isEmpty()) {
-                        break;
-                    }
-                }
+                RequestProgress p = new RequestProgress(r);
             } else {
                 Message ret = new Message();
                 Header h = new Header(r.getMessage().getHeader());
@@ -68,5 +60,28 @@ public class RecursiveResolver {
         }
 
         return null;
+    }
+
+    public void resolveRecursively(RequestProgress r) throws CacheAccessException {
+        Question q = r.getRequest().getMessage().getQuestions().get(r.getQuestionIndex().get());
+        // first try to answer the question
+        List<RR<?>> potentialAnswer = cache.search(q.getQName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
+        if(!potentialAnswer.isEmpty()) {
+            r.getAnswer().addAll(potentialAnswer);
+            r.getQuestionIndex().incrementAndGet();
+        }
+
+        List<String> domains = LabelCache.genSuffixes(q.getQName());
+        List<RR<?>> search = null;
+        for (String d : domains) {
+            search = cache.search(d, q.getqType(), q.getqClass(), OffsetDateTime.now());
+            if(!search.isEmpty()) {
+                break;
+            }
+        }
+
+        if(search == null || search.isEmpty()) {
+
+        }
     }
 }

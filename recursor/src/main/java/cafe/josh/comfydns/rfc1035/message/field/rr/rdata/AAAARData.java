@@ -7,6 +7,7 @@ import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
 
 import java.net.Inet6Address;
 import java.net.UnknownHostException;
+import java.util.Objects;
 
 public class AAAARData implements RData {
     private final Inet6Address address;
@@ -42,5 +43,18 @@ public class AAAARData implements RData {
         } catch (UnknownHostException e) {
             throw new InvalidMessageException("IPv6 address too many bits", e);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AAAARData aaaarData = (AAAARData) o;
+        return address.equals(aaaarData.address);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(address);
     }
 }

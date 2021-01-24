@@ -6,6 +6,8 @@ import cafe.josh.comfydns.rfc1035.message.LabelMaker;
 import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 
+import java.util.Objects;
+
 public class SOARecord implements RData {
     private final String mName, rName;
     private final long serial, refresh, retry, expire, minimum;
@@ -81,5 +83,18 @@ public class SOARecord implements RData {
         }
 
         return ret;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SOARecord soaRecord = (SOARecord) o;
+        return serial == soaRecord.serial && refresh == soaRecord.refresh && retry == soaRecord.retry && expire == soaRecord.expire && minimum == soaRecord.minimum && mName.equals(soaRecord.mName) && rName.equals(soaRecord.rName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mName, rName, serial, refresh, retry, expire, minimum);
     }
 }

@@ -38,6 +38,10 @@ public class Header implements Writeable {
         set16BitInteger(0, id, "id");
     }
 
+    public void setIdRandomly() {
+        setId((int) (Math.random() * ((1 << 16)-1)));
+    }
+
     public int getId() {
         return get16BitInteger(0);
     }

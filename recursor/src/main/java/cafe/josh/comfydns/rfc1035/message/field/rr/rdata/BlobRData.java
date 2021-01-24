@@ -4,6 +4,8 @@ import cafe.josh.comfydns.rfc1035.message.LabelCache;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
 
+import java.util.Arrays;
+
 public class BlobRData implements RData {
     private final byte[] data;
 
@@ -25,5 +27,18 @@ public class BlobRData implements RData {
         byte[] d = new byte[rdlength];
         System.arraycopy(content, pos, d, 0, rdlength);
         return new BlobRData(d);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BlobRData blobRData = (BlobRData) o;
+        return Arrays.equals(data, blobRData.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(data);
     }
 }

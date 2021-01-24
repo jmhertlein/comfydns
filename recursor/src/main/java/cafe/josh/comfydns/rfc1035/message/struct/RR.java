@@ -13,6 +13,7 @@ import cafe.josh.comfydns.rfc1035.message.write.Writeable;
 import java.nio.ByteBuffer;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 public class RR<T extends RData> implements Writeable {
     private final String name;
@@ -147,5 +148,18 @@ public class RR<T extends RData> implements Writeable {
             this.read = read;
             this.length = length;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RR<?> rr = (RR<?>) o;
+        return name.equals(rr.name) && rrType.equals(rr.rrType) && rrClass.equals(rr.rrClass) && tData.equals(rr.tData);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, rrType, rrClass, tData);
     }
 }

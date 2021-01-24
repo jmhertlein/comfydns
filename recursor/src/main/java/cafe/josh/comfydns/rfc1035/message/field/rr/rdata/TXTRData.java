@@ -4,6 +4,8 @@ import cafe.josh.comfydns.rfc1035.message.LabelCache;
 import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 
+import java.util.Objects;
+
 public class TXTRData implements RData {
     private final String text;
 
@@ -37,5 +39,18 @@ public class TXTRData implements RData {
         }
 
         return ret;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TXTRData txtrData = (TXTRData) o;
+        return Objects.equals(text, txtrData.text);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(text);
     }
 }
