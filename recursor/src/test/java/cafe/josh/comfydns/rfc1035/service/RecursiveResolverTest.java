@@ -58,12 +58,16 @@ public class RecursiveResolverTest {
         );
         responses.put(InetAddress.getByName("192.168.1.23"), aGtldNetResponse);
 
-
-        RecursiveResolver r = new RecursiveResolver(
-                new InMemoryDNSCache(),
-                new TestTruncatingTransport(responses),
-                null
+        Message ns1GoogleDomainsResponse = new Message();
+        Header h3 = new Header();
+        ns1GoogleDomainsResponse.setHeader(h3);
+        h3.setANCount(1);
+        h3.setQR(true);
+        ns1GoogleDomainsResponse.getAnswerRecords().add(
+                new RR<>("status.stripe.com", KnownRRType.A, KnownRRClass.IN, 60 * 60,
+                        new ARData((Inet4Address) InetAddress.getByName("192.168.1.100")))
         );
+        responses.put(InetAddress.getByName("192.168.1.24"), ns1GoogleDomainsResponse);
 
         CompletableFuture<Message> fM = new CompletableFuture<>();
         Request req = new Request() {
@@ -84,9 +88,20 @@ public class RecursiveResolverTest {
             }
         };
 
-        r.resolve(req);
-        Message message = fM.get();
-        Assertions.assertEquals(1, message.getHeader().getANCount());
-        r.shutdown();
+        RecursiveResolver r = new RecursiveResolver(
+                new InMemoryDNSCache(),
+                new TestTruncatingTransport(responses),
+                null
+        );
+        try {
+            r.resolve(req);
+            Message message = fM.get();
+            Assertions.assertEquals(1, message.getHeader().getANCount());
+            Assertions.assertEquals("192.168.1.100",
+                    ((ARData) message.getAnswerRecords().get(0).getTData())
+                            .getAddress().getHostAddress());
+        } finally {
+            r.shutdown();
+        }
     }
 }

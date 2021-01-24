@@ -70,6 +70,7 @@ public class SearchContext {
         h.setANCount(getAnswer().size());
         h.setNSCount(getAuthority().size());
         h.setARCount(getAdditional().size());
+        m.setHeader(h);
         m.getQuestions().addAll(request.getMessage().getQuestions());
         m.getAnswerRecords().addAll(getAnswer());
         m.getAuthorityRecords().addAll(getAuthority());
