@@ -13,13 +13,17 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class AsyncTruncatingTransport implements TruncatingTransport {
+    private static final Logger log = LoggerFactory.getLogger(AsyncTruncatingTransport.class);
     private static final int DNS_UDP_PORT = 53;
     private final EventLoopGroup group;
 
@@ -73,6 +77,12 @@ public class AsyncTruncatingTransport implements TruncatingTransport {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             ctx.writeAndFlush(Unpooled.wrappedBuffer(payload));
+            ctx.channel().eventLoop().schedule(() -> {
+                if(!done) {
+                    log.warn("Timed out after 10 seconds waiting for UDP reply from " + ctx.channel().remoteAddress());
+                    ctx.close();
+                }
+            }, 10, TimeUnit.SECONDS);
         }
 
         @Override
