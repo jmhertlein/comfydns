@@ -71,7 +71,8 @@ public class HandleResponseToZoneQuery implements RequestState {
         }
 
         if(m.getHeader().getTC()) {
-            self.setState(new SendServerQuery(true));
+            log.info("Response had TC=1, retrying via tcp.");
+            self.setState(new SendServerQuery(true, sent.getHeader().getId()));
             self.run();
             return;
         }

@@ -7,6 +7,8 @@ import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolverTask;
 import cafe.josh.comfydns.rfc1035.service.search.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -20,10 +22,19 @@ import java.util.function.Consumer;
  * for that server overall.
  */
 public class SendServerQuery implements RequestState {
+    private static final Logger log = LoggerFactory.getLogger(SendServerQuery.class);
+
     private final boolean useNonTruncating;
+    private final Integer useId;
 
     public SendServerQuery(boolean useNonTruncating) {
         this.useNonTruncating = useNonTruncating;
+        this.useId = null;
+    }
+
+    public SendServerQuery(boolean useNonTruncating, Integer useId) {
+        this.useNonTruncating = useNonTruncating;
+        this.useId = useId;
     }
 
     @Override
@@ -61,7 +72,11 @@ public class SendServerQuery implements RequestState {
             rCtx.getPool().submit(self);
         };
 
+        log.info("QUERY: " + bestServer.getHostname());
         if(useNonTruncating) {
+            if(useId != null) {
+                m.getHeader().setId(useId);
+            }
             rCtx.getFallback().send(m.write(), bestServer.getIp(), onSuccess, onError);
         } else {
             rCtx.getPrimary().send(m.write(), bestServer.getIp(), onSuccess, onError);

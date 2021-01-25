@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class AsyncTruncatingTransport implements NonTruncatingTransport {
+public class AsyncTruncatingTransport implements TruncatingTransport {
     private static final int DNS_UDP_PORT = 53;
     private final EventLoopGroup group;
 
@@ -43,8 +43,8 @@ public class AsyncTruncatingTransport implements NonTruncatingTransport {
         clientBootstrap.group(group);
         clientBootstrap.channel(NioDatagramChannel.class);
         clientBootstrap.remoteAddress(dest, DNS_UDP_PORT);
-        clientBootstrap.handler(new ChannelInitializer<SocketChannel>() {
-            protected void initChannel(SocketChannel socketChannel) throws Exception {
+        clientBootstrap.handler(new ChannelInitializer<NioDatagramChannel>() {
+            protected void initChannel(NioDatagramChannel socketChannel) throws Exception {
                 socketChannel.pipeline().addLast(new ChannelHandler(payload, cb, onError));
             }
         });
@@ -56,10 +56,13 @@ public class AsyncTruncatingTransport implements NonTruncatingTransport {
         private final Consumer<byte[]> cb;
         private final Consumer<Throwable> onError;
 
+        private boolean done;
+
         private ChannelHandler(byte[] payload, Consumer<byte[]> cb, Consumer<Throwable> onError) {
             this.payload = payload;
             this.cb = cb;
             this.onError = onError;
+            done = false;
         }
 
         @Override
@@ -74,8 +77,19 @@ public class AsyncTruncatingTransport implements NonTruncatingTransport {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket msg) throws Exception {
-            cb.accept(msg.content().array());
+            ByteBuf content = msg.content();
+            byte[] dest = new byte[content.capacity()];
+            content.getBytes(0, dest);
+            cb.accept(dest);
             ctx.close();
+            done = true;
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            if(!done) {
+                onError.accept(new TimeoutException("Timed out waiting for response."));
+            }
         }
     }
 }

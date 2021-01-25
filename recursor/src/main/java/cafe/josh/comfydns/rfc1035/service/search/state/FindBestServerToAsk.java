@@ -14,6 +14,7 @@ import cafe.josh.comfydns.rfc1035.service.search.*;
 
 import java.net.InetAddress;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,17 +42,19 @@ public class FindBestServerToAsk implements RequestState {
         if(search == null || search.isEmpty()) {
             sList.setZone("");
             sList.getServers().clear();
-            sList.getServers().addAll(DNSRootZone.ROOT_SERVERS.stream().map(rs -> {
+            List<SList.SListServer> tmp = DNSRootZone.ROOT_SERVERS.stream().map(rs -> {
                 SList.SListServer sls = new SList.SListServer(rs.getName());
                 sls.setIp(rs.getAddress());
                 return sls;
-            }).collect(Collectors.toList()));
+            }).collect(Collectors.toList());
+            Collections.shuffle(tmp);
+            sList.getServers().addAll(tmp);
         } else {
             sList.setZone(zone);
             sList.getServers().clear();
             for (RR<?> rr : search) {
-                SList.SListServer s = new SList.SListServer(rr.getName());
                 NSRData tData = (NSRData) rr.getTData();
+                SList.SListServer s = new SList.SListServer(tData.getNsDName());
                 List<RR<?>> aSearch = rCtx.getOverlay().search(tData.getNsDName(), KnownRRType.A, q.getqClass(), OffsetDateTime.now());
                 if(!aSearch.isEmpty()) {
                     ARData nsIp = (ARData) aSearch.get((int) (Math.random() * aSearch.size())).getTData();

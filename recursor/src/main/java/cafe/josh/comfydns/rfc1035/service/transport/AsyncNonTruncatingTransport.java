@@ -1,6 +1,7 @@
 package cafe.josh.comfydns.rfc1035.service.transport;
 
 import cafe.josh.comfydns.butil.PrettyByte;
+import cafe.josh.comfydns.rfc1035.message.struct.Header;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -52,6 +53,7 @@ public class AsyncNonTruncatingTransport implements NonTruncatingTransport {
         private final Consumer<Throwable> onError;
         private final List<byte[]> in;
         private int msgLen;
+        private boolean done;
 
         private ChannelHandler(byte[] payload, Consumer<byte[]> cb, Consumer<Throwable> onError) {
             this.payload = payload;
@@ -59,24 +61,31 @@ public class AsyncNonTruncatingTransport implements NonTruncatingTransport {
             this.onError = onError;
             in = new ArrayList<>();
             msgLen = -1;
+            done = false;
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            onError.accept(cause);
+            if(!done) {
+                done = true;
+                onError.accept(cause);
+            }
         }
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            ByteBuf lengthOctets = Unpooled.buffer(2);
-            PrettyByte.writeNBitUnsignedInt(payload.length, 16, lengthOctets.array(), 0, 0);
-            ctx.write(lengthOctets);
-            ctx.writeAndFlush(Unpooled.wrappedBuffer(payload));
+            byte[] payloadWithLen = new byte[payload.length + 2];
+            PrettyByte.writeNBitUnsignedInt(payload.length, 16, payloadWithLen, 0, 0);
+            System.arraycopy(payload, 0, payloadWithLen, 2, payload.length);
+            ctx.writeAndFlush(Unpooled.wrappedBuffer(payloadWithLen));
         }
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-            in.add(msg.array());
+            int msgLen = msg.writerIndex() - msg.readerIndex();
+            byte[] content = new byte[msgLen];
+            msg.getBytes(0, content);
+            in.add(content);
             if(msgLen == -1 && bytesRead() >= 2) {
                 byte[] len = new byte[2];
                 int pos = 0;
@@ -103,14 +112,27 @@ public class AsyncNonTruncatingTransport implements NonTruncatingTransport {
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             int len = bytesRead();
+            if(len < Header.FIXED_LENGTH_OCTETS) {
+                if(!done) {
+                    done = true;
+                    onError.accept(new Exception("Received " + len + " octet message, need at least 12 " +
+                            "for a full header."));
+                    return;
+                }
+            }
             byte[] ret = new byte[len];
             int pos = 0;
+            int srcPos = 2;
             for (byte[] bytes : in) {
-                System.arraycopy(bytes, 0, ret, pos, bytes.length);
+                System.arraycopy(bytes, srcPos, ret, pos, (pos + bytes.length >= ret.length ? bytes.length-2 : bytes.length));
                 pos += bytes.length;
+                srcPos = 0;
             }
 
-            cb.accept(ret);
+            if(!done) {
+                done = true;
+                cb.accept(ret);
+            }
             ctx.close();
         }
 
