@@ -71,7 +71,10 @@ public class AsyncTruncatingTransport implements TruncatingTransport {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            onError.accept(cause);
+            if(!done) {
+                done = true;
+                onError.accept(cause);
+            }
         }
 
         @Override
