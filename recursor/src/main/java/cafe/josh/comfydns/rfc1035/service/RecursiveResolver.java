@@ -35,7 +35,7 @@ public class RecursiveResolver {
     public void resolve(Request r) {
         RecursiveResolverTask t = new RecursiveResolverTask(
                 new SearchContext(r),
-                new ResolverContext(cache, new TemporaryDNSCache(), pool, primary, fallback)
+                new ResolverContext(this, cache, new TemporaryDNSCache(), pool, primary, fallback)
         );
         pool.submit(t);
     }

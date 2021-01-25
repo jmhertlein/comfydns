@@ -4,6 +4,7 @@ import cafe.josh.comfydns.rfc1035.message.RDataConstructionFunction;
 import cafe.josh.comfydns.rfc1035.message.field.query.QType;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.AAAARData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.ARData;
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.CNameRData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
 
 public enum KnownRRType implements QType,RRType {
@@ -11,7 +12,7 @@ public enum KnownRRType implements QType,RRType {
     NS("NS", (byte) 2, "an authoritative name server", NSRData::read),
     MD("MD", (byte) 3, "a mail destination (Obsolete - use MX)"),
     MF("MF", (byte) 4, "a mail forwarder (Obsolete - use MX)"),
-    CNAME("CNAME", (byte) 5, "the canonical name for an alias"),
+    CNAME("CNAME", (byte) 5, "the canonical name for an alias", CNameRData::read),
     SOA("SOA", (byte) 6, "marks the start of a zone of authority"),
     MB("MB", (byte) 7, "a mailbox domain name (EXPERIMENTAL)"),
     MG("MG", (byte) 8, "a mail group member (EXPERIMENTAL)"),

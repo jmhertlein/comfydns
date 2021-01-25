@@ -128,4 +128,40 @@ public class IntegrationTest {
         Message rcv = Message.read(f.get());
         System.out.println(rcv);
     }
+
+    @Test
+    public void testCName() throws InterruptedException, ExecutionException {
+        CompletableFuture<Message> fM = new CompletableFuture<>();
+        Request req = new Request() {
+            @Override
+            public Message getMessage() {
+                Message ret = new Message();
+                Header h = new Header();
+                h.setQDCount(1);
+                h.setRD(true);
+                ret.getQuestions().add(new Question("testcname.josh.cafe", KnownRRType.A, KnownRRClass.IN));
+                ret.setHeader(h);
+                return ret;
+            }
+
+            @Override
+            public void answer(Message m) {
+                fM.complete(m);
+            }
+        };
+
+        RecursiveResolver r = new RecursiveResolver(
+                new InMemoryDNSCache(),
+                new AsyncTruncatingTransport(),
+                new AsyncNonTruncatingTransport()
+        );
+        try {
+            r.resolve(req);
+            Message message = fM.get();
+            System.out.println(message);
+            Assertions.assertTrue(message.getHeader().getANCount() > 0);
+        } finally {
+            r.shutdown();
+        }
+    }
 }

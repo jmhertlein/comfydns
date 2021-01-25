@@ -53,4 +53,9 @@ public class TXTRData implements RData {
     public int hashCode() {
         return Objects.hash(text);
     }
+
+    @Override
+    public String toString() {
+        return text;
+    }
 }

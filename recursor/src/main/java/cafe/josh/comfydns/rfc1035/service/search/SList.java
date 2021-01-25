@@ -8,11 +8,13 @@ public class SList {
     public static final int FAILURE_LIMIT = 3;
     private String zone;
     private List<SListServer> servers;
+    private final Map<String, Integer> failureCounts;
 
 
     public SList() {
         this.zone = "";
         this.servers = new ArrayList<>();
+        failureCounts = new HashMap<>();
     }
 
     public void setZone(String zone) {
@@ -31,8 +33,14 @@ public class SList {
         return servers;
     }
 
+    public void incrementFailureCount(SListServer s) {
+        int failures = failureCounts.computeIfAbsent(s.hostname, k -> 0);
+        failures++;
+        failureCounts.put(s.hostname, failures);
+    }
+
     public Optional<SListServer> getBestServer() {
-        List<SListServer> eligible = servers.stream().filter(s -> s.failureCount < FAILURE_LIMIT).collect(Collectors.toList());
+        List<SListServer> eligible = servers.stream().filter(s -> s.getFailureCount() < FAILURE_LIMIT).collect(Collectors.toList());
         Optional<SListServer> best = eligible.stream().filter(s -> s.ip != null).sorted().findFirst();
         if(best.isPresent()) {
             return best;
@@ -42,21 +50,26 @@ public class SList {
         return best;
     }
 
-    public static class SListServer implements Comparable<SListServer> {
+    public SListServer newServerEntry(String hostname) {
+        return new SListServer(hostname);
+    }
+
+    public SListServer newServerEntry(String hostname, InetAddress ip) {
+        return new SListServer(hostname, ip);
+    }
+
+    public class SListServer implements Comparable<SListServer> {
         private final String hostname;
 
         private InetAddress ip;
-        private int failureCount;
 
         public SListServer(String hostname) {
             this.hostname = hostname;
-            this.failureCount = 0;
         }
 
         public SListServer(String hostname, InetAddress ip) {
             this.hostname = hostname;
             this.ip = ip;
-            this.failureCount = 0;
         }
 
         public void setIp(InetAddress ip) {
@@ -68,11 +81,11 @@ public class SList {
         }
 
         public int getFailureCount() {
-            return failureCount;
+            return failureCounts.getOrDefault(hostname, 0);
         }
 
         public void incrementFailureCount() {
-            this.failureCount++;
+            SList.this.incrementFailureCount(this);
         }
 
         public InetAddress getIp() {
@@ -81,7 +94,7 @@ public class SList {
 
         @Override
         public int compareTo(SListServer o) {
-            return Integer.compare(this.failureCount, o.failureCount);
+            return Integer.compare(this.getFailureCount(), o.getFailureCount());
         }
     }
 }

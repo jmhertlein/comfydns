@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  */
 public class FindBestServerToAsk implements RequestState {
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException {
+    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException {
         Question q = sCtx.getCurrentQuestion();
         List<String> domains = LabelCache.genSuffixes(q.getQName());
         List<RR<?>> search = null;
@@ -43,7 +43,7 @@ public class FindBestServerToAsk implements RequestState {
             sList.setZone("");
             sList.getServers().clear();
             List<SList.SListServer> tmp = DNSRootZone.ROOT_SERVERS.stream().map(rs -> {
-                SList.SListServer sls = new SList.SListServer(rs.getName());
+                SList.SListServer sls = sList.newServerEntry(rs.getName());
                 sls.setIp(rs.getAddress());
                 return sls;
             }).collect(Collectors.toList());
@@ -54,7 +54,7 @@ public class FindBestServerToAsk implements RequestState {
             sList.getServers().clear();
             for (RR<?> rr : search) {
                 NSRData tData = (NSRData) rr.getTData();
-                SList.SListServer s = new SList.SListServer(tData.getNsDName());
+                SList.SListServer s = sList.newServerEntry(tData.getNsDName());
                 List<RR<?>> aSearch = rCtx.getOverlay().search(tData.getNsDName(), KnownRRType.A, q.getqClass(), OffsetDateTime.now());
                 if(!aSearch.isEmpty()) {
                     ARData nsIp = (ARData) aSearch.get((int) (Math.random() * aSearch.size())).getTData();

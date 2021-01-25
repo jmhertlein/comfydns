@@ -38,7 +38,7 @@ public class SendServerQuery implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException {
+    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
         Optional<SList.SListServer> best = sCtx.getSList().getBestServer();
         if(best.isEmpty()) {
             throw new NameResolutionException("While looking to send a query for zone " + sCtx.getSList().getZone() +
@@ -46,9 +46,11 @@ public class SendServerQuery implements RequestState {
         }
         SList.SListServer bestServer = best.get();
         if(bestServer.getIp() == null) {
-            throw new NameResolutionException("While looking to send a query for zone " + sCtx.getSList().getZone() +
-                    ", all the servers we found did not include matching A records for their NS records. I'm " +
-                    "going to try not implementing this and see how it goes.");
+            log.info("While looking to send a query for zone " + sCtx.getSList().getZone() +
+                    ", all the servers we found did not include matching A records for their NS records");
+            self.setState(new SendNSDNameLookup(sCtx.getSList().getServers()));
+            self.run();
+            return; // TODO is this the best place to do this or should we transition from the FindBestServerToAsk state
         }
 
         Question q = sCtx.getCurrentQuestion();
@@ -63,12 +65,20 @@ public class SendServerQuery implements RequestState {
         m.getQuestions().add(new Question(sCtx.getSName(), q.getqType(), q.getqClass()));
 
         Consumer<byte[]> onSuccess = payload -> {
-            self.setState(new HandleResponseToZoneQuery(bestServer, m, payload));
+            try {
+                self.setState(new HandleResponseToZoneQuery(bestServer, m, payload));
+            } catch (StateTransitionCountLimitExceededException e) {
+                self.setImmediateDeathState();
+            }
             rCtx.getPool().submit(self);
         };
 
         Consumer<Throwable> onError = e -> {
-            self.setState(new HandleResponseToZoneQuery(bestServer, m, e));
+            try {
+                self.setState(new HandleResponseToZoneQuery(bestServer, m, e));
+            } catch (StateTransitionCountLimitExceededException e2) {
+                self.setImmediateDeathState();
+            }
             rCtx.getPool().submit(self);
         };
 

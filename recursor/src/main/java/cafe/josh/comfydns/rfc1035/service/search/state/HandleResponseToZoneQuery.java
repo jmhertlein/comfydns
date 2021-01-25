@@ -38,7 +38,7 @@ public class HandleResponseToZoneQuery implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, NameErrorException {
+    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, NameErrorException, StateTransitionCountLimitExceededException {
         if(error != null) {
             serverQueried.incrementFailureCount();
             log.warn("Zone query resulted in error.", error);
@@ -54,6 +54,7 @@ public class HandleResponseToZoneQuery implements RequestState {
         Message m;
         try {
             m = Message.read(response);
+            System.out.println(m);
         } catch (InvalidMessageException e) {
             log.warn("Error while reading zone query response", e);
             serverQueried.incrementFailureCount();

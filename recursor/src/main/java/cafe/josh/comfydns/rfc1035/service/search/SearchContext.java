@@ -119,6 +119,10 @@ public class SearchContext {
         request.answer(m);
     }
 
+    public void setsName(String sName) {
+        this.sName = sName;
+    }
+
     public String getSName() {
         return sName;
     }
