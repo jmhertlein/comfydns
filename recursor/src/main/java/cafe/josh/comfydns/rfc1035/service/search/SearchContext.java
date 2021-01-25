@@ -20,6 +20,7 @@ public class SearchContext {
     private final AtomicInteger questionIndex;
     private final ConcurrentLinkedQueue<RR<?>> answer, authority, additional;
 
+    private String sName;
     private final SList sList;
 
 
@@ -31,6 +32,7 @@ public class SearchContext {
         this.additional = new ConcurrentLinkedQueue<>();
 
         sList = new SList();
+        sName = getCurrentQuestion().getQName();
     }
 
     public Question getCurrentQuestion() {
@@ -47,6 +49,19 @@ public class SearchContext {
 
     public AtomicInteger getQuestionIndex() {
         return questionIndex;
+    }
+
+    public void nextQuestion() {
+        questionIndex.incrementAndGet();
+        if(!allQuestionsAnswered()) {
+            sName = getCurrentQuestion().getQName();
+        } else {
+            sName = null;
+        }
+    }
+
+    public boolean allQuestionsAnswered() {
+        return questionIndex.get() >= request.getMessage().getHeader().getQDCount();
     }
 
     public Collection<RR<?>> getAnswer() {
@@ -102,5 +117,9 @@ public class SearchContext {
                 )
         );
         request.answer(m);
+    }
+
+    public String getSName() {
+        return sName;
     }
 }

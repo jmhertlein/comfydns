@@ -20,8 +20,8 @@ public class TryToAnswerWithLocalInformation implements RequestState {
         List<RR<?>> potentialAnswer = rCtx.getOverlay().search(q.getQName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
         if(!potentialAnswer.isEmpty()) {
             sCtx.getAnswer().addAll(potentialAnswer);
-            int questionIndex = sCtx.getQuestionIndex().incrementAndGet();
-            if(questionIndex >= sCtx.getRequest().getMessage().getHeader().getQDCount()) {
+            sCtx.nextQuestion();
+            if(sCtx.allQuestionsAnswered()) {
                 sCtx.sendAnswer();
             } else {
                 self.setState(new TryToAnswerWithLocalInformation());

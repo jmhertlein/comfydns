@@ -60,7 +60,7 @@ public class SendServerQuery implements RequestState {
         h.setIdRandomly();
         h.setOpCode(OpCode.QUERY);
         m.setHeader(h);
-        m.getQuestions().add(new Question(q.getQName(), q.getqType(), q.getqClass()));
+        m.getQuestions().add(new Question(sCtx.getSName(), q.getqType(), q.getqClass()));
 
         Consumer<byte[]> onSuccess = payload -> {
             self.setState(new HandleResponseToZoneQuery(bestServer, m, payload));
