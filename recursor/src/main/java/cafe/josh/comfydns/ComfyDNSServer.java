@@ -7,6 +7,7 @@ import cafe.josh.comfydns.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncTruncatingTransport;
 import cafe.josh.comfydns.system.SimpleConnectionPool;
 import cafe.josh.comfydns.system.TCPServer;
+import cafe.josh.comfydns.system.UDPServer;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -47,7 +48,9 @@ public class ComfyDNSServer implements Runnable {
                 new AsyncNonTruncatingTransport(workerGroup));
         try {
             TCPServer tcp = new TCPServer(resolver, bossGroup, workerGroup);
+            UDPServer udp = new UDPServer(resolver, bossGroup);
             tcp.waitFor();
+            udp.waitFor();
         } catch (InterruptedException e) {
             log.error("Interrupted.", e);
         } finally {

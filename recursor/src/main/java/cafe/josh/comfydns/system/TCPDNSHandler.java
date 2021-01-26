@@ -35,7 +35,7 @@ public class TCPDNSHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 byte[] content = new byte[msgLen];
                 acculmulated.readBytes(content, 0, msgLen);
                 Message m = Message.read(content);
-                resolver.resolve(new ExternalRequest(m, ctx, true));
+                resolver.resolve(new TCPRequest(m, ctx));
             }
         }
     }
