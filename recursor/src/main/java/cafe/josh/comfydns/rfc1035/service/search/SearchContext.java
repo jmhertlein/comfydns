@@ -8,10 +8,9 @@ import cafe.josh.comfydns.rfc1035.message.struct.Header;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
-import cafe.josh.comfydns.rfc1035.service.Request;
+import cafe.josh.comfydns.rfc1035.service.request.Request;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 

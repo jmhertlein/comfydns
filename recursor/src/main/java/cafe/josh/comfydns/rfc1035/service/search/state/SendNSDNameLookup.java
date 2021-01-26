@@ -6,7 +6,7 @@ import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 import cafe.josh.comfydns.rfc1035.message.struct.Header;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
-import cafe.josh.comfydns.rfc1035.service.InternalRequest;
+import cafe.josh.comfydns.rfc1035.service.request.InternalRequest;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolverTask;
 import cafe.josh.comfydns.rfc1035.service.search.*;
 

@@ -19,8 +19,12 @@ public class AsyncNonTruncatingTransport implements NonTruncatingTransport {
     private static final int DNS_TCP_PORT = 53;
     private final EventLoopGroup group;
 
-    public AsyncNonTruncatingTransport() throws InterruptedException {
+    public AsyncNonTruncatingTransport() {
         group = new NioEventLoopGroup();
+    }
+
+    public AsyncNonTruncatingTransport(EventLoopGroup group) {
+        this.group = group;
     }
 
 

@@ -1,4 +1,4 @@
-package cafe.josh.comfydns.rfc1035.service;
+package cafe.josh.comfydns.rfc1035.service.request;
 
 import cafe.josh.comfydns.rfc1035.message.struct.Header;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;

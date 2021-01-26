@@ -1,10 +1,9 @@
 package cafe.josh.comfydns.rfc1035.service.search.state;
 
-import cafe.josh.comfydns.net.DNSRootZone;
+import cafe.josh.comfydns.internet.DNSRootZone;
 import cafe.josh.comfydns.rfc1035.cache.CacheAccessException;
 import cafe.josh.comfydns.rfc1035.message.LabelCache;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
-import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.ARData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
@@ -12,7 +11,6 @@ import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolverTask;
 import cafe.josh.comfydns.rfc1035.service.search.*;
 
-import java.net.InetAddress;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;

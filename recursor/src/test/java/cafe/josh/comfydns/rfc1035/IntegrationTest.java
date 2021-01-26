@@ -1,26 +1,19 @@
 package cafe.josh.comfydns.rfc1035;
 
-import cafe.josh.comfydns.net.DNSRootZone;
+import cafe.josh.comfydns.internet.DNSRootZone;
 import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
 import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
-import cafe.josh.comfydns.rfc1035.message.LabelCache;
 import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.header.OpCode;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRClass;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
-import cafe.josh.comfydns.rfc1035.message.field.rr.RRType;
-import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.ARData;
-import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
 import cafe.josh.comfydns.rfc1035.message.struct.Header;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
-import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolver;
-import cafe.josh.comfydns.rfc1035.service.Request;
+import cafe.josh.comfydns.rfc1035.service.request.Request;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncTruncatingTransport;
-import cafe.josh.comfydns.rfc1035.service.transport.TestTruncatingTransport;
-import io.netty.channel.unix.DatagramSocketAddress;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -28,8 +21,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;

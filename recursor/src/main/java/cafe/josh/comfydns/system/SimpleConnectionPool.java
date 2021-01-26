@@ -1,4 +1,4 @@
-package cafe.josh.comfydns.net;
+package cafe.josh.comfydns.system;
 
 import org.postgresql.ds.PGConnectionPoolDataSource;
 import org.slf4j.Logger;

@@ -1,6 +1,6 @@
 package cafe.josh.comfydns.rfc1035.service;
 
-import cafe.josh.comfydns.net.DNSRootZone;
+import cafe.josh.comfydns.internet.DNSRootZone;
 import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRClass;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
@@ -10,6 +10,7 @@ import cafe.josh.comfydns.rfc1035.message.struct.Header;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
+import cafe.josh.comfydns.rfc1035.service.request.Request;
 import cafe.josh.comfydns.rfc1035.service.transport.TestTruncatingTransport;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class RecursiveResolverTest {
     @Test

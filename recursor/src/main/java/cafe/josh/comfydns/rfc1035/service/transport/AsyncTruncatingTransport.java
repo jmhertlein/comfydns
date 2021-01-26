@@ -1,6 +1,5 @@
 package cafe.josh.comfydns.rfc1035.service.transport;
 
-import cafe.josh.comfydns.butil.PrettyByte;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -10,15 +9,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramPacket;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -27,8 +22,12 @@ public class AsyncTruncatingTransport implements TruncatingTransport {
     private static final int DNS_UDP_PORT = 53;
     private final EventLoopGroup group;
 
-    public AsyncTruncatingTransport() throws InterruptedException {
-        group = new NioEventLoopGroup();
+    public AsyncTruncatingTransport() {
+        this.group = new NioEventLoopGroup();
+    }
+
+    public AsyncTruncatingTransport(EventLoopGroup group) {
+        this.group = group;
     }
 
 
