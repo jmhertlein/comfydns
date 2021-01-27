@@ -233,8 +233,6 @@ public class IntegrationTest {
 
     @Test
     public void testGithubDotComAAAA() throws ExecutionException, InterruptedException {
-        Assumptions.assumeTrue(false);
-        // I think this is a poorly configured DNS server in the wild.
         CompletableFuture<Message> fM = new CompletableFuture<>();
         Request req = new Request() {
             @Override
@@ -263,6 +261,43 @@ public class IntegrationTest {
             r.resolve(req);
             Message message = fM.get();
             System.out.println(message);
+            Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
+        } finally {
+            r.shutdown();
+        }
+    }
+
+    @Test
+    public void testBingA() throws ExecutionException, InterruptedException {
+        CompletableFuture<Message> fM = new CompletableFuture<>();
+        Request req = new Request() {
+            @Override
+            public Message getMessage() {
+                Message ret = new Message();
+                Header h = new Header();
+                h.setQDCount(1);
+                h.setRD(true);
+                ret.getQuestions().add(new Question("bing", KnownRRType.A, KnownRRClass.IN));
+                ret.setHeader(h);
+                return ret;
+            }
+
+            @Override
+            public void answer(Message m) {
+                fM.complete(m);
+            }
+        };
+
+        RecursiveResolver r = new RecursiveResolver(
+                new InMemoryDNSCache(),
+                new AsyncTruncatingTransport(),
+                new AsyncNonTruncatingTransport()
+        );
+        try {
+            r.resolve(req);
+            Message message = fM.get();
+            System.out.println(message);
+            Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
         } finally {
             r.shutdown();
         }

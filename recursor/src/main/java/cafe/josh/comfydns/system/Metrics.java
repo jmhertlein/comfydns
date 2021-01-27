@@ -23,7 +23,8 @@ public class Metrics {
             tasksAlive,
             recordsPruned,
             recordsCached,
-            maxSuccessfulStateTransitions;
+            maxSuccessfulStateTransitions,
+            cachedNegativeAnswersFound;
 
     private Metrics() {
         requestsReceived = new AtomicInteger(0);
@@ -34,6 +35,7 @@ public class Metrics {
         recordsPruned = new AtomicInteger();
         recordsCached = new AtomicInteger();
         maxSuccessfulStateTransitions = new AtomicInteger();
+        cachedNegativeAnswersFound = new AtomicInteger();
     }
 
     public AtomicInteger getRequestsReceived() {
@@ -68,6 +70,10 @@ public class Metrics {
         return recordsCached;
     }
 
+    public AtomicInteger getCachedNegativeAnswersFound() {
+        return cachedNegativeAnswersFound;
+    }
+
     public Object toJson(NioEventLoopGroup bossGroup, NioEventLoopGroup workerGroup, ThreadPoolExecutor executor) {
         Map<String, Object> ret = new HashMap<>();
 
@@ -77,6 +83,7 @@ public class Metrics {
             requests.put("answered", requestsAnswered.intValue());
             requests.put("serverFailure", requestsServerFailure.intValue());
             requests.put("nameError", requestsNameError.intValue());
+            requests.put("cachedNameError", cachedNegativeAnswersFound.get());
             ret.put("requests", requests);
         }
 

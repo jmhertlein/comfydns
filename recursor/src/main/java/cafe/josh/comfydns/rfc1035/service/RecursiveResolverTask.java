@@ -8,12 +8,10 @@ import cafe.josh.comfydns.system.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
-
 public class RecursiveResolverTask implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(RecursiveResolverTask.class);
 
-    public static final int STATE_TRANSITION_COUNT_LIMIT = 256;
+    public static final int STATE_TRANSITION_COUNT_LIMIT = 128;
 
     private final SearchContext sCtx;
     private final ResolverContext rCtx;

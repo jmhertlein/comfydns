@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TryToAnswerWithLocalInformation implements RequestState {
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException {
+    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException, NameErrorException {
         Question q = sCtx.getCurrentQuestion();
         List<RR<?>> potentialAnswer = rCtx.getOverlay().search(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
         if(!potentialAnswer.isEmpty()) {
@@ -51,6 +51,12 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             self.setState(new TryToAnswerWithLocalInformation());
             self.run();
             return;
+        }
+
+        List<RR<?>> soaSearch = rCtx.getOverlay().search(sCtx.getSName(), KnownRRType.SOA, q.getqClass(), OffsetDateTime.now());
+        if(!soaSearch.isEmpty()) {
+            Metrics.getInstance().getCachedNegativeAnswersFound().incrementAndGet();
+            throw new NameErrorException("Found a cached negative record.");
         }
 
         self.setState(new FindBestServerToAsk());
