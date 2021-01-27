@@ -41,7 +41,7 @@ public class HandleResponseToZoneQuery implements RequestState {
     public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, NameErrorException, StateTransitionCountLimitExceededException {
         if(error != null) {
             serverQueried.incrementFailureCount();
-            log.warn("Zone query resulted in error.", error);
+            log.warn("[{}]: Zone query resulted in error: {} {}", sCtx.getRequest().getId(), error.getClass().getSimpleName(), error.getMessage());
             self.setState(new SendServerQuery(false));
             self.run();
             return;

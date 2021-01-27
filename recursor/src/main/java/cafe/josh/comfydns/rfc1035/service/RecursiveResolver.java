@@ -26,6 +26,10 @@ public class RecursiveResolver {
         this.pool = Executors.newCachedThreadPool();
     }
 
+    public ExecutorService getPool() {
+        return pool;
+    }
+
     public void resolve(Request r) {
         RecursiveResolverTask t = new RecursiveResolverTask(
                 new SearchContext(r),

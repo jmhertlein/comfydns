@@ -28,9 +28,6 @@ public class RR<T extends RData> implements Writeable {
         this.name = name;
         this.rrType = rrType;
         this.rrClass = rrClass;
-        if(!RangeCheck.uint(32, ttl)) {
-            throw new IllegalArgumentException("ttl must be 32-bit unsigned int");
-        }
         this.ttl = ttl;
         this.tData = tData;
         this.classAndType = new RR2Tuple(rrClass.getValue(), rrType.getValue());

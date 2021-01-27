@@ -12,4 +12,4 @@ WORKDIR /build/recursor
 RUN mvn clean package
 RUN bash -c "cp /build/recursor/target/comfydns-recursor-*.jar /app/recursor.jar"
 
-CMD ["java", "-jar", "/app/recursor.jar"]
+CMD ["java", "-Xmx128M", "-jar", "/app/recursor.jar"]

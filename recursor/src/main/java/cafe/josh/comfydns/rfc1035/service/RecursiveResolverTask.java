@@ -13,7 +13,7 @@ import java.util.UUID;
 public class RecursiveResolverTask implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(RecursiveResolverTask.class);
 
-    public static final int STATE_TRANSITION_COUNT_LIMIT = 128;
+    public static final int STATE_TRANSITION_COUNT_LIMIT = 256;
 
     private final SearchContext sCtx;
     private final ResolverContext rCtx;
@@ -38,7 +38,7 @@ public class RecursiveResolverTask implements Runnable {
             Metrics.getInstance().getRequestsServerFailure().incrementAndGet();
             sCtx.sendOops("Sorry, something went wrong.");
         } catch (NameErrorException e) {
-            log.debug("Returning NAME_ERROR to client.");
+            log.info("[{}] Returning NAME_ERROR to client: {}", sCtx.getRequest().getId(), sCtx.getCurrentQuestion().getQName());
             Metrics.getInstance().getRequestsAnswered().incrementAndGet();
             Metrics.getInstance().getRequestsNameError().incrementAndGet();
             sCtx.sendNameError();

@@ -3,6 +3,7 @@ package cafe.josh.comfydns.rfc1035.cache;
 import cafe.josh.comfydns.rfc1035.message.field.query.QClass;
 import cafe.josh.comfydns.rfc1035.message.field.query.QType;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
+import cafe.josh.comfydns.system.Metrics;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -25,12 +26,12 @@ public class InMemoryDNSCache implements DNSCache {
         try {
             lock.readLock().lock();
             Map<RR2Tuple, List<CachedRR<?>>> rr2TupleRRMap = cache.get(name);
-            if(rr2TupleRRMap == null) {
+            if (rr2TupleRRMap == null) {
                 return List.of();
             }
 
             for (Map.Entry<RR2Tuple, List<CachedRR<?>>> e : rr2TupleRRMap.entrySet()) {
-                if(qType.queryMatches(e.getKey().rrType) && qClass.queryMatches(e.getKey().rrClass)) {
+                if (qType.queryMatches(e.getKey().rrType) && qClass.queryMatches(e.getKey().rrClass)) {
                     ret.addAll(e.getValue().stream()
                             .map(rr -> rr.getRr().adjustTTL(rr.getCacheTime(), now))
                             .filter(rr -> rr.getTtl() > 0)
@@ -53,6 +54,7 @@ public class InMemoryDNSCache implements DNSCache {
             List<CachedRR<?>> cachedRRS = records.computeIfAbsent(record.getClassAndType(),
                     k -> new ArrayList<>());
             cachedRRS.add(new CachedRR<>(record, now));
+            Metrics.getInstance().getRecordsCached().incrementAndGet();
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -68,25 +70,27 @@ public class InMemoryDNSCache implements DNSCache {
                     .filter(crr -> isRRExpired(crr, now))
                     .map(CachedRR::getRr)
                     .collect(Collectors.toList());
-                    prune.forEach(rr -> {
-                        Map<RR2Tuple, List<CachedRR<?>>> cacheForDomain = cache.get(rr.getName());
-                        List<CachedRR<?>> typeClassMatch = cacheForDomain.get(rr.getClassAndType());
-                        typeClassMatch.removeIf(crr -> crr.getRr() == rr);
-                        if(typeClassMatch.isEmpty()) {
-                            cacheForDomain.remove(rr.getClassAndType());
-                        }
-                        if(cacheForDomain.isEmpty()) {
-                            cache.remove(rr.getName());
-                        }
 
-                    });
+            Metrics.getInstance().getRecordsPruned().addAndGet(prune.size());
+            prune.forEach(rr -> {
+                Map<RR2Tuple, List<CachedRR<?>>> cacheForDomain = cache.get(rr.getName());
+                List<CachedRR<?>> typeClassMatch = cacheForDomain.get(rr.getClassAndType());
+                typeClassMatch.removeIf(crr -> crr.getRr() == rr);
+                if (typeClassMatch.isEmpty()) {
+                    cacheForDomain.remove(rr.getClassAndType());
+                }
+                if (cacheForDomain.isEmpty()) {
+                    cache.remove(rr.getName());
+                }
+
+            });
 
         } finally {
             this.lock.writeLock().unlock();
         }
     }
 
-    private boolean isRRExpired(CachedRR<?> crr, OffsetDateTime now) {
+    private static boolean isRRExpired(CachedRR<?> crr, OffsetDateTime now) {
         return crr.getRr().getTtl() - (crr.getCacheTime().until(now, ChronoUnit.SECONDS)) <= 0;
     }
 

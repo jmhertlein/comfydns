@@ -20,8 +20,12 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -45,16 +49,27 @@ public class ComfyDNSServer implements Runnable {
 //            return;
 //        }
 
-        HttpRouter router = new HttpRouter.Builder()
-                .get("/metrics", r -> Responses.ok(Metrics.getInstance().toJson())).build();
 
         DNSCache cache = new InMemoryDNSCache();
+        cron.scheduleAtFixedRate(() -> {
+            try {
+                cache.prune(OffsetDateTime.now());
+            } catch(Throwable t) {
+                log.warn("DNS cache pruner error", t);
+            }
+        }, 30, 30, TimeUnit.SECONDS);
 
-        EventLoopGroup bossGroup, workerGroup;
+        NioEventLoopGroup bossGroup, workerGroup;
         bossGroup = new NioEventLoopGroup();
         workerGroup = new NioEventLoopGroup();
         RecursiveResolver resolver = new RecursiveResolver(cache, new AsyncTruncatingTransport(workerGroup),
                 new AsyncNonTruncatingTransport(workerGroup));
+
+        HttpRouter router = new HttpRouter.Builder()
+                .get("/metrics", r -> Responses.ok(Metrics.getInstance().toJson(
+                        bossGroup, workerGroup, (ThreadPoolExecutor) resolver.getPool()
+                ))).build();
+
         try {
             TCPServer tcp = new TCPServer(resolver, bossGroup, workerGroup);
             UDPServer udp = new UDPServer(resolver, bossGroup);
