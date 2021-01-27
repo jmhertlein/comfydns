@@ -1,18 +1,20 @@
 package cafe.josh.comfydns.rfc1035.message.field.rr.rdata;
 
 import cafe.josh.comfydns.butil.PrettyByte;
+import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.LabelCache;
 import cafe.josh.comfydns.rfc1035.message.LabelMaker;
+import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 
 import java.util.Objects;
 
-public class SOARecord implements RData {
+public class SOARData implements RData {
     private final String mName, rName;
     private final long serial, refresh, retry, expire, minimum;
 
-    public SOARecord(String mName, String rName, long serial, long refresh, long retry, long expire, long minimum) {
+    public SOARData(String mName, String rName, long serial, long refresh, long retry, long expire, long minimum) {
         this.mName = mName;
         this.rName = rName;
         this.serial = serial;
@@ -89,8 +91,27 @@ public class SOARecord implements RData {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SOARecord soaRecord = (SOARecord) o;
-        return serial == soaRecord.serial && refresh == soaRecord.refresh && retry == soaRecord.retry && expire == soaRecord.expire && minimum == soaRecord.minimum && mName.equals(soaRecord.mName) && rName.equals(soaRecord.rName);
+        SOARData SOARData = (SOARData) o;
+        return serial == SOARData.serial && refresh == SOARData.refresh && retry == SOARData.retry && expire == SOARData.expire && minimum == SOARData.minimum && mName.equals(SOARData.mName) && rName.equals(SOARData.rName);
+    }
+
+    public static RData read(byte[] content, int pos, int rdlength) throws InvalidMessageException, UnsupportedRRTypeException {
+        LabelMaker.ReadLabels readMName = LabelMaker.readLabels(content, pos);
+        pos += readMName.length;
+        LabelMaker.ReadLabels readRName = LabelMaker.readLabels(content, pos);
+
+        long serial = PrettyByte.readNBitUnsignedInt(32, content, pos, 0);
+        pos += 4;
+        long refresh = PrettyByte.readNBitUnsignedInt(32, content, pos, 0);
+        pos += 4;
+        long retry = PrettyByte.readNBitUnsignedInt(32, content, pos, 0);
+        pos += 4;
+        long expire = PrettyByte.readNBitUnsignedInt(32, content, pos, 0);
+        pos += 4;
+        long minimum = PrettyByte.readNBitUnsignedInt(32, content, pos, 0);
+        pos += 4;
+
+        return new SOARData(readMName.name, readRName.name, serial, refresh, retry, expire, minimum);
     }
 
     @Override

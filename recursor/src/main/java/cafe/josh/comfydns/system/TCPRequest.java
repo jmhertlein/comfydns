@@ -8,7 +8,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 
-public class TCPRequest implements Request {
+public class TCPRequest extends Request {
     private final Message m;
     private final ChannelHandlerContext ctx;
 

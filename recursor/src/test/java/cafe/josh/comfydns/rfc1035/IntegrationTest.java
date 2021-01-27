@@ -5,6 +5,7 @@ import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
 import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.header.OpCode;
+import cafe.josh.comfydns.rfc1035.message.field.header.RCode;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRClass;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 import cafe.josh.comfydns.rfc1035.message.struct.Header;
@@ -14,6 +15,7 @@ import cafe.josh.comfydns.rfc1035.service.RecursiveResolver;
 import cafe.josh.comfydns.rfc1035.service.request.Request;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncTruncatingTransport;
+import cafe.josh.comfydns.system.Metrics;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -151,6 +153,79 @@ public class IntegrationTest {
             Message message = fM.get();
             System.out.println(message);
             Assertions.assertTrue(message.getHeader().getANCount() > 0);
+        } finally {
+            r.shutdown();
+        }
+    }
+
+    @Test
+    public void testNameError() throws ExecutionException, InterruptedException {
+        CompletableFuture<Message> fM = new CompletableFuture<>();
+        Request req = new Request() {
+            @Override
+            public Message getMessage() {
+                Message ret = new Message();
+                Header h = new Header();
+                h.setQDCount(1);
+                h.setRD(true);
+                ret.getQuestions().add(new Question("wakaka.hert", KnownRRType.A, KnownRRClass.IN));
+                ret.setHeader(h);
+                return ret;
+            }
+
+            @Override
+            public void answer(Message m) {
+                fM.complete(m);
+            }
+        };
+
+        RecursiveResolver r = new RecursiveResolver(
+                new InMemoryDNSCache(),
+                new AsyncTruncatingTransport(),
+                new AsyncNonTruncatingTransport()
+        );
+        try {
+            r.resolve(req);
+            Message message = fM.get();
+            System.out.println(message);
+            Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
+            Assertions.assertEquals(1, Metrics.getInstance().getRequestsNameError().intValue());
+            Assertions.assertEquals(1, Metrics.getInstance().getRequestsAnswered().intValue());
+        } finally {
+            r.shutdown();
+        }
+    }
+
+    @Test
+    public void testEffDotOrg() throws ExecutionException, InterruptedException {
+        CompletableFuture<Message> fM = new CompletableFuture<>();
+        Request req = new Request() {
+            @Override
+            public Message getMessage() {
+                Message ret = new Message();
+                Header h = new Header();
+                h.setQDCount(1);
+                h.setRD(true);
+                ret.getQuestions().add(new Question("www.eff.org", KnownRRType.A, KnownRRClass.IN));
+                ret.setHeader(h);
+                return ret;
+            }
+
+            @Override
+            public void answer(Message m) {
+                fM.complete(m);
+            }
+        };
+
+        RecursiveResolver r = new RecursiveResolver(
+                new InMemoryDNSCache(),
+                new AsyncTruncatingTransport(),
+                new AsyncNonTruncatingTransport()
+        );
+        try {
+            r.resolve(req);
+            Message message = fM.get();
+            System.out.println(message);
         } finally {
             r.shutdown();
         }

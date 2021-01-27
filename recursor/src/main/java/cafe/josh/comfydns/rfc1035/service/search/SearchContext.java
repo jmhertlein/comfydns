@@ -96,7 +96,9 @@ public class SearchContext {
         Message m = new Message();
         Header h = new Header(request.getMessage().getHeader());
         h.setRCode(RCode.NAME_ERROR);
+        h.setQR(true);
         m.setHeader(h);
+        m.getQuestions().addAll(request.getMessage().getQuestions());
         request.answer(m);
     }
 
@@ -106,6 +108,7 @@ public class SearchContext {
         h.setRCode(RCode.SERVER_FAILURE);
         h.setARCount(1);
         m.setHeader(h);
+        m.getQuestions().addAll(request.getMessage().getQuestions());
         m.getAdditionalRecords().add(
                 new RR<>(
                         getCurrentQuestion().getQName(),

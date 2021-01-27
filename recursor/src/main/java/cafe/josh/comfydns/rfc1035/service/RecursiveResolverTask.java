@@ -4,8 +4,11 @@ import cafe.josh.comfydns.rfc1035.cache.CacheAccessException;
 import cafe.josh.comfydns.rfc1035.service.search.*;
 import cafe.josh.comfydns.rfc1035.service.search.state.ImmediateDeathState;
 import cafe.josh.comfydns.rfc1035.service.search.state.TryToAnswerWithLocalInformation;
+import cafe.josh.comfydns.system.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 public class RecursiveResolverTask implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(RecursiveResolverTask.class);
@@ -22,6 +25,7 @@ public class RecursiveResolverTask implements Runnable {
         this.rCtx = rCtx;
         this.state = new TryToAnswerWithLocalInformation();
         this.stateTransitionCount = 0;
+        Metrics.getInstance().getTasksAlive().incrementAndGet();
     }
 
     @Override
@@ -29,11 +33,22 @@ public class RecursiveResolverTask implements Runnable {
         try {
             this.state.run(rCtx, sCtx, this);
         } catch (CacheAccessException | NameResolutionException | StateTransitionCountLimitExceededException e) {
-            log.warn("Returning SERVER_FAILURE to client.", e);
-            sCtx.sendOops(e.getClass().getSimpleName() + ": " + e.getMessage());
+            log.warn("[" + sCtx.getRequest().getId() + "]: Returning SERVER_FAILURE to client for request: " + sCtx.getRequest().getMessage(), e);
+            Metrics.getInstance().getRequestsAnswered().incrementAndGet();
+            Metrics.getInstance().getRequestsServerFailure().incrementAndGet();
+            sCtx.sendOops("Sorry, something went wrong.");
         } catch (NameErrorException e) {
+            log.debug("Returning NAME_ERROR to client.");
+            Metrics.getInstance().getRequestsAnswered().incrementAndGet();
+            Metrics.getInstance().getRequestsNameError().incrementAndGet();
             sCtx.sendNameError();
+        } catch(Throwable t) {
+            log.error("Unhandled exception.", t);
+            Metrics.getInstance().getRequestsAnswered().incrementAndGet();
+            Metrics.getInstance().getRequestsServerFailure().incrementAndGet();
+            sCtx.sendOops("Sorry, something went wrong.");
         }
+
     }
 
     public RequestState getState() {
@@ -41,6 +56,7 @@ public class RecursiveResolverTask implements Runnable {
     }
 
     public void setState(RequestState state) throws StateTransitionCountLimitExceededException {
+        log.debug("[{}]: STATE {} -> {}", sCtx.getRequest().getId(), this.state.getName(), state.getName());
         if(stateTransitionCount > STATE_TRANSITION_COUNT_LIMIT) {
             throw new StateTransitionCountLimitExceededException("Limit: " + STATE_TRANSITION_COUNT_LIMIT);
         }
@@ -50,5 +66,10 @@ public class RecursiveResolverTask implements Runnable {
 
     public void setImmediateDeathState() {
         this.state = new ImmediateDeathState();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        Metrics.getInstance().getTasksAlive().decrementAndGet();
     }
 }

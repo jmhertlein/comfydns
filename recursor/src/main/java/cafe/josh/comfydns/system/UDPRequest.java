@@ -1,6 +1,5 @@
 package cafe.josh.comfydns.system;
 
-import cafe.josh.comfydns.butil.PrettyByte;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.service.request.Request;
 import io.netty.buffer.ByteBuf;
@@ -10,11 +9,13 @@ import io.netty.channel.socket.DatagramPacket;
 
 import java.net.InetSocketAddress;
 
-public class UDPRequest implements Request {
+public class UDPRequest extends Request {
+    private final InetSocketAddress replyTo;
     private final Message m;
     private final ChannelHandlerContext ctx;
 
-    public UDPRequest(Message m, ChannelHandlerContext ctx) {
+    public UDPRequest(InetSocketAddress replyTo, Message m, ChannelHandlerContext ctx) {
+        this.replyTo = replyTo;
         this.m = m;
         this.ctx = ctx;
     }
@@ -29,8 +30,8 @@ public class UDPRequest implements Request {
         ByteBuf out = Unpooled.buffer();
         byte[] payload = m.write();
         out.writeBytes(payload);
-        DatagramPacket packet = new DatagramPacket(out, (InetSocketAddress) ctx.channel().remoteAddress());
+        DatagramPacket packet = new DatagramPacket(out, replyTo);
         ctx.writeAndFlush(packet);
-        ctx.close();
+        //ctx.close(); // DO NOT REMOVE. CLOSING THIS CLOSES THE ENTIRE DANG UDP SOCKET.
     }
 }

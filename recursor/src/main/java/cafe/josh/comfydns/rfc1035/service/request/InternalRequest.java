@@ -4,7 +4,7 @@ import cafe.josh.comfydns.rfc1035.message.struct.Message;
 
 import java.util.function.Consumer;
 
-public class InternalRequest implements Request {
+public class InternalRequest extends Request {
     private final Message request;
     private final Consumer<Message> onAnswer;
 

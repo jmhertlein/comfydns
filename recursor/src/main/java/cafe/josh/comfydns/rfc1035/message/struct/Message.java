@@ -142,6 +142,10 @@ public class Message {
         StringBuilder b = new StringBuilder();
         b.append(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
         b.append(header.toString()).append("\n");
+        b.append("===========================================================\n");
+        for (Question q : questions) {
+            b.append(q).append("\n");
+        }
         for(List<RR<?>> section : List.of(answerRecords, authorityRecords, additionalRecords)) {
             b.append("===========================================================\n");
             for(RR<?> rr : section) {

@@ -54,7 +54,7 @@ public class HandleResponseToZoneQuery implements RequestState {
         Message m;
         try {
             m = Message.read(response);
-            System.out.println(m);
+            log.debug("[{}]: Message received: {}", sCtx.getRequest().getId(), m);
         } catch (InvalidMessageException e) {
             log.warn("Error while reading zone query response", e);
             serverQueried.incrementFailureCount();
@@ -67,21 +67,24 @@ public class HandleResponseToZoneQuery implements RequestState {
         }
 
         if(m.getHeader().getId() != sent.getHeader().getId()) {
+            log.warn("[{}]: Received message w/ nonmatching ID: expected {} but found {}", sCtx.getRequest().getId(), sent.getHeader().getId(), m.getHeader().getId());
             throw new NameResolutionException("Received message with nonmatching ID: expected " +
                     sent.getHeader().getId() + ", but found " + m.getHeader().getId());
         }
 
         if(m.getHeader().getTC()) {
-            log.info("Response had TC=1, retrying via tcp.");
+            log.debug("Response had TC=1, retrying via tcp.");
             self.setState(new SendServerQuery(true, sent.getHeader().getId()));
             self.run();
             return;
         }
 
+
         RCode rCode = m.getHeader().getRCode();
         switch(rCode) {
             case SERVER_FAILURE:
                 serverQueried.incrementFailureCount();
+                log.warn("[{}]: We got a SERVER_FAILURE back from {}: {}", sCtx.getRequest().getId(), serverQueried.getHostname(), m.toString());
                 self.setState(new SendServerQuery(false));
                 self.run();
                 return;
@@ -94,8 +97,10 @@ public class HandleResponseToZoneQuery implements RequestState {
                 return;
             case NAME_ERROR:
                 if(m.getHeader().getAA()) {
+                    log.debug("[{}] Received authoritative name error.", sCtx.getRequest().getId());
                     throw new NameErrorException("Received authoritative name error.");
                 } else {
+                    log.debug("[{}] Received non-authoritative name error.", sCtx.getRequest().getId());
                     sCtx.getSList().removeServer(serverQueried);
                     self.setState(new SendServerQuery(false));
                     self.run();
@@ -107,6 +112,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             throw new RuntimeException("Unhandled RCODE:" + rCode);
         }
 
+        log.debug("[{}]: Processing RRs in response.", sCtx.getRequest().getId());
         List<RR<?>> rrs = new ArrayList<>();
         m.forEach(rrs::add);
         for (RR<?> rr : rrs) {

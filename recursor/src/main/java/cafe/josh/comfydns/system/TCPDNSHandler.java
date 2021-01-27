@@ -42,7 +42,7 @@ public class TCPDNSHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        log.info("Connection from {}", ctx.channel().remoteAddress());
+        log.debug("Connection from {}", ctx.channel().remoteAddress());
     }
 
     @Override
@@ -54,6 +54,6 @@ public class TCPDNSHandler extends SimpleChannelInboundHandler<ByteBuf> {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // TODO maybe cancel the request if the transport disconnects?
-        log.info("Connection close: {}", ctx.channel().remoteAddress());
+        log.debug("Connection close: {}", ctx.channel().remoteAddress());
     }
 }

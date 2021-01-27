@@ -7,6 +7,7 @@ import cafe.josh.comfydns.rfc1035.service.search.ResolverContext;
 import cafe.josh.comfydns.rfc1035.service.search.SearchContext;
 import cafe.josh.comfydns.rfc1035.service.transport.NonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.TruncatingTransport;
+import cafe.josh.comfydns.system.Metrics;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,6 +31,7 @@ public class RecursiveResolver {
                 new SearchContext(r),
                 new ResolverContext(this, cache, new TemporaryDNSCache(), pool, primary, fallback)
         );
+        Metrics.getInstance().getRequestsReceived().incrementAndGet();
         pool.submit(t);
     }
 

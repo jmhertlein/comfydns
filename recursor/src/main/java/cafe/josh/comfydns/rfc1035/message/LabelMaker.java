@@ -50,7 +50,12 @@ public class LabelMaker {
             b.deleteCharAt(b.length()-1);
         }
 
-        return new ReadLabels(b.toString(), endOfCurrentLabel == null ? pos : endOfCurrentLabel);
+        if(endOfCurrentLabel == null ) {
+            return new ReadLabels(b.toString(), pos, (pos+1) - startPos);
+        } else {
+            return new ReadLabels(b.toString(), endOfCurrentLabel, (endOfCurrentLabel+1) - startPos);
+        }
+
     }
 
     public static byte[] makeLabels(String domainName, LabelCache cache) {
@@ -121,10 +126,12 @@ public class LabelMaker {
     public static class ReadLabels {
         public final String name;
         public final int zeroOctetPosition;
+        public final int length;
 
-        public ReadLabels(String name, int zeroOctetPosition) {
+        public ReadLabels(String name, int zeroOctetPosition, int length) {
             this.name = name;
             this.zeroOctetPosition = zeroOctetPosition;
+            this.length = length;
         }
     }
 }

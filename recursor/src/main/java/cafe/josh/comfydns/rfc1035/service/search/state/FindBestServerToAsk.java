@@ -24,7 +24,7 @@ public class FindBestServerToAsk implements RequestState {
     @Override
     public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException {
         Question q = sCtx.getCurrentQuestion();
-        List<String> domains = LabelCache.genSuffixes(q.getQName());
+        List<String> domains = LabelCache.genSuffixes(sCtx.getSName());
         List<RR<?>> search = null;
         String zone = null;
         for (String d : domains) {

@@ -202,7 +202,7 @@ public class Header implements Writeable {
     public String toString() {
         return String.format("ID: %s, QR: %s, OPCODE: %s, AA: %s, TC: %s, RD: %s, RA: %s, RCODE: %s\n"
         + "QDCOUNT: %s, ANCOUNT: %s, NSCOUNT: %s, ARCOUNT: %s",
-                getId(), getQR() ? "query" : "response", getOpCode().name(), getAA(), getTC(), getRD(), getRA(), getRCode().name(),
+                getId(), getQR() ? "response" : "query", getOpCode().name(), getAA(), getTC(), getRD(), getRA(), getRCode().name(),
                 getQDCount(), getANCount(), getNSCount(), getARCount());
     }
 

@@ -36,7 +36,7 @@ public class HandleResponseToNSDNameLookup implements RequestState {
                     " yielded an RCode of " + m.getHeader().getRCode().name() + ": " + m.getHeader().getRCode().getExplanation());
         }
 
-        log.info("An internal query finished.");
+        log.debug("An internal query finished.");
 
         List<RR<?>> records = new ArrayList<>();
         Set<String> serversWithAnswerRecords = new HashSet<>();
@@ -49,12 +49,13 @@ public class HandleResponseToNSDNameLookup implements RequestState {
             }
             if(KnownRRType.A.queryMatches(rr.getRrType().getValue())) {
                 serversWithAnswerRecords.add(rr.getName());
-                log.info("Internal query found that {} has ip {}", rr.getName(), ((ARData) rr.getTData()).getAddress());
+                log.debug("Internal query found that {} has ip {}", rr.getName(), ((ARData) rr.getTData()).getAddress());
             }
         }
 
         for (SList.SListServer s : serversInQuestion) {
             if(!serversWithAnswerRecords.contains(s.getHostname())) {
+                log.info("[{}]: SList server failure: {}. Sent an InternalRequest but it came back as: {}", sCtx.getRequest().getId(), s.getHostname(), m.toString());
                 s.incrementFailureCount();
             }
         }

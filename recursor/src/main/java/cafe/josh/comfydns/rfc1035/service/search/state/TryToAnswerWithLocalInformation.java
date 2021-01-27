@@ -8,6 +8,7 @@ import cafe.josh.comfydns.rfc1035.message.struct.Question;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolverTask;
 import cafe.josh.comfydns.rfc1035.service.search.*;
+import cafe.josh.comfydns.system.Metrics;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -22,6 +23,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             sCtx.getAnswer().addAll(potentialAnswer);
             sCtx.nextQuestion();
             if(sCtx.allQuestionsAnswered()) {
+                Metrics.getInstance().getRequestsAnswered().incrementAndGet();
                 sCtx.sendAnswer();
             } else {
                 self.setState(new TryToAnswerWithLocalInformation());

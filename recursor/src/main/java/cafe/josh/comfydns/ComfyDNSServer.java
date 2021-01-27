@@ -5,12 +5,18 @@ import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolver;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncTruncatingTransport;
+import cafe.josh.comfydns.system.Metrics;
 import cafe.josh.comfydns.system.SimpleConnectionPool;
 import cafe.josh.comfydns.system.TCPServer;
 import cafe.josh.comfydns.system.UDPServer;
+import cafe.josh.comfydns.system.http.HttpServer;
+import cafe.josh.comfydns.system.http.Responses;
+import cafe.josh.comfydns.system.http.router.HttpRouter;
+import com.google.gson.Gson;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +45,9 @@ public class ComfyDNSServer implements Runnable {
 //            return;
 //        }
 
+        HttpRouter router = new HttpRouter.Builder()
+                .get("/metrics", r -> Responses.ok(Metrics.getInstance().toJson())).build();
+
         DNSCache cache = new InMemoryDNSCache();
 
         EventLoopGroup bossGroup, workerGroup;
@@ -49,6 +58,8 @@ public class ComfyDNSServer implements Runnable {
         try {
             TCPServer tcp = new TCPServer(resolver, bossGroup, workerGroup);
             UDPServer udp = new UDPServer(resolver, bossGroup);
+            HttpServer metrics = new HttpServer(router, bossGroup, workerGroup);
+            metrics.waitFor();
             tcp.waitFor();
             udp.waitFor();
         } catch (InterruptedException e) {

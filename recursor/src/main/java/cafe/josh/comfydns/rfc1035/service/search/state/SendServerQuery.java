@@ -46,7 +46,7 @@ public class SendServerQuery implements RequestState {
         }
         SList.SListServer bestServer = best.get();
         if(bestServer.getIp() == null) {
-            log.info("While looking to send a query for zone " + sCtx.getSList().getZone() +
+            log.debug("While looking to send a query for zone " + sCtx.getSList().getZone() +
                     ", all the servers we found did not include matching A records for their NS records");
             self.setState(new SendNSDNameLookup(sCtx.getSList().getServers()));
             self.run();
@@ -82,7 +82,7 @@ public class SendServerQuery implements RequestState {
             rCtx.getPool().submit(self);
         };
 
-        log.info("QUERY: " + bestServer.getHostname());
+        log.debug("[{}]: QUERY: {}", sCtx.getRequest().getId(), bestServer.getHostname());
         if(useNonTruncating) {
             if(useId != null) {
                 m.getHeader().setId(useId);
