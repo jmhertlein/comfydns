@@ -68,6 +68,10 @@ public class RecursiveResolverTask implements Runnable {
         this.state = new ImmediateDeathState();
     }
 
+    public int getStateTransitionCount() {
+        return stateTransitionCount;
+    }
+
     @Override
     protected void finalize() throws Throwable {
         Metrics.getInstance().getTasksAlive().decrementAndGet();

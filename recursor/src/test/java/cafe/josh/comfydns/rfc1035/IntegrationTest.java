@@ -230,4 +230,41 @@ public class IntegrationTest {
             r.shutdown();
         }
     }
+
+    @Test
+    public void testGithubDotComAAAA() throws ExecutionException, InterruptedException {
+        Assumptions.assumeTrue(false);
+        // I think this is a poorly configured DNS server in the wild.
+        CompletableFuture<Message> fM = new CompletableFuture<>();
+        Request req = new Request() {
+            @Override
+            public Message getMessage() {
+                Message ret = new Message();
+                Header h = new Header();
+                h.setQDCount(1);
+                h.setRD(true);
+                ret.getQuestions().add(new Question("github.com", KnownRRType.AAAA, KnownRRClass.IN));
+                ret.setHeader(h);
+                return ret;
+            }
+
+            @Override
+            public void answer(Message m) {
+                fM.complete(m);
+            }
+        };
+
+        RecursiveResolver r = new RecursiveResolver(
+                new InMemoryDNSCache(),
+                new AsyncTruncatingTransport(),
+                new AsyncNonTruncatingTransport()
+        );
+        try {
+            r.resolve(req);
+            Message message = fM.get();
+            System.out.println(message);
+        } finally {
+            r.shutdown();
+        }
+    }
 }

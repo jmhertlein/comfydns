@@ -22,7 +22,8 @@ public class Metrics {
             requestsNameError,
             tasksAlive,
             recordsPruned,
-            recordsCached;
+            recordsCached,
+            maxSuccessfulStateTransitions;
 
     private Metrics() {
         requestsReceived = new AtomicInteger(0);
@@ -32,6 +33,7 @@ public class Metrics {
         tasksAlive = new AtomicInteger();
         recordsPruned = new AtomicInteger();
         recordsCached = new AtomicInteger();
+        maxSuccessfulStateTransitions = new AtomicInteger();
     }
 
     public AtomicInteger getRequestsReceived() {
@@ -48,6 +50,10 @@ public class Metrics {
 
     public AtomicInteger getRequestsNameError() {
         return requestsNameError;
+    }
+
+    public AtomicInteger getMaxSuccessfulStateTransitions() {
+        return maxSuccessfulStateTransitions;
     }
 
     public AtomicInteger getTasksAlive() {
@@ -98,6 +104,12 @@ public class Metrics {
                     "pending", executor.getTaskCount() - executor.getCompletedTaskCount() - executor.getActiveCount()
             ));
             ret.put("queues", queues);
+        }
+
+        {
+            ret.put("stateMachine", Map.of(
+                    "maxSuccessfulQueryTransitionCount", maxSuccessfulStateTransitions.get()
+            ));
         }
 
         {

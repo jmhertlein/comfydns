@@ -12,6 +12,7 @@ import cafe.josh.comfydns.system.Metrics;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TryToAnswerWithLocalInformation implements RequestState {
 
@@ -24,6 +25,17 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             sCtx.nextQuestion();
             if(sCtx.allQuestionsAnswered()) {
                 Metrics.getInstance().getRequestsAnswered().incrementAndGet();
+                AtomicInteger transitions = Metrics.getInstance().getMaxSuccessfulStateTransitions();
+
+                boolean done = false;
+                while(!done) {
+                    int peek = transitions.get();
+                    if (self.getStateTransitionCount() > peek) {
+                        done = Metrics.getInstance().getMaxSuccessfulStateTransitions().compareAndSet(peek, self.getStateTransitionCount());
+                    } else {
+                        done = true;
+                    }
+                }
                 sCtx.sendAnswer();
             } else {
                 self.setState(new TryToAnswerWithLocalInformation());

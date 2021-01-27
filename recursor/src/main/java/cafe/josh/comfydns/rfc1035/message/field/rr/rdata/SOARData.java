@@ -24,7 +24,7 @@ public class SOARData implements RData {
         this.minimum = minimum;
     }
 
-    public String getmName() {
+    public String getMName() {
         return mName;
     }
 
@@ -112,6 +112,12 @@ public class SOARData implements RData {
         pos += 4;
 
         return new SOARData(readMName.name, readRName.name, serial, refresh, retry, expire, minimum);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("MNAME: %s, RNAME: %s, SERIAL: %s, \nREFRESH: %s, RETRY: %s, EXPIRE: %s, MINIMUM: %s",
+                mName, rName, serial, refresh, retry, expire, minimum);
     }
 
     @Override
