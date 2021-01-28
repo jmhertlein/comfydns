@@ -5,26 +5,23 @@ import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolver;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncTruncatingTransport;
-import cafe.josh.comfydns.system.Metrics;
 import cafe.josh.comfydns.system.SimpleConnectionPool;
 import cafe.josh.comfydns.system.TCPServer;
 import cafe.josh.comfydns.system.UDPServer;
 import cafe.josh.comfydns.system.http.HttpServer;
-import cafe.josh.comfydns.system.http.Responses;
 import cafe.josh.comfydns.system.http.router.HttpRouter;
-import com.google.gson.Gson;
-import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.prometheus.client.Gauge;
+import io.prometheus.client.exporter.HTTPServer;
+import io.prometheus.client.hotspot.GarbageCollectorExports;
+import io.prometheus.client.hotspot.MemoryPoolsExports;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -49,6 +46,8 @@ public class ComfyDNSServer implements Runnable {
 //            return;
 //        }
 
+        new MemoryPoolsExports().register();
+        new GarbageCollectorExports().register();
 
         DNSCache cache = new InMemoryDNSCache();
         cron.scheduleAtFixedRate(() -> {
@@ -66,19 +65,20 @@ public class ComfyDNSServer implements Runnable {
                 new AsyncNonTruncatingTransport(workerGroup));
 
         HttpRouter router = new HttpRouter.Builder()
-                .get("/metrics", r -> Responses.ok(Metrics.getInstance().toJson(
-                        bossGroup, workerGroup, (ThreadPoolExecutor) resolver.getPool()
-                ))).build();
+        .build();
 
         try {
             TCPServer tcp = new TCPServer(resolver, bossGroup, workerGroup);
             UDPServer udp = new UDPServer(resolver, bossGroup);
-            HttpServer metrics = new HttpServer(router, bossGroup, workerGroup);
-            metrics.waitFor();
+            HttpServer api = new HttpServer(router, bossGroup, workerGroup);
+            HTTPServer server = new HTTPServer(33200);
+            api.waitFor();
             tcp.waitFor();
             udp.waitFor();
         } catch (InterruptedException e) {
             log.error("Interrupted.", e);
+        } catch (IOException e) {
+            log.error("", e);
         } finally {
             try { bossGroup.shutdownGracefully().sync(); } catch (InterruptedException ignore) {}
             try { workerGroup.shutdownGracefully().sync(); } catch (InterruptedException ignore) {}

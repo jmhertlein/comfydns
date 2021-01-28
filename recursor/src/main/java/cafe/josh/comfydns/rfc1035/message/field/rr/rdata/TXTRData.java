@@ -1,6 +1,8 @@
 package cafe.josh.comfydns.rfc1035.message.field.rr.rdata;
 
+import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.LabelCache;
+import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 
@@ -57,5 +59,14 @@ public class TXTRData implements RData {
     @Override
     public String toString() {
         return text;
+    }
+
+    public static RData read(byte[] content, int pos, int rdlength) throws InvalidMessageException, UnsupportedRRTypeException {
+        StringBuilder b = new StringBuilder();
+        for(int i = pos; i < pos + rdlength; i++) {
+            b.appendCodePoint(content[i]);
+        }
+
+        return new TXTRData(b.toString());
     }
 }

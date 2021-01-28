@@ -3,8 +3,7 @@ package cafe.josh.comfydns.rfc1035.service;
 import cafe.josh.comfydns.rfc1035.cache.CacheAccessException;
 import cafe.josh.comfydns.rfc1035.service.search.*;
 import cafe.josh.comfydns.rfc1035.service.search.state.ImmediateDeathState;
-import cafe.josh.comfydns.rfc1035.service.search.state.TryToAnswerWithLocalInformation;
-import cafe.josh.comfydns.system.Metrics;
+import cafe.josh.comfydns.rfc1035.service.search.state.InitialCheckingState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,29 +20,24 @@ public class RecursiveResolverTask implements Runnable {
     public RecursiveResolverTask(SearchContext sCtx, ResolverContext rCtx) {
         this.sCtx = sCtx;
         this.rCtx = rCtx;
-        this.state = new TryToAnswerWithLocalInformation();
+        this.state = new InitialCheckingState();
         this.stateTransitionCount = 0;
-        Metrics.getInstance().getTasksAlive().incrementAndGet();
     }
 
     @Override
     public void run() {
         try {
             this.state.run(rCtx, sCtx, this);
+        } catch(OptionalFeatureNotImplementedException e) {
+            sCtx.sendNotImplemented();
         } catch (CacheAccessException | NameResolutionException | StateTransitionCountLimitExceededException e) {
             log.warn("[" + sCtx.getRequest().getId() + "]: Returning SERVER_FAILURE to client for request: " + sCtx.getRequest().getMessage(), e);
-            Metrics.getInstance().getRequestsAnswered().incrementAndGet();
-            Metrics.getInstance().getRequestsServerFailure().incrementAndGet();
             sCtx.sendOops("Sorry, something went wrong.");
         } catch (NameErrorException e) {
             log.info("[{}] Returning NAME_ERROR to client: {}", sCtx.getRequest().getId(), sCtx.getCurrentQuestion().getQName());
-            Metrics.getInstance().getRequestsAnswered().incrementAndGet();
-            Metrics.getInstance().getRequestsNameError().incrementAndGet();
             sCtx.sendNameError();
         } catch(Throwable t) {
             log.error("Unhandled exception.", t);
-            Metrics.getInstance().getRequestsAnswered().incrementAndGet();
-            Metrics.getInstance().getRequestsServerFailure().incrementAndGet();
             sCtx.sendOops("Sorry, something went wrong.");
         }
 
@@ -68,10 +62,5 @@ public class RecursiveResolverTask implements Runnable {
 
     public int getStateTransitionCount() {
         return stateTransitionCount;
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        Metrics.getInstance().getTasksAlive().decrementAndGet();
     }
 }

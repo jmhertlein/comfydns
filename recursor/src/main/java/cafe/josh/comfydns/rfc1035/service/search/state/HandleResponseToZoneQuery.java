@@ -8,6 +8,7 @@ import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolverTask;
 import cafe.josh.comfydns.rfc1035.service.search.*;
+import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,10 @@ import java.util.List;
 
 public class HandleResponseToZoneQuery implements RequestState {
     private static final Logger log = LoggerFactory.getLogger(HandleResponseToZoneQuery.class);
+    private static final Counter slistServerFailures = Counter.build()
+            .name("slist_server_failures")
+            .help("Times servers in the slist have behaved poorly while trying to ask them for records.")
+            .register();
 
     private final SList.SListServer serverQueried;
     private final Message sent;
@@ -38,9 +43,10 @@ public class HandleResponseToZoneQuery implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, NameErrorException, StateTransitionCountLimitExceededException {
+    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, NameErrorException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
         if(error != null) {
             serverQueried.incrementFailureCount();
+            slistServerFailures.inc();
             log.warn("[{}]: Zone query resulted in error: {} {}", sCtx.getRequest().getId(), error.getClass().getSimpleName(), error.getMessage());
             self.setState(new SendServerQuery(false));
             self.run();
@@ -62,7 +68,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             self.run();
             return;
         } catch (UnsupportedRRTypeException e) {
-            throw new NameResolutionException("Encountered an unsupported RRType while reading zone response",
+            throw new OptionalFeatureNotImplementedException("Encountered an unsupported RRType while reading zone response",
                     e);
         }
 

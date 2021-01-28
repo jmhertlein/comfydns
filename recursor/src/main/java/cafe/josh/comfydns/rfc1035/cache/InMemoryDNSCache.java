@@ -3,7 +3,7 @@ package cafe.josh.comfydns.rfc1035.cache;
 import cafe.josh.comfydns.rfc1035.message.field.query.QClass;
 import cafe.josh.comfydns.rfc1035.message.field.query.QType;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
-import cafe.josh.comfydns.system.Metrics;
+import io.prometheus.client.Counter;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -12,6 +12,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class InMemoryDNSCache implements DNSCache {
+    private static final Counter cachedRecordsTotal = Counter.build()
+            .name("cached_records_total")
+            .help("Total number of records ever put into the cache.")
+            .labelNames("rrtype")
+            .register();
+    private static final Counter cachedRecordsPrunedTotal = Counter.build()
+            .name("cached_records_pruned_total")
+            .help("Total number of records ever removed from the cache.")
+            .register();
     private final Map<String, Map<RR2Tuple, List<CachedRR<?>>>> cache;
     private final ReentrantReadWriteLock lock;
 
@@ -54,7 +63,11 @@ public class InMemoryDNSCache implements DNSCache {
             List<CachedRR<?>> cachedRRS = records.computeIfAbsent(record.getClassAndType(),
                     k -> new ArrayList<>());
             cachedRRS.add(new CachedRR<>(record, now));
-            Metrics.getInstance().getRecordsCached().incrementAndGet();
+            cachedRecordsTotal.labels(
+                    record.getRrType().isWellKnown()
+                    ? record.getRrType().getType().toLowerCase()
+                    : "not_well_known"
+            ).inc();
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -71,7 +84,7 @@ public class InMemoryDNSCache implements DNSCache {
                     .map(CachedRR::getRr)
                     .collect(Collectors.toList());
 
-            Metrics.getInstance().getRecordsPruned().addAndGet(prune.size());
+            cachedRecordsPrunedTotal.inc(prune.size());
             prune.forEach(rr -> {
                 Map<RR2Tuple, List<CachedRR<?>>> cacheForDomain = cache.get(rr.getName());
                 List<CachedRR<?>> typeClassMatch = cacheForDomain.get(rr.getClassAndType());

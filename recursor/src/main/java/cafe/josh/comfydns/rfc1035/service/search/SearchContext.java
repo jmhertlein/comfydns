@@ -97,6 +97,7 @@ public class SearchContext {
         Header h = new Header(request.getMessage().getHeader());
         h.setRCode(RCode.NAME_ERROR);
         h.setQR(true);
+        h.setRA(true);
         m.setHeader(h);
         m.getQuestions().addAll(request.getMessage().getQuestions());
         request.answer(m);
@@ -106,6 +107,8 @@ public class SearchContext {
         Message m = new Message();
         Header h = new Header(request.getMessage().getHeader());
         h.setRCode(RCode.SERVER_FAILURE);
+        h.setQR(true);
+        h.setRA(true);
         h.setARCount(1);
         m.setHeader(h);
         m.getQuestions().addAll(request.getMessage().getQuestions());
@@ -127,5 +130,16 @@ public class SearchContext {
 
     public String getSName() {
         return sName;
+    }
+
+    public void sendNotImplemented() {
+        Message m = new Message();
+        Header h = new Header(request.getMessage().getHeader());
+        h.setRCode(RCode.NOT_IMPLEMENTED);
+        h.setQR(true);
+        h.setRA(true);
+        m.setHeader(h);
+        m.getQuestions().addAll(request.getMessage().getQuestions());
+        request.answer(m);
     }
 }

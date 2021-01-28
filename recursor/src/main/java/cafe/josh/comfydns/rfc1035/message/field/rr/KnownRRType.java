@@ -15,12 +15,12 @@ public enum KnownRRType implements QType,RRType {
     MG("MG", (byte) 8, "a mail group member (EXPERIMENTAL)"),
     MR("MR", (byte) 9, "a mail rename domain name (EXPERIMENTAL)"),
     NULL("NULL", (byte) 10, "a null RR (EXPERIMENTAL)"),
-    WKS("WKS", (byte) 11, "a well known service description"),
-    PTR("PTR", (byte) 12, "a domain name pointer"),
+    WKS("WKS", (byte) 11, "a well known service description", WKSRData::read),
+    PTR("PTR", (byte) 12, "a domain name pointer", PTRRData::read),
     HINFO("HINFO", (byte) 13, "host information"),
-    MINFO("MINFO", (byte) 14, "mailbox or mail list information"),
-    MX("MX", (byte) 15, "mail exchange"),
-    TXT("TXT", (byte) 16, "text strings"),
+    MINFO("MINFO", (byte) 14, "mailbox or mail list information (EXPERIMENTAL"),
+    MX("MX", (byte) 15, "mail exchange", MXRData::read),
+    TXT("TXT", (byte) 16, "text strings", TXTRData::read),
     AAAA("AAAA", (byte) 28, "a host address (ipv6)", AAAARData::read),
     ;
 

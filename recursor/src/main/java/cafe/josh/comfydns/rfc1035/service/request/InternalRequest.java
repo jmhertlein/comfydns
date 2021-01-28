@@ -11,6 +11,7 @@ public class InternalRequest extends Request {
     public InternalRequest(Message request, Consumer<Message> onAnswer) {
         this.request = request;
         this.onAnswer = onAnswer;
+        requestsIn.labels("internal").inc();
     }
 
     @Override
@@ -21,5 +22,11 @@ public class InternalRequest extends Request {
     @Override
     public void answer(Message m) {
         onAnswer.accept(m);
+        this.recordAnswer(m, "internal");
+    }
+
+    @Override
+    public boolean isInternal() {
+        return true;
     }
 }

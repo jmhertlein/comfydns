@@ -4,7 +4,6 @@ import cafe.josh.comfydns.butil.PrettyByte;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.service.request.Request;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -15,6 +14,7 @@ public class TCPRequest extends Request {
     public TCPRequest(Message m, ChannelHandlerContext ctx) {
         this.m = m;
         this.ctx = ctx;
+        requestsIn.labels("tcp").inc();
     }
 
     @Override
@@ -32,5 +32,6 @@ public class TCPRequest extends Request {
         out.writeBytes(payload);
         ctx.writeAndFlush(out);
         ctx.close();
+        this.recordAnswer(m, "tcp");
     }
 }

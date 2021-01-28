@@ -18,6 +18,7 @@ public class UDPRequest extends Request {
         this.replyTo = replyTo;
         this.m = m;
         this.ctx = ctx;
+        requestsIn.labels("udp").inc();
     }
 
     @Override
@@ -32,6 +33,7 @@ public class UDPRequest extends Request {
         out.writeBytes(payload);
         DatagramPacket packet = new DatagramPacket(out, replyTo);
         ctx.writeAndFlush(packet);
+        this.recordAnswer(m, "udp");
         //ctx.close(); // DO NOT REMOVE. CLOSING THIS CLOSES THE ENTIRE DANG UDP SOCKET.
     }
 }

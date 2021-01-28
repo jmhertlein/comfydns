@@ -8,5 +8,6 @@ public enum RequestStateName {
     HANDLE_RESPONSE_TO_NSDNAME_LOOKUP,
     SEND_NSDNAME_LOOKUP,
     IMMEDIATE_DEATH,
+    INITIAL_CHECKING,
     ;
 }

@@ -15,7 +15,6 @@ import cafe.josh.comfydns.rfc1035.service.RecursiveResolver;
 import cafe.josh.comfydns.rfc1035.service.request.Request;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncTruncatingTransport;
-import cafe.josh.comfydns.system.Metrics;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -189,8 +188,6 @@ public class IntegrationTest {
             Message message = fM.get();
             System.out.println(message);
             Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
-            Assertions.assertEquals(1, Metrics.getInstance().getRequestsNameError().intValue());
-            Assertions.assertEquals(1, Metrics.getInstance().getRequestsAnswered().intValue());
         } finally {
             r.shutdown();
         }
@@ -298,6 +295,44 @@ public class IntegrationTest {
             Message message = fM.get();
             System.out.println(message);
             Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
+        } finally {
+            r.shutdown();
+        }
+    }
+
+    @Test
+    public void testPTRSearch() {
+        CompletableFuture<Message> fM = new CompletableFuture<>();
+        Request req = new Request() {
+            @Override
+            public Message getMessage() {
+                Message ret = new Message();
+                Header h = new Header();
+                h.setQDCount(1);
+                h.setRD(true);
+                ret.getQuestions().add(new Question("129.238.22.165.in-addr.arpa", KnownRRType.PTR, KnownRRClass.IN));
+                ret.setHeader(h);
+                return ret;
+            }
+
+            @Override
+            public void answer(Message m) {
+                fM.complete(m);
+            }
+        };
+
+        RecursiveResolver r = new RecursiveResolver(
+                new InMemoryDNSCache(),
+                new AsyncTruncatingTransport(),
+                new AsyncNonTruncatingTransport()
+        );
+        try {
+            r.resolve(req);
+            Message message = fM.get();
+            System.out.println(message);
+            Assertions.assertTrue(message.getAnswerRecords().size() > 0);
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
         } finally {
             r.shutdown();
         }
