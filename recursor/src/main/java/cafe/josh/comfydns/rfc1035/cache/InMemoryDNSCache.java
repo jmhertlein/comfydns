@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-public class InMemoryDNSCache implements DNSCache {
+public class InMemoryDNSCache implements RRCache {
     private static final Counter cachedRecordsTotal = Counter.build()
             .name("cached_records_total")
             .help("Total number of records ever put into the cache.")
@@ -106,18 +106,5 @@ public class InMemoryDNSCache implements DNSCache {
     private static boolean isRRExpired(CachedRR<?> crr, OffsetDateTime now) {
         return crr.getRr().getTtl() - (crr.getCacheTime().until(now, ChronoUnit.SECONDS)) <= 0;
     }
-
-    private static class PendingPrune {
-        public final String domainName;
-        public final RR2Tuple key;
-        public final RR<?> record;
-
-        private PendingPrune(String domainName, RR2Tuple key, RR<?> record) {
-            this.domainName = domainName;
-            this.key = key;
-            this.record = record;
-        }
-    }
-
 
 }

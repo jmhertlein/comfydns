@@ -43,7 +43,7 @@ public class HandleResponseToNSDNameLookup implements RequestState {
         m.forEach(records::add);
         for (RR<?> rr : records) {
             if(rr.getTtl() == 0) {
-                rCtx.getRequestCache().cache(rr, OffsetDateTime.now());
+                sCtx.getRequestCache().cache(rr, OffsetDateTime.now());
             } else {
                 rCtx.getGlobalCache().cache(rr, OffsetDateTime.now());
             }

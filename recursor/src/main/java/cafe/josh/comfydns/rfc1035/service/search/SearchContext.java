@@ -1,5 +1,8 @@
 package cafe.josh.comfydns.rfc1035.service.search;
 
+import cafe.josh.comfydns.rfc1035.cache.OverlayCache;
+import cafe.josh.comfydns.rfc1035.cache.RRSource;
+import cafe.josh.comfydns.rfc1035.cache.TemporaryDNSCache;
 import cafe.josh.comfydns.rfc1035.message.field.header.RCode;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRClass;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
@@ -22,8 +25,10 @@ public class SearchContext {
     private String sName;
     private final SList sList;
 
+    private final TemporaryDNSCache requestCache;
+    private final RRSource overlay;
 
-    public SearchContext(Request req) {
+    public SearchContext(Request req, RRSource globalCache) {
         this.request = req;
         this.questionIndex = new AtomicInteger(0);
         this.answer = new ConcurrentLinkedQueue<>();
@@ -32,6 +37,10 @@ public class SearchContext {
 
         sList = new SList();
         sName = getCurrentQuestion().getQName();
+
+
+        this.requestCache = new TemporaryDNSCache();
+        this.overlay = new OverlayCache(requestCache, globalCache);
     }
 
     public Question getCurrentQuestion() {
@@ -44,6 +53,14 @@ public class SearchContext {
 
     public Request getRequest() {
         return request;
+    }
+
+    public TemporaryDNSCache getRequestCache() {
+        return requestCache;
+    }
+
+    public RRSource getOverlay() {
+        return overlay;
     }
 
     public AtomicInteger getQuestionIndex() {

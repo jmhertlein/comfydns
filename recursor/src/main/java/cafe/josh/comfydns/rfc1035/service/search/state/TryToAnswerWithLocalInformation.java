@@ -27,7 +27,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
     @Override
     public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException, NameErrorException {
         Question q = sCtx.getCurrentQuestion();
-        List<RR<?>> potentialAnswer = rCtx.getOverlay().search(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
+        List<RR<?>> potentialAnswer = sCtx.getOverlay().search(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
         if(!potentialAnswer.isEmpty()) {
             sCtx.getAnswer().addAll(potentialAnswer);
             sCtx.nextQuestion();
@@ -41,7 +41,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             return;
         }
 
-        List<RR<?>> cnameSearch = rCtx.getOverlay().search(sCtx.getSName(), KnownRRType.CNAME, q.getqClass(), OffsetDateTime.now());
+        List<RR<?>> cnameSearch = sCtx.getOverlay().search(sCtx.getSName(), KnownRRType.CNAME, q.getqClass(), OffsetDateTime.now());
         if(!cnameSearch.isEmpty()) {
             sCtx.getAnswer().add(cnameSearch.get(0));
             sCtx.setsName(((CNameRData) cnameSearch.get(0).getTData()).getDomainName());
@@ -50,7 +50,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             return;
         }
 
-        List<RR<?>> soaSearch = rCtx.getOverlay().search(sCtx.getSName(), KnownRRType.SOA, q.getqClass(), OffsetDateTime.now());
+        List<RR<?>> soaSearch = sCtx.getOverlay().search(sCtx.getSName(), KnownRRType.SOA, q.getqClass(), OffsetDateTime.now());
         if(!soaSearch.isEmpty()) {
             cachedNegativeAnswers.inc();
             throw new NameErrorException("Found a cached negative record.");

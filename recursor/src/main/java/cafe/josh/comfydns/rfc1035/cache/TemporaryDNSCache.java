@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-public class TemporaryDNSCache implements DNSCache {
+public class TemporaryDNSCache implements RRContainer {
     private final Map<String, Map<RR2Tuple, List<CachedRR<?>>>> cache;
 
     public TemporaryDNSCache() {
@@ -40,10 +40,5 @@ public class TemporaryDNSCache implements DNSCache {
         List<CachedRR<?>> cachedRRS = records.computeIfAbsent(record.getClassAndType(),
                 k -> new ArrayList<>());
         cachedRRS.add(new CachedRR<>(record, now));
-    }
-
-    @Override
-    public void prune(OffsetDateTime now) {
-
     }
 }

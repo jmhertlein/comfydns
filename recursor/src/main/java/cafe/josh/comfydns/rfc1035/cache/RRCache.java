@@ -7,8 +7,6 @@ import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-public interface DNSCache {
-    public List<RR<?>> search(String name, QType qType, QClass qClass, OffsetDateTime now) throws CacheAccessException;
-    public void cache(RR<?> record, OffsetDateTime now) throws CacheAccessException;
+public interface RRCache extends RRContainer {
     public void prune(OffsetDateTime now);
 }

@@ -1,7 +1,7 @@
 package cafe.josh.comfydns;
 
-import cafe.josh.comfydns.rfc1035.cache.DNSCache;
 import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
+import cafe.josh.comfydns.rfc1035.cache.RRCache;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolver;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncTruncatingTransport;
@@ -49,7 +49,7 @@ public class ComfyDNSServer implements Runnable {
         new MemoryPoolsExports().register();
         new GarbageCollectorExports().register();
 
-        DNSCache cache = new InMemoryDNSCache();
+        RRCache cache = new InMemoryDNSCache();
         cron.scheduleAtFixedRate(() -> {
             try {
                 cache.prune(OffsetDateTime.now());

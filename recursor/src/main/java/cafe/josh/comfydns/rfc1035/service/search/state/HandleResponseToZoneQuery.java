@@ -123,7 +123,7 @@ public class HandleResponseToZoneQuery implements RequestState {
         m.forEach(rrs::add);
         for (RR<?> rr : rrs) {
             if(rr.getTtl() == 0) {
-                rCtx.getRequestCache().cache(rr, OffsetDateTime.now());
+                sCtx.getRequestCache().cache(rr, OffsetDateTime.now());
             } else {
                 rCtx.getGlobalCache().cache(rr, OffsetDateTime.now());
             }
