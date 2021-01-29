@@ -67,8 +67,12 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             }
         }
 
-        self.setState(new FindBestServerToAsk());
-        self.run();
+        if(sCtx.getRequest().getMessage().getHeader().getRD()) {
+            self.setState(new FindBestServerToAsk());
+            self.run();
+        } else {
+            throw new NameErrorException("Recursion not desired by client.");
+        }
     }
 
     @Override
