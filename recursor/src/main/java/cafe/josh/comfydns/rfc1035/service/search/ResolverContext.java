@@ -1,9 +1,6 @@
 package cafe.josh.comfydns.rfc1035.service.search;
 
-import cafe.josh.comfydns.rfc1035.cache.OverlayCache;
-import cafe.josh.comfydns.rfc1035.cache.RRContainer;
-import cafe.josh.comfydns.rfc1035.cache.RRSource;
-import cafe.josh.comfydns.rfc1035.cache.TemporaryDNSCache;
+import cafe.josh.comfydns.rfc1035.cache.*;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolver;
 import cafe.josh.comfydns.rfc1035.service.transport.NonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.TruncatingTransport;
@@ -16,19 +13,29 @@ public class ResolverContext {
     private final ExecutorService pool;
     private final TruncatingTransport primary;
     private final NonTruncatingTransport fallback;
+    private final AuthoritativeRecordsContainer authorityZones;
 
-    public ResolverContext(RecursiveResolver recursiveResolver, RRContainer globalCache, ExecutorService pool, TruncatingTransport primary, NonTruncatingTransport fallback) {
+    public ResolverContext(RecursiveResolver recursiveResolver,
+                           RRContainer globalCache,
+                           ExecutorService pool,
+                           TruncatingTransport primary,
+                           NonTruncatingTransport fallback,
+                           AuthoritativeRecordsContainer authorityZones) {
         this.recursiveResolver = recursiveResolver;
         this.globalCache = globalCache;
         this.pool = pool;
         this.primary = primary;
         this.fallback = fallback;
+        this.authorityZones = authorityZones;
     }
 
     public RRContainer getGlobalCache() {
         return globalCache;
     }
 
+    public AuthoritativeRecordsContainer getAuthorityZones() {
+        return authorityZones;
+    }
 
     public ExecutorService getPool() {
         return pool;

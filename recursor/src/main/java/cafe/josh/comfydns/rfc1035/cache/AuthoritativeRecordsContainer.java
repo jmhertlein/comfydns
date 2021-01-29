@@ -45,4 +45,8 @@ public class AuthoritativeRecordsContainer implements RRSource {
         rrs.add(record);
     }
 
+    @Override
+    public boolean isAuthoritative() {
+        return true;
+    }
 }

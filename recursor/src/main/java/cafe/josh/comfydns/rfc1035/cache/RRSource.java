@@ -9,4 +9,7 @@ import java.util.List;
 
 public interface RRSource {
     List<RR<?>> search(String name, QType qType, QClass qClass, OffsetDateTime now) throws CacheAccessException;
+    default boolean isAuthoritative() {
+        return false;
+    }
 }

@@ -63,7 +63,7 @@ public class RecursiveResolver {
     public void resolve(Request r) {
         RecursiveResolverTask t = new RecursiveResolverTask(
                 new SearchContext(r, cache),
-                new ResolverContext(this, cache, pool, primary, fallback)
+                new ResolverContext(this, cache, pool, primary, fallback, authorityZones)
         );
         pool.submit(t);
     }

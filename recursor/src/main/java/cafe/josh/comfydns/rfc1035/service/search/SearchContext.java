@@ -21,6 +21,7 @@ public class SearchContext {
     private final Request request;
     private final AtomicInteger questionIndex;
     private final ConcurrentLinkedQueue<RR<?>> answer, authority, additional;
+    private Boolean answerAuthoritative;
 
     private String sName;
     private final SList sList;
@@ -41,6 +42,19 @@ public class SearchContext {
 
         this.requestCache = new TemporaryDNSCache();
         this.overlay = new OverlayCache(requestCache, globalCache);
+        answerAuthoritative = true;
+    }
+
+    public void updateAnswerAuthoritative(boolean aa) {
+        // null -> false OK
+        // null -> true OK
+        // false -> true NO
+        // true -> false OK
+        if(answerAuthoritative != null && !answerAuthoritative && aa) {
+            return;
+        }
+
+        answerAuthoritative = aa;
     }
 
     public Question getCurrentQuestion() {

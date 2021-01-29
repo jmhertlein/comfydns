@@ -1,6 +1,7 @@
 package cafe.josh.comfydns.rfc1035.service.search.state;
 
 import cafe.josh.comfydns.rfc1035.cache.CacheAccessException;
+import cafe.josh.comfydns.rfc1035.cache.RRSource;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.CNameRData;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
@@ -11,6 +12,7 @@ import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class TryToAnswerWithLocalInformation implements RequestState {
@@ -27,33 +29,42 @@ public class TryToAnswerWithLocalInformation implements RequestState {
     @Override
     public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException, NameErrorException {
         Question q = sCtx.getCurrentQuestion();
-        List<RR<?>> potentialAnswer = sCtx.getOverlay().search(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
-        if(!potentialAnswer.isEmpty()) {
-            sCtx.getAnswer().addAll(potentialAnswer);
-            sCtx.nextQuestion();
-            if(sCtx.allQuestionsAnswered()) {
-                completedRequestStateTransitionCount.labels("no_error").observe(self.getStateTransitionCount());
-                sCtx.sendAnswer();
-            } else {
+
+        List<RRSource> sources = new ArrayList<>();
+        sources.add(rCtx.getAuthorityZones());
+        sources.add(sCtx.getOverlay());
+        for (RRSource source : sources) {
+            List<RR<?>> potentialAnswer = source.search(
+                    sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
+            if(!potentialAnswer.isEmpty()) {
+                sCtx.getAnswer().addAll(potentialAnswer);
+                sCtx.updateAnswerAuthoritative(source.isAuthoritative());
+                sCtx.nextQuestion();
+                if(sCtx.allQuestionsAnswered()) {
+                    completedRequestStateTransitionCount.labels("no_error").observe(self.getStateTransitionCount());
+                    sCtx.sendAnswer();
+                } else {
+                    self.setState(new TryToAnswerWithLocalInformation());
+                    self.run();
+                }
+                return;
+            }
+
+            List<RR<?>> cnameSearch = source.search(sCtx.getSName(), KnownRRType.CNAME, q.getqClass(), OffsetDateTime.now());
+            if(!cnameSearch.isEmpty()) {
+                sCtx.getAnswer().add(cnameSearch.get(0));
+                sCtx.updateAnswerAuthoritative(source.isAuthoritative());
+                sCtx.setsName(((CNameRData) cnameSearch.get(0).getTData()).getDomainName());
                 self.setState(new TryToAnswerWithLocalInformation());
                 self.run();
+                return;
             }
-            return;
-        }
 
-        List<RR<?>> cnameSearch = sCtx.getOverlay().search(sCtx.getSName(), KnownRRType.CNAME, q.getqClass(), OffsetDateTime.now());
-        if(!cnameSearch.isEmpty()) {
-            sCtx.getAnswer().add(cnameSearch.get(0));
-            sCtx.setsName(((CNameRData) cnameSearch.get(0).getTData()).getDomainName());
-            self.setState(new TryToAnswerWithLocalInformation());
-            self.run();
-            return;
-        }
-
-        List<RR<?>> soaSearch = sCtx.getOverlay().search(sCtx.getSName(), KnownRRType.SOA, q.getqClass(), OffsetDateTime.now());
-        if(!soaSearch.isEmpty()) {
-            cachedNegativeAnswers.inc();
-            throw new NameErrorException("Found a cached negative record.");
+            List<RR<?>> soaSearch = source.search(sCtx.getSName(), KnownRRType.SOA, q.getqClass(), OffsetDateTime.now());
+            if(!soaSearch.isEmpty()) {
+                cachedNegativeAnswers.inc();
+                throw new NameErrorException("Found a cached negative record.");
+            }
         }
 
         self.setState(new FindBestServerToAsk());
