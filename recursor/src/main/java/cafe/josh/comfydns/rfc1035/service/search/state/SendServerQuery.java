@@ -38,11 +38,12 @@ public class SendServerQuery implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
+    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, NameErrorException {
         Optional<SList.SListServer> best = sCtx.getSList().getBestServer();
         if(best.isEmpty()) {
-            throw new NameResolutionException("While looking to send a query for zone " + sCtx.getSList().getZone() +
-                    ", we couldn't find any healthy servers to service the request.");
+            log.warn("While looking to send a query for zone " + sCtx.getSList().getZone() +
+                    ", we couldn't find any healthy servers to service the request. Question was: " + sCtx.getCurrentQuestion());
+            throw new NameErrorException();
         }
         SList.SListServer bestServer = best.get();
         if(bestServer.getIp() == null) {
