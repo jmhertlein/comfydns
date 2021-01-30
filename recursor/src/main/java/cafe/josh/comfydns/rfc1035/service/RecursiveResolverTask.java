@@ -34,7 +34,7 @@ public class RecursiveResolverTask implements Runnable {
             log.warn("[" + sCtx.getRequest().getId() + "]: Returning SERVER_FAILURE to client for request: " + sCtx.getRequest().getMessage(), e);
             sCtx.sendOops("Sorry, something went wrong.");
         } catch (NameErrorException e) {
-            log.info("[{}] Returning NAME_ERROR to client: {}", sCtx.getRequest().getId(), sCtx.getCurrentQuestion().getQName());
+            log.info("[{}] Returning NAME_ERROR to client: {}", sCtx.getRequest().getId(), sCtx.getCurrentQuestion());
             sCtx.sendNameError();
         } catch(Throwable t) {
             log.error("Unhandled exception.", t);
