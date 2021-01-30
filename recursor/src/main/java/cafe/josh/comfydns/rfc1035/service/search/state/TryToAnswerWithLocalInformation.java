@@ -22,6 +22,12 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             .labelNames("no_error").buckets(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130)
             .register();
 
+    private static final Histogram completedRequestSubQueryCount =
+            Histogram.build().name("completed_request_subquery_count")
+                    .help("When requests are done, how many (internal) subqueries did it take?")
+                    .labelNames("no_error").buckets(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130)
+                    .register();
+
     private static final Counter cachedNegativesUsed =
             Counter.build().name("cached_negatives_used")
             .help("How many responses were a result of a cached negative.")
@@ -48,6 +54,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
                 sCtx.nextQuestion();
                 if(sCtx.allQuestionsAnswered()) {
                     completedRequestStateTransitionCount.labels("no_error").observe(self.getStateTransitionCount());
+                    completedRequestSubQueryCount.labels("no_error").observe(sCtx.getSubQueriesMade());
                     sCtx.sendAnswer();
                 } else {
                     self.setState(new TryToAnswerWithLocalInformation());
