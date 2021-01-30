@@ -9,11 +9,14 @@ import cafe.josh.comfydns.rfc1035.message.struct.Question;
 import cafe.josh.comfydns.rfc1035.service.request.InternalRequest;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolverTask;
 import cafe.josh.comfydns.rfc1035.service.search.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class SendNSDNameLookup implements RequestState {
+    private static final Logger log = LoggerFactory.getLogger(SendNSDNameLookup.class);
     private final List<SList.SListServer> servers;
 
     public SendNSDNameLookup(List<SList.SListServer> servers) {
@@ -30,6 +33,9 @@ public class SendNSDNameLookup implements RequestState {
         m.getQuestions().addAll(questions);
         m.getHeader().setRD(true);
         m.getHeader().setIdRandomly();
+
+        log.info("[{}]: Trying to answer |{}|, sending internal request: \n{}",
+                sCtx.getRequest().getId(), sCtx.getCurrentQuestion(), m);
 
         InternalRequest req = new InternalRequest(m, message -> {
             try {
