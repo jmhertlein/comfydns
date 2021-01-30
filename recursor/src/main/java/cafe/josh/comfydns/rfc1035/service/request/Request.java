@@ -14,6 +14,7 @@ public abstract class Request {
             .name("requests_out").help("All internet requests received")
             .labelNames("protocol", "rcode").register();
     protected static final Histogram requestDurations = Histogram.build()
+            .linearBuckets(0, 0.5, 20)
             .name("request_duration").help("How long requests take, from receipt to response.")
             .labelNames("source").register();
 
