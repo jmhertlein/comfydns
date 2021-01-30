@@ -2,6 +2,7 @@ package cafe.josh.comfydns.rfc1035.service;
 
 import cafe.josh.comfydns.internet.DNSRootZone;
 import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
+import cafe.josh.comfydns.rfc1035.cache.NegativeCache;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRClass;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.ARData;
@@ -90,7 +91,7 @@ public class RecursiveResolverTest {
 
         RecursiveResolver r = new RecursiveResolver(
                 new InMemoryDNSCache(),
-                new TestTruncatingTransport(responses),
+                new NegativeCache(), new TestTruncatingTransport(responses),
                 null
         );
         try {

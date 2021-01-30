@@ -5,7 +5,9 @@ import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.header.RCode;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.SOARData;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
+import cafe.josh.comfydns.rfc1035.message.struct.Question;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolverTask;
 import cafe.josh.comfydns.rfc1035.service.search.*;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class HandleResponseToZoneQuery implements RequestState {
     private static final Logger log = LoggerFactory.getLogger(HandleResponseToZoneQuery.class);
@@ -120,11 +123,22 @@ public class HandleResponseToZoneQuery implements RequestState {
         }
 
         log.debug("Checking for SOA -> nameerror");
-        if(m.getHeader().getAA() && m.getAuthorityRecords()
-                .stream()
-                .filter(rr -> rr.getRrType() == KnownRRType.SOA)
-                .anyMatch(soa -> sCtx.getSName().endsWith(soa.getName()))) {
-            throw new NameErrorException();
+        if(m.getHeader().getAA()) {
+            Optional<RR<?>> soaFound = m.getAuthorityRecords()
+                    .stream()
+                    .filter(rr -> rr.getRrType() == KnownRRType.SOA)
+                    .filter(soa -> sCtx.getSName().endsWith(soa.getName())).findFirst();
+
+            if(soaFound.isPresent()) {
+                Question q = sCtx.getCurrentQuestion();
+                rCtx.getNegativeCache().cacheNegative(
+                        sCtx.getSName(),
+                        q.getqType(), q.getqClass(),
+                        ((SOARData) soaFound.get().getTData()).getMinimum(),
+                        OffsetDateTime.now()
+                );
+                throw new NameErrorException();
+            }
         }
 
         log.debug("[{}]: Processing RRs in response.", sCtx.getRequest().getId());

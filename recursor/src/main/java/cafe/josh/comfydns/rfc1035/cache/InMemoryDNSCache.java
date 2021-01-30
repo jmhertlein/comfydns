@@ -26,14 +26,15 @@ public class InMemoryDNSCache implements RRCache {
 
     public InMemoryDNSCache() {
         this.cache = new HashMap<>();
-        lock = new ReentrantReadWriteLock();
+        lock = new ReentrantReadWriteLock(true);
     }
 
     @Override
     public List<RR<?>> search(String name, QType qType, QClass qClass, OffsetDateTime now) throws CacheAccessException {
         List<RR<?>> ret = new ArrayList<>();
+
+        lock.readLock().lock();
         try {
-            lock.readLock().lock();
             Map<RR2Tuple, List<CachedRR<?>>> rr2TupleRRMap = cache.get(name);
             if (rr2TupleRRMap == null) {
                 return List.of();
@@ -57,8 +58,8 @@ public class InMemoryDNSCache implements RRCache {
 
     @Override
     public void cache(RR<?> record, OffsetDateTime now) throws CacheAccessException {
+        this.lock.writeLock().lock();
         try {
-            this.lock.writeLock().lock();
             Map<RR2Tuple, List<CachedRR<?>>> records = cache.computeIfAbsent(record.getName(), k -> new HashMap<>());
             List<CachedRR<?>> cachedRRS = records.computeIfAbsent(record.getClassAndType(),
                     k -> new ArrayList<>());

@@ -14,19 +14,21 @@ public class ResolverContext {
     private final TruncatingTransport primary;
     private final NonTruncatingTransport fallback;
     private final AuthoritativeRecordsContainer authorityZones;
+    private final NegativeCache negativeCache;
 
     public ResolverContext(RecursiveResolver recursiveResolver,
                            RRContainer globalCache,
                            ExecutorService pool,
                            TruncatingTransport primary,
                            NonTruncatingTransport fallback,
-                           AuthoritativeRecordsContainer authorityZones) {
+                           AuthoritativeRecordsContainer authorityZones, NegativeCache negativeCache) {
         this.recursiveResolver = recursiveResolver;
         this.globalCache = globalCache;
         this.pool = pool;
         this.primary = primary;
         this.fallback = fallback;
         this.authorityZones = authorityZones;
+        this.negativeCache = negativeCache;
     }
 
     public RRContainer getGlobalCache() {
@@ -51,5 +53,9 @@ public class ResolverContext {
 
     public RecursiveResolver getRecursiveResolver() {
         return recursiveResolver;
+    }
+
+    public NegativeCache getNegativeCache() {
+        return negativeCache;
     }
 }

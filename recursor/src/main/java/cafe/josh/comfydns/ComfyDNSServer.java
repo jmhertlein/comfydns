@@ -2,10 +2,10 @@ package cafe.josh.comfydns;
 
 import cafe.josh.comfydns.rfc1035.cache.AuthoritativeRecordsContainer;
 import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
+import cafe.josh.comfydns.rfc1035.cache.NegativeCache;
 import cafe.josh.comfydns.rfc1035.cache.RRCache;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRClass;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
-import cafe.josh.comfydns.rfc1035.message.field.rr.RRType;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.ARData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.SOARData;
@@ -20,7 +20,6 @@ import cafe.josh.comfydns.system.http.HttpServer;
 import cafe.josh.comfydns.system.http.router.HttpRouter;
 import cafe.josh.comfydns.util.Resources;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.prometheus.client.Gauge;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.GarbageCollectorExports;
 import io.prometheus.client.hotspot.MemoryPoolsExports;
@@ -29,17 +28,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.Inet4Address;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 
 public class ComfyDNSServer implements Runnable {
@@ -74,10 +69,19 @@ public class ComfyDNSServer implements Runnable {
             }
         }, 30, 30, TimeUnit.SECONDS);
 
+        NegativeCache negativeCache = new NegativeCache();
+        cron.scheduleAtFixedRate(() -> {
+            try {
+                negativeCache.prune(OffsetDateTime.now());
+            } catch(Throwable t) {
+                log.warn("DNS negative cache pruner error", t);
+            }
+        }, 30, 30, TimeUnit.SECONDS);
+
         NioEventLoopGroup bossGroup, workerGroup;
         bossGroup = new NioEventLoopGroup();
         workerGroup = new NioEventLoopGroup();
-        RecursiveResolver resolver = new RecursiveResolver(cache, new AsyncTruncatingTransport(workerGroup),
+        RecursiveResolver resolver = new RecursiveResolver(cache, negativeCache, new AsyncTruncatingTransport(workerGroup),
                 new AsyncNonTruncatingTransport(workerGroup));
 
         {

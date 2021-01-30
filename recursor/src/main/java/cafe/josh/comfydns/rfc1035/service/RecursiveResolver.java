@@ -1,8 +1,8 @@
 package cafe.josh.comfydns.rfc1035.service;
 
 import cafe.josh.comfydns.rfc1035.cache.AuthoritativeRecordsContainer;
+import cafe.josh.comfydns.rfc1035.cache.NegativeCache;
 import cafe.josh.comfydns.rfc1035.cache.RRContainer;
-import cafe.josh.comfydns.rfc1035.cache.TemporaryDNSCache;
 import cafe.josh.comfydns.rfc1035.service.request.Request;
 import cafe.josh.comfydns.rfc1035.service.search.ResolverContext;
 import cafe.josh.comfydns.rfc1035.service.search.SearchContext;
@@ -41,12 +41,14 @@ public class RecursiveResolver {
         });
     }
     private final RRContainer cache;
+    private final NegativeCache negativeCache;
     private final TruncatingTransport primary;
     private final NonTruncatingTransport fallback;
     private volatile AuthoritativeRecordsContainer authorityZones;
 
-    public RecursiveResolver(RRContainer cache, TruncatingTransport primary, NonTruncatingTransport fallback) {
+    public RecursiveResolver(RRContainer cache, NegativeCache negativeCache, TruncatingTransport primary, NonTruncatingTransport fallback) {
         this.cache = cache;
+        this.negativeCache = negativeCache;
         this.primary = primary;
         this.fallback = fallback;
         this.authorityZones = new AuthoritativeRecordsContainer();
@@ -63,7 +65,7 @@ public class RecursiveResolver {
     public void resolve(Request r) {
         RecursiveResolverTask t = new RecursiveResolverTask(
                 new SearchContext(r, cache),
-                new ResolverContext(this, cache, pool, primary, fallback, authorityZones)
+                new ResolverContext(this, cache, pool, primary, fallback, authorityZones, negativeCache)
         );
         pool.submit(t);
     }

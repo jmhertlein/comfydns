@@ -2,6 +2,7 @@ package cafe.josh.comfydns.rfc1035;
 
 import cafe.josh.comfydns.internet.DNSRootZone;
 import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
+import cafe.josh.comfydns.rfc1035.cache.NegativeCache;
 import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.header.OpCode;
@@ -206,7 +207,7 @@ public class IntegrationTest {
 
         RecursiveResolver r = new RecursiveResolver(
                 new InMemoryDNSCache(),
-                new AsyncTruncatingTransport(),
+                new NegativeCache(), new AsyncTruncatingTransport(),
                 new AsyncNonTruncatingTransport()
         );
         try {

@@ -22,9 +22,19 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             .labelNames("no_error").buckets(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130)
             .register();
 
+    private static final Counter cachedNegativesUsed =
+            Counter.build().name("cached_negatives_used")
+            .help("How many responses were a result of a cached negative.")
+            .register();
+
     @Override
     public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException, NameErrorException {
         Question q = sCtx.getCurrentQuestion();
+
+        if(rCtx.getNegativeCache().cachedNegative(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now())) {
+            cachedNegativesUsed.inc();
+            throw new NameErrorException();
+        }
 
         List<RRSource> sources = new ArrayList<>();
         sources.add(rCtx.getAuthorityZones());
