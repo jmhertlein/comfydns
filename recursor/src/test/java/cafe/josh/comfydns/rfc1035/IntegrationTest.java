@@ -337,4 +337,42 @@ public class IntegrationTest {
             r.shutdown();
         }
     }
+
+    @Test
+    public void testArchNTPSearch() {
+        CompletableFuture<Message> fM = new CompletableFuture<>();
+        Request req = new Request() {
+            @Override
+            public Message getMessage() {
+                Message ret = new Message();
+                Header h = new Header();
+                h.setQDCount(1);
+                h.setRD(true);
+                ret.getQuestions().add(new Question("0.arch.pool.ntp.org", KnownRRType.AAAA, KnownRRClass.IN));
+                ret.setHeader(h);
+                return ret;
+            }
+
+            @Override
+            public void answer(Message m) {
+                fM.complete(m);
+            }
+        };
+
+        RecursiveResolver r = new RecursiveResolver(
+                new InMemoryDNSCache(),
+                new AsyncTruncatingTransport(),
+                new AsyncNonTruncatingTransport()
+        );
+        try {
+            r.resolve(req);
+            Message message = fM.get();
+            System.out.println(message);
+            Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        } finally {
+            r.shutdown();
+        }
+    }
 }

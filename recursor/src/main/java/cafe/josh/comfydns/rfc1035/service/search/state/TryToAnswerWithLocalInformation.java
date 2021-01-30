@@ -21,10 +21,6 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             .help("When requests are done, how many state transitions did it take?")
             .labelNames("no_error").buckets(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130)
             .register();
-    private static final Counter cachedNegativeAnswers = Counter.build()
-            .name("cached_negative_answers_used")
-            .help("How many times we used a cached negative answer to respond to a request.")
-            .register();
 
     @Override
     public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException, NameErrorException {
@@ -58,12 +54,6 @@ public class TryToAnswerWithLocalInformation implements RequestState {
                 self.setState(new TryToAnswerWithLocalInformation());
                 self.run();
                 return;
-            }
-
-            List<RR<?>> soaSearch = source.search(sCtx.getSName(), KnownRRType.SOA, q.getqClass(), OffsetDateTime.now());
-            if(!soaSearch.isEmpty()) {
-                cachedNegativeAnswers.inc();
-                throw new NameErrorException("Found a cached negative record.");
             }
         }
 

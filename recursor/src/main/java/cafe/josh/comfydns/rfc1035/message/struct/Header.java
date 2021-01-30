@@ -19,6 +19,7 @@ public class Header implements Writeable {
     public Header(Header deepCopy) {
         this();
         System.arraycopy(deepCopy.content, 0, this.content, 0, FIXED_LENGTH_OCTETS);
+        content[3] &= 0b10001111;
     }
 
     /**

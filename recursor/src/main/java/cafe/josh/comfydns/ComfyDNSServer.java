@@ -1,7 +1,15 @@
 package cafe.josh.comfydns;
 
+import cafe.josh.comfydns.rfc1035.cache.AuthoritativeRecordsContainer;
 import cafe.josh.comfydns.rfc1035.cache.InMemoryDNSCache;
 import cafe.josh.comfydns.rfc1035.cache.RRCache;
+import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRClass;
+import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
+import cafe.josh.comfydns.rfc1035.message.field.rr.RRType;
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.ARData;
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.SOARData;
+import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolver;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncTruncatingTransport;
@@ -10,6 +18,7 @@ import cafe.josh.comfydns.system.TCPServer;
 import cafe.josh.comfydns.system.UDPServer;
 import cafe.josh.comfydns.system.http.HttpServer;
 import cafe.josh.comfydns.system.http.router.HttpRouter;
+import cafe.josh.comfydns.util.Resources;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.exporter.HTTPServer;
@@ -19,11 +28,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 
 public class ComfyDNSServer implements Runnable {
@@ -63,6 +79,31 @@ public class ComfyDNSServer implements Runnable {
         workerGroup = new NioEventLoopGroup();
         RecursiveResolver resolver = new RecursiveResolver(cache, new AsyncTruncatingTransport(workerGroup),
                 new AsyncNonTruncatingTransport(workerGroup));
+
+        {
+            List<RR<?>> records = new ArrayList<>();
+            records.add(new RR<>("hert", KnownRRType.SOA, KnownRRClass.IN, 60 * 60, new SOARData(
+                "ns1.hert",
+                "jmhertlein@gmail.com",
+                1,
+                60*60, 60, 60*60*2,
+                60
+            )));
+            records.add(new RR<>("hert", KnownRRType.NS, KnownRRClass.IN, 60*60, new NSRData("ns1.hert")));
+            Resources.readLines(getClass().getResourceAsStream("/hert.db"))
+                    .map(s -> s.trim().split("\\s+"))
+                    .map(arr -> {
+                        try {
+                            return new RR<>(arr[0].substring(0, arr[0].length()-1), KnownRRType.A, KnownRRClass.IN, 60, new ARData((Inet4Address) Inet4Address.getByName(arr[3])));
+                        } catch (UnknownHostException e) {
+                            log.error("", e);
+                            return null;
+                        }
+                    }).filter(Objects::nonNull)
+                    .forEach(records::add);
+
+            resolver.setAuthorityZones(new AuthoritativeRecordsContainer(records));
+        }
 
         HttpRouter router = new HttpRouter.Builder()
         .build();

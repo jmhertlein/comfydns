@@ -111,6 +111,7 @@ public class SearchContext {
         Header h = new Header(request.getMessage().getHeader());
         h.setQR(true);
         h.setRA(true);
+        h.setAA(answerAuthoritative);
         h.setQDCount(request.getMessage().getHeader().getQDCount());
         h.setANCount(getAnswer().size());
         h.setNSCount(getAuthority().size());
@@ -129,6 +130,9 @@ public class SearchContext {
         h.setRCode(RCode.NAME_ERROR);
         h.setQR(true);
         h.setRA(true);
+        h.setARCount(0);
+        h.setNSCount(0);
+        h.setANCount(0);
         m.setHeader(h);
         m.getQuestions().addAll(request.getMessage().getQuestions());
         request.answer(m);
@@ -141,6 +145,8 @@ public class SearchContext {
         h.setQR(true);
         h.setRA(true);
         h.setARCount(1);
+        h.setANCount(0);
+        h.setNSCount(0);
         m.setHeader(h);
         m.getQuestions().addAll(request.getMessage().getQuestions());
         m.getAdditionalRecords().add(

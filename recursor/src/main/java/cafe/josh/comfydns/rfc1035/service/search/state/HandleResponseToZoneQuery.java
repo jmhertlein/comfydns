@@ -4,6 +4,7 @@ import cafe.josh.comfydns.rfc1035.cache.CacheAccessException;
 import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.header.RCode;
+import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolverTask;
@@ -116,6 +117,14 @@ public class HandleResponseToZoneQuery implements RequestState {
 
         if(rCode != RCode.NO_ERROR) {
             throw new RuntimeException("Unhandled RCODE:" + rCode);
+        }
+
+        log.debug("Checking for SOA -> nameerror");
+        if(m.getHeader().getAA() && m.getAuthorityRecords()
+                .stream()
+                .filter(rr -> rr.getRrType() == KnownRRType.SOA)
+                .anyMatch(soa -> sCtx.getSName().endsWith(soa.getName()))) {
+            throw new NameErrorException();
         }
 
         log.debug("[{}]: Processing RRs in response.", sCtx.getRequest().getId());
