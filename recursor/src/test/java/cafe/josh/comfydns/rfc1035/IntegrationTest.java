@@ -62,38 +62,7 @@ public class IntegrationTest {
 
     @Test
     public void testResolver() throws UnknownHostException, InterruptedException, ExecutionException {
-        CompletableFuture<Message> fM = new CompletableFuture<>();
-        Request req = new Request() {
-            @Override
-            public Message getMessage() {
-                Message ret = new Message();
-                Header h = new Header();
-                h.setQDCount(1);
-                h.setRD(true);
-                ret.getQuestions().add(new Question("status.stripe.com", KnownRRType.A, KnownRRClass.IN));
-                ret.setHeader(h);
-                return ret;
-            }
-
-            @Override
-            public void answer(Message m) {
-                fM.complete(m);
-            }
-        };
-
-        RecursiveResolver r = new RecursiveResolver(
-                new InMemoryDNSCache(),
-                new AsyncTruncatingTransport(),
-                new AsyncNonTruncatingTransport()
-        );
-        try {
-            r.resolve(req);
-            Message message = fM.get();
-            System.out.println(message);
-            Assertions.assertTrue(message.getHeader().getANCount() > 0);
-        } finally {
-            r.shutdown();
-        }
+        assertHasAnswer(testQuery(new Question("status.stripe.com", KnownRRType.A, KnownRRClass.IN)));
     }
 
     @Test
@@ -123,223 +92,61 @@ public class IntegrationTest {
 
     @Test
     public void testCName() throws InterruptedException, ExecutionException {
-        CompletableFuture<Message> fM = new CompletableFuture<>();
-        Request req = new Request() {
-            @Override
-            public Message getMessage() {
-                Message ret = new Message();
-                Header h = new Header();
-                h.setQDCount(1);
-                h.setRD(true);
-                ret.getQuestions().add(new Question("testcname.josh.cafe", KnownRRType.A, KnownRRClass.IN));
-                ret.setHeader(h);
-                return ret;
-            }
-
-            @Override
-            public void answer(Message m) {
-                fM.complete(m);
-            }
-        };
-
-        RecursiveResolver r = new RecursiveResolver(
-                new InMemoryDNSCache(),
-                new AsyncTruncatingTransport(),
-                new AsyncNonTruncatingTransport()
-        );
-        try {
-            r.resolve(req);
-            Message message = fM.get();
-            System.out.println(message);
-            Assertions.assertTrue(message.getHeader().getANCount() > 0);
-        } finally {
-            r.shutdown();
-        }
+        assertHasAnswer(testQuery(new Question("testcname.josh.cafe", KnownRRType.A, KnownRRClass.IN)));
     }
 
     @Test
     public void testNameError() throws ExecutionException, InterruptedException {
-        CompletableFuture<Message> fM = new CompletableFuture<>();
-        Request req = new Request() {
-            @Override
-            public Message getMessage() {
-                Message ret = new Message();
-                Header h = new Header();
-                h.setQDCount(1);
-                h.setRD(true);
-                ret.getQuestions().add(new Question("wakaka.hert", KnownRRType.A, KnownRRClass.IN));
-                ret.setHeader(h);
-                return ret;
-            }
-
-            @Override
-            public void answer(Message m) {
-                fM.complete(m);
-            }
-        };
-
-        RecursiveResolver r = new RecursiveResolver(
-                new InMemoryDNSCache(),
-                new AsyncTruncatingTransport(),
-                new AsyncNonTruncatingTransport()
-        );
-        try {
-            r.resolve(req);
-            Message message = fM.get();
-            System.out.println(message);
-            Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
-        } finally {
-            r.shutdown();
-        }
+        assertNameError(testQuery(new Question("wakaka.hert", KnownRRType.A, KnownRRClass.IN)));
     }
 
     @Test
     public void testEffDotOrg() throws ExecutionException, InterruptedException {
-        CompletableFuture<Message> fM = new CompletableFuture<>();
-        Request req = new Request() {
-            @Override
-            public Message getMessage() {
-                Message ret = new Message();
-                Header h = new Header();
-                h.setQDCount(1);
-                h.setRD(true);
-                ret.getQuestions().add(new Question("www.eff.org", KnownRRType.A, KnownRRClass.IN));
-                ret.setHeader(h);
-                return ret;
-            }
-
-            @Override
-            public void answer(Message m) {
-                fM.complete(m);
-            }
-        };
-
-        RecursiveResolver r = new RecursiveResolver(
-                new InMemoryDNSCache(),
-                new AsyncTruncatingTransport(),
-                new AsyncNonTruncatingTransport()
-        );
-        try {
-            r.resolve(req);
-            Message message = fM.get();
-            System.out.println(message);
-        } finally {
-            r.shutdown();
-        }
+        assertHasAnswer(testQuery(new Question("www.eff.org", KnownRRType.A, KnownRRClass.IN)));
     }
 
     @Test
     public void testGithubDotComAAAA() throws ExecutionException, InterruptedException {
-        CompletableFuture<Message> fM = new CompletableFuture<>();
-        Request req = new Request() {
-            @Override
-            public Message getMessage() {
-                Message ret = new Message();
-                Header h = new Header();
-                h.setQDCount(1);
-                h.setRD(true);
-                ret.getQuestions().add(new Question("github.com", KnownRRType.AAAA, KnownRRClass.IN));
-                ret.setHeader(h);
-                return ret;
-            }
-
-            @Override
-            public void answer(Message m) {
-                fM.complete(m);
-            }
-        };
-
-        RecursiveResolver r = new RecursiveResolver(
-                new InMemoryDNSCache(),
-                new AsyncTruncatingTransport(),
-                new AsyncNonTruncatingTransport()
-        );
-        try {
-            r.resolve(req);
-            Message message = fM.get();
-            System.out.println(message);
-            Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
-        } finally {
-            r.shutdown();
-        }
+        assertNameError(testQuery(new Question("github.com", KnownRRType.AAAA, KnownRRClass.IN)));
     }
 
     @Test
     public void testBingA() throws ExecutionException, InterruptedException {
-        CompletableFuture<Message> fM = new CompletableFuture<>();
-        Request req = new Request() {
-            @Override
-            public Message getMessage() {
-                Message ret = new Message();
-                Header h = new Header();
-                h.setQDCount(1);
-                h.setRD(true);
-                ret.getQuestions().add(new Question("bing", KnownRRType.A, KnownRRClass.IN));
-                ret.setHeader(h);
-                return ret;
-            }
-
-            @Override
-            public void answer(Message m) {
-                fM.complete(m);
-            }
-        };
-
-        RecursiveResolver r = new RecursiveResolver(
-                new InMemoryDNSCache(),
-                new AsyncTruncatingTransport(),
-                new AsyncNonTruncatingTransport()
-        );
-        try {
-            r.resolve(req);
-            Message message = fM.get();
-            System.out.println(message);
-            Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
-        } finally {
-            r.shutdown();
-        }
+        assertNameError(testQuery(new Question("bing", KnownRRType.A, KnownRRClass.IN)));
     }
 
     @Test
-    public void testPTRSearch() {
-        CompletableFuture<Message> fM = new CompletableFuture<>();
-        Request req = new Request() {
-            @Override
-            public Message getMessage() {
-                Message ret = new Message();
-                Header h = new Header();
-                h.setQDCount(1);
-                h.setRD(true);
-                ret.getQuestions().add(new Question("129.238.22.165.in-addr.arpa", KnownRRType.PTR, KnownRRClass.IN));
-                ret.setHeader(h);
-                return ret;
-            }
-
-            @Override
-            public void answer(Message m) {
-                fM.complete(m);
-            }
-        };
-
-        RecursiveResolver r = new RecursiveResolver(
-                new InMemoryDNSCache(),
-                new AsyncTruncatingTransport(),
-                new AsyncNonTruncatingTransport()
-        );
-        try {
-            r.resolve(req);
-            Message message = fM.get();
-            System.out.println(message);
-            Assertions.assertTrue(message.getAnswerRecords().size() > 0);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        } finally {
-            r.shutdown();
-        }
+    public void testPTRSearch() throws ExecutionException, InterruptedException {
+        assertHasAnswer(testQuery(new Question("129.238.22.165.in-addr.arpa", KnownRRType.PTR, KnownRRClass.IN)));
     }
 
     @Test
-    public void testArchNTPSearch() {
+    public void testArchNTPSearch() throws ExecutionException, InterruptedException {
+        assertNameError(testQuery(new Question("0.arch.pool.ntp.org", KnownRRType.AAAA, KnownRRClass.IN)));
+    }
+
+    @Test
+    public void testCaseSensitivity() throws ExecutionException, InterruptedException {
+        Message m = testQuery(new Question("EU.bAttLe.NET", KnownRRType.A, KnownRRClass.IN));
+        assertHasAnswer(m);
+        Assertions.assertEquals("EU.bAttLe.NET", m.getAnswerRecords().get(0).getName());
+    }
+
+    @Test
+    public void testRipeHackathon() throws ExecutionException, InterruptedException {
+        assertHasAnswer(testQuery(new Question("ripe-hackathon6-ns.nlnetlabs.nl", KnownRRType.A, KnownRRClass.IN)));
+    }
+
+    private static void assertHasAnswer(Message m) {
+        Assertions.assertEquals(RCode.NO_ERROR, m.getHeader().getRCode());
+        Assertions.assertTrue(m.getAnswerRecords().size() > 0);
+    }
+
+    private static void assertNameError(Message m) {
+        Assertions.assertEquals(RCode.NAME_ERROR, m.getHeader().getRCode());
+    }
+
+    private static Message testQuery(Question test) throws ExecutionException, InterruptedException {
         CompletableFuture<Message> fM = new CompletableFuture<>();
         Request req = new Request() {
             @Override
@@ -348,7 +155,7 @@ public class IntegrationTest {
                 Header h = new Header();
                 h.setQDCount(1);
                 h.setRD(true);
-                ret.getQuestions().add(new Question("0.arch.pool.ntp.org", KnownRRType.AAAA, KnownRRClass.IN));
+                ret.getQuestions().add(test);
                 ret.setHeader(h);
                 return ret;
             }
@@ -368,9 +175,9 @@ public class IntegrationTest {
             r.resolve(req);
             Message message = fM.get();
             System.out.println(message);
-            Assertions.assertEquals(RCode.NAME_ERROR, message.getHeader().getRCode());
+            return message;
         } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+            throw e;
         } finally {
             r.shutdown();
         }

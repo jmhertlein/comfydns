@@ -25,7 +25,16 @@ public class RR<T extends RData> implements Writeable {
     private final RR2Tuple classAndType;
 
     public RR(String name, RRType rrType, RRClass rrClass, int ttl, T tData) {
-        this.name = name;
+        this.name = name.toLowerCase();
+        this.rrType = rrType;
+        this.rrClass = rrClass;
+        this.ttl = ttl;
+        this.tData = tData;
+        this.classAndType = new RR2Tuple(rrClass.getValue(), rrType.getValue());
+    }
+
+    private RR(Question q, RRType rrType, RRClass rrClass, int ttl, T tData) {
+        this.name = q.getQName();
         this.rrType = rrType;
         this.rrClass = rrClass;
         this.ttl = ttl;
@@ -42,6 +51,14 @@ public class RR<T extends RData> implements Writeable {
             newTTL = ttl - ((int) age);
         }
         return new RR<>(name, rrType, rrClass, newTTL, tData);
+    }
+
+    public RR<T> changeNamesToQuestionCase(Question q) {
+        if(name.equalsIgnoreCase(q.getQName()) && !name.equals(q.getQName())) {
+            return new RR<>(q, rrType, rrClass, ttl, tData);
+        } else {
+            return this;
+        }
     }
 
     public String getName() {

@@ -37,7 +37,8 @@ public class RecursiveResolverTask implements Runnable {
             log.info("[{}] Returning NAME_ERROR to client: {}", sCtx.getRequest().getId(), sCtx.getCurrentQuestion());
             sCtx.sendNameError();
         } catch(Throwable t) {
-            log.error("Unhandled exception.", t);
+            log.error(String.format("[%s]: Unhandled exception for question: %s", sCtx.getRequest().getId(),
+                    sCtx.getCurrentQuestion()), t);
             sCtx.sendOops("Sorry, something went wrong.");
         }
 

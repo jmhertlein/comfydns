@@ -6,6 +6,7 @@ import cafe.josh.comfydns.rfc1035.message.LabelMaker;
 import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
+import cafe.josh.comfydns.rfc1035.message.struct.Question;
 
 public class CNameRData implements RData {
     private final String domainName;

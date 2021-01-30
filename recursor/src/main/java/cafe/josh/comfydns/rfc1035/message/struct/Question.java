@@ -48,7 +48,7 @@ public class Question implements Writeable {
 
     public static ReadQuestion read(byte[] content, int startPos) throws MalformedLabelException {
         int pos = startPos;
-        LabelMaker.ReadLabels readLabels = LabelMaker.readLabels(content, pos);
+        LabelMaker.ReadLabels readLabels = LabelMaker.readLabels(content, pos, true);
         pos = readLabels.zeroOctetPosition + 1;
         QType QTYPE = QType.match(content, pos);
         pos += 2;

@@ -9,6 +9,10 @@ public class LabelMaker {
     private LabelMaker() {}
 
     public static ReadLabels readLabels(byte[] content, int startPos) throws MalformedLabelException {
+        return readLabels(content, startPos, false);
+    }
+
+    public static ReadLabels readLabels(byte[] content, int startPos, boolean preserveCase) throws MalformedLabelException {
         int pos = startPos;
         StringBuilder b = new StringBuilder();
         Integer endOfCurrentLabel = null;
@@ -50,10 +54,15 @@ public class LabelMaker {
             b.deleteCharAt(b.length()-1);
         }
 
+        String ret = b.toString();
+        if(!preserveCase) {
+            ret = ret.toLowerCase();
+        }
+
         if(endOfCurrentLabel == null ) {
-            return new ReadLabels(b.toString(), pos, (pos+1) - startPos);
+            return new ReadLabels(ret, pos, (pos+1) - startPos);
         } else {
-            return new ReadLabels(b.toString(), endOfCurrentLabel, (endOfCurrentLabel+1) - startPos);
+            return new ReadLabels(ret, endOfCurrentLabel, (endOfCurrentLabel+1) - startPos);
         }
 
     }

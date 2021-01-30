@@ -37,7 +37,7 @@ public class SearchContext {
         this.additional = new ConcurrentLinkedQueue<>();
 
         sList = new SList();
-        sName = getCurrentQuestion().getQName();
+        setsName(getCurrentQuestion().getQName());
 
 
         this.requestCache = new TemporaryDNSCache();
@@ -106,6 +106,10 @@ public class SearchContext {
         return additional;
     }
 
+    public void addAnswerRR(RR<?> rr) {
+        answer.add(rr.changeNamesToQuestionCase(getCurrentQuestion()));
+    }
+
     public void sendAnswer() {
         Message m = new Message();
         Header h = new Header(request.getMessage().getHeader());
@@ -162,7 +166,7 @@ public class SearchContext {
     }
 
     public void setsName(String sName) {
-        this.sName = sName;
+        this.sName = sName.toLowerCase();
     }
 
     public String getSName() {

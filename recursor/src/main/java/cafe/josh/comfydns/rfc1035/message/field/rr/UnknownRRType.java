@@ -40,4 +40,9 @@ public class UnknownRRType implements RRType {
     public RDataConstructionFunction getCtor() {
         return BlobRData::read;
     }
+
+    @Override
+    public String toString() {
+        return PrettyByte.binString(value[0]) + " " + PrettyByte.binString(value[1]);
+    }
 }

@@ -33,7 +33,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             List<RR<?>> potentialAnswer = source.search(
                     sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
             if(!potentialAnswer.isEmpty()) {
-                sCtx.getAnswer().addAll(potentialAnswer);
+                potentialAnswer.forEach(sCtx::addAnswerRR);
                 sCtx.updateAnswerAuthoritative(source.isAuthoritative());
                 sCtx.nextQuestion();
                 if(sCtx.allQuestionsAnswered()) {
@@ -48,7 +48,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
 
             List<RR<?>> cnameSearch = source.search(sCtx.getSName(), KnownRRType.CNAME, q.getqClass(), OffsetDateTime.now());
             if(!cnameSearch.isEmpty()) {
-                sCtx.getAnswer().add(cnameSearch.get(0));
+                sCtx.addAnswerRR(cnameSearch.get(0));
                 sCtx.updateAnswerAuthoritative(source.isAuthoritative());
                 sCtx.setsName(((CNameRData) cnameSearch.get(0).getTData()).getDomainName());
                 self.setState(new TryToAnswerWithLocalInformation());
