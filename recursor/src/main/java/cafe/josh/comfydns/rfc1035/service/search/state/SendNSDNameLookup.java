@@ -26,6 +26,12 @@ public class SendNSDNameLookup implements RequestState {
 
     @Override
     public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, NameErrorException {
+        sCtx.incrementSubQueriesMade();
+        if(sCtx.getSubQueriesMade() > SearchContext.SUB_QUERY_COUNT_LIMIT) {
+            log.warn("[{}] Reached max subquery count while trying to answer {}",
+                    sCtx.getRequest().getId(), sCtx.getCurrentQuestion());
+            throw new NameResolutionException("Reached max subquery count, refusing to continue.");
+        }
         Message m = new Message();
         m.setHeader(new Header());
         m.getHeader().setQDCount(servers.size());

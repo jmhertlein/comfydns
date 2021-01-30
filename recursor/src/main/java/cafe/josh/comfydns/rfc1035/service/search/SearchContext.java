@@ -18,10 +18,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SearchContext {
+    public static final int SUB_QUERY_COUNT_LIMIT = 100;
     private final Request request;
     private final AtomicInteger questionIndex;
     private final ConcurrentLinkedQueue<RR<?>> answer, authority, additional;
     private Boolean answerAuthoritative;
+
+    private int subQueriesMade;
 
     private String sName;
     private final SList sList;
@@ -38,6 +41,7 @@ public class SearchContext {
 
         sList = new SList();
         setsName(getCurrentQuestion().getQName());
+        subQueriesMade = 0;
 
 
         this.requestCache = new TemporaryDNSCache();
@@ -55,6 +59,14 @@ public class SearchContext {
         }
 
         answerAuthoritative = aa;
+    }
+
+    public void incrementSubQueriesMade() {
+        subQueriesMade++;
+    }
+
+    public int getSubQueriesMade() {
+        return subQueriesMade;
     }
 
     public Question getCurrentQuestion() {
