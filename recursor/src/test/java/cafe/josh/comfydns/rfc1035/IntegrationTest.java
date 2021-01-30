@@ -15,10 +15,7 @@ import cafe.josh.comfydns.rfc1035.service.RecursiveResolver;
 import cafe.josh.comfydns.rfc1035.service.request.Request;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import cafe.josh.comfydns.rfc1035.service.transport.AsyncTruncatingTransport;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.IOException;
 import java.net.*;
@@ -132,9 +129,46 @@ public class IntegrationTest {
         Assertions.assertEquals("EU.bAttLe.NET", m.getAnswerRecords().get(0).getName());
     }
 
+
+    // TODO: test idk if this should be name_error or no_error
     @Test
     public void testRipeHackathon() throws ExecutionException, InterruptedException {
         assertHasAnswer(testQuery(new Question("ripe-hackathon6-ns.nlnetlabs.nl", KnownRRType.A, KnownRRClass.IN)));
+    }
+
+    /*
+    java.lang.ArrayIndexOutOfBoundsException: arraycopy: last source index 1025 out of bounds for byte[1024]
+	at java.base/java.lang.System.arraycopy(Native Method)
+	at cafe.josh.comfydns.rfc1035.message.field.rr.rdata.ARData.read(ARData.java:35)
+
+	ROFL this crashes 8.8.8.8 too:
+
+	dig @8.8.8.8 0822b46b4771b7f5-1612023248-54251-rslv.1500-plus0.pmtu4.rootcanary.net
+
+; <<>> DiG 9.16.11 <<>> @8.8.8.8 0822b46b4771b7f5-1612023248-54251-rslv.1500-plus0.pmtu4.rootcanary.net
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: SERVFAIL, id: 17272
+;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 512
+;; QUESTION SECTION:
+;0822b46b4771b7f5-1612023248-54251-rslv.1500-plus0.pmtu4.rootcanary.net.	IN A
+
+;; Query time: 416 msec
+;; SERVER: 8.8.8.8#53(8.8.8.8)
+;; WHEN: Sat Jan 30 10:30:29 CST 2021
+;; MSG SIZE  rcvd: 99
+
+     */
+    @Test
+    @Disabled
+    public void testWeirdArrayCopyIssue() throws ExecutionException, InterruptedException {
+        assertNotServerFailure(testQuery(new Question("0822b46b4771b7f5-1612023248-54251-rslv.1500-plus0.pmtu4.rootcanary.net",
+                KnownRRType.A, KnownRRClass.IN)));
+
     }
 
     private static void assertHasAnswer(Message m) {
@@ -144,6 +178,10 @@ public class IntegrationTest {
 
     private static void assertNameError(Message m) {
         Assertions.assertEquals(RCode.NAME_ERROR, m.getHeader().getRCode());
+    }
+
+    private static void assertNotServerFailure(Message m) {
+        Assertions.assertNotEquals(RCode.SERVER_FAILURE, m.getHeader().getRCode());
     }
 
     private static Message testQuery(Question test) throws ExecutionException, InterruptedException {
