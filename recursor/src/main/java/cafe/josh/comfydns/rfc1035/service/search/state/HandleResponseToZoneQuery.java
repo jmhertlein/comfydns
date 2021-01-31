@@ -4,6 +4,7 @@ import cafe.josh.comfydns.rfc1035.cache.CacheAccessException;
 import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.header.RCode;
+import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRClass;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.SOARData;
@@ -174,10 +175,9 @@ public class HandleResponseToZoneQuery implements RequestState {
         NAME: zdns.google, TYPE: NS, CLASS: IN, TTL: 10800, RDATA:
          NSDNAME: ns3.zdns.google
          */
-        Set<String> aRecordNamesFound = m.getAdditionalRecords().stream()
-                .filter(r -> r.getRrType() == KnownRRType.A)
-                .map(RR::getName)
-                .collect(Collectors.toSet());
+        Map<String, Integer> aRecordNamesFound = m.getAdditionalRecords().stream()
+                .filter(r -> r.getRrType() == KnownRRType.A && r.getRrClass() == KnownRRClass.IN)
+                .collect(Collectors.toMap(RR::getName, RR::getTtl, (i1, i2) -> i1 > i2 ? i1 : i2));
 
         return m.getAuthorityRecords().stream()
                 .filter(rr -> rr.getRrType() == KnownRRType.NS)
@@ -189,7 +189,8 @@ public class HandleResponseToZoneQuery implements RequestState {
                     }
                     return rr.getTData().getNsDName().endsWith(rr.getName());
                 })
-                .filter(rr -> !aRecordNamesFound.contains(rr.getTData().getNsDName()))
+                .filter(rr -> !aRecordNamesFound.containsKey(rr.getTData().getNsDName()) ||
+                        aRecordNamesFound.get(rr.getTData().getNsDName()) < rr.getTtl())
                 .collect(Collectors.toSet());
     }
 

@@ -39,4 +39,17 @@ public class DetectServerIsItsOwnNSTest {
                 new ARData((Inet4Address) Inet4Address.getByName("192.168.1.24"))));
         Assertions.assertTrue(HandleResponseToZoneQuery.filterNSDNamesInTheirOwnZoneWithoutARecords(m).isEmpty());
     }
+
+    @Test
+    public void testTTLTooShort() throws UnknownHostException {
+        Message m = new Message();
+        m.setHeader(new Header());
+        m.getHeader().setNSCount(1);
+        m.getHeader().setQR(true);
+        m.getAuthorityRecords().add(new RR<>("zdns.google", KnownRRType.NS, KnownRRClass.IN, 10800,
+                new NSRData("ns2.zdns.google")));
+        m.getAdditionalRecords().add(new RR<>("ns2.zdns.google", KnownRRType.A, KnownRRClass.IN, 100,
+                new ARData((Inet4Address) Inet4Address.getByName("192.168.1.24"))));
+        Assertions.assertFalse(HandleResponseToZoneQuery.filterNSDNamesInTheirOwnZoneWithoutARecords(m).isEmpty());
+    }
 }
