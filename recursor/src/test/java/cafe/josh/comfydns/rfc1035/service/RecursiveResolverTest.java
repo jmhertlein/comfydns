@@ -105,4 +105,47 @@ public class RecursiveResolverTest {
             r.shutdown();
         }
     }
+
+    @Test
+    public void testServerIsItsOwnNameserver() throws UnknownHostException {
+        Map<InetAddress, Message> responses = new HashMap<>();
+        Message rootResponse = new Message();
+        Header h = new Header();
+        h.setNSCount(1);
+        h.setARCount(1);
+        h.setQR(true);
+        rootResponse.setHeader(h);
+        rootResponse.getAuthorityRecords().add(
+                new RR<>("google", KnownRRType.NS, KnownRRClass.IN, 60 * 60, new NSRData("a.gtld.net"))
+        );
+        rootResponse.getAdditionalRecords().add(
+                new RR<>("a.gtld.net", KnownRRType.A, KnownRRClass.IN, 60 * 60, new ARData((Inet4Address) InetAddress.getByName("192.168.1.23")))
+        );
+
+        DNSRootZone.ROOT_SERVERS.forEach(s -> {
+            responses.put(s.getAddress(), rootResponse);
+        });
+
+        Message aGtldNetResponse = new Message();
+        Header h2 = new Header();
+        h2.setQR(true);
+        h2.setNSCount(1);
+        h2.setARCount(1);
+        aGtldNetResponse.setHeader(h2);
+        aGtldNetResponse.getAuthorityRecords().add(
+                new RR<>("dns.google", KnownRRType.NS, KnownRRClass.IN, 60 * 60, new NSRData("ns3.zdns.google"))
+        );
+        responses.put(InetAddress.getByName("192.168.1.23"), aGtldNetResponse);
+
+        Message ns1GoogleDomainsResponse = new Message();
+        Header h3 = new Header();
+        ns1GoogleDomainsResponse.setHeader(h3);
+        h3.setANCount(1);
+        h3.setQR(true);
+        ns1GoogleDomainsResponse.getAnswerRecords().add(
+                new RR<>("status.stripe.com", KnownRRType.A, KnownRRClass.IN, 60 * 60,
+                        new ARData((Inet4Address) InetAddress.getByName("192.168.1.100")))
+        );
+        responses.put(InetAddress.getByName("192.168.1.24"), ns1GoogleDomainsResponse);
+    }
 }

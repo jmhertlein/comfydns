@@ -2,6 +2,8 @@ package cafe.josh.comfydns.rfc1035.cache;
 
 import cafe.josh.comfydns.rfc1035.message.field.query.QClass;
 import cafe.josh.comfydns.rfc1035.message.field.query.QType;
+import cafe.josh.comfydns.rfc1035.message.field.rr.RRClass;
+import cafe.josh.comfydns.rfc1035.message.field.rr.RRType;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import io.prometheus.client.Counter;
 
@@ -86,19 +88,33 @@ public class InMemoryDNSCache implements RRCache {
                     .collect(Collectors.toList());
 
             cachedRecordsPrunedTotal.inc(prune.size());
-            prune.forEach(rr -> {
-                Map<RR2Tuple, List<CachedRR<?>>> cacheForDomain = cache.get(rr.getName());
-                List<CachedRR<?>> typeClassMatch = cacheForDomain.get(rr.getClassAndType());
-                typeClassMatch.removeIf(crr -> crr.getRr() == rr);
-                if (typeClassMatch.isEmpty()) {
-                    cacheForDomain.remove(rr.getClassAndType());
-                }
-                if (cacheForDomain.isEmpty()) {
-                    cache.remove(rr.getName());
-                }
+            removeRRs(prune);
 
-            });
+        } finally {
+            this.lock.writeLock().unlock();
+        }
+    }
 
+    private void removeRRs(List<? extends RR<?>> prune) {
+        prune.forEach(rr -> {
+            Map<RR2Tuple, List<CachedRR<?>>> cacheForDomain = cache.get(rr.getName());
+            List<CachedRR<?>> typeClassMatch = cacheForDomain.get(rr.getClassAndType());
+            typeClassMatch.removeIf(crr -> crr.getRr() == rr);
+            if (typeClassMatch.isEmpty()) {
+                cacheForDomain.remove(rr.getClassAndType());
+            }
+            if (cacheForDomain.isEmpty()) {
+                cache.remove(rr.getName());
+            }
+
+        });
+    }
+
+    @Override
+    public void expunge(List<RR<?>> records) {
+        this.lock.writeLock().lock();
+        try {
+            removeRRs(records);
         } finally {
             this.lock.writeLock().unlock();
         }

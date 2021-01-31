@@ -2,16 +2,24 @@ package cafe.josh.comfydns.rfc1035.service.search.state;
 
 import cafe.josh.comfydns.rfc1035.cache.CacheAccessException;
 import cafe.josh.comfydns.rfc1035.message.field.header.OpCode;
+import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
+import cafe.josh.comfydns.rfc1035.message.field.rr.RData;
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
 import cafe.josh.comfydns.rfc1035.message.struct.Header;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
+import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import cafe.josh.comfydns.rfc1035.service.RecursiveResolverTask;
 import cafe.josh.comfydns.rfc1035.service.search.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * This assumes the SList has been populated to the best of the
@@ -49,6 +57,19 @@ public class SendServerQuery implements RequestState {
         if(bestServer.getIp() == null) {
             log.debug("While looking to send a query for zone " + sCtx.getSList().getZone() +
                     ", all the servers we found did not include matching A records for their NS records");
+
+            if(sCtx.getSList().getServers().stream().anyMatch(s -> s.getHostname().equals(sCtx.getSName()))) {
+                log.warn("While trying to answer [{}], we have been told that {} is its own nameserver. This is going to cause" +
+                        " infinite recursion. I'm going to bust the cache records for this and fail the request.", sCtx.getCurrentQuestion(), sCtx.getSName());
+                List<RR<?>> removals = sCtx.getSList().getServers().stream()
+                        .filter(s -> s.getNsRecord().isPresent())
+                        .map(s -> s.getNsRecord().get())
+                        .collect(Collectors.toList());
+                log.warn("Expunging these RRs from the cache: \n{}\n", removals.stream().map(RR::toString)
+                .collect(Collectors.joining("\n")));
+                rCtx.getGlobalCache().expunge(removals);
+                throw new NameResolutionException("We almost went into infinite recursion. Try again later.");
+            }
             self.setState(new SendNSDNameLookup(sCtx.getSList().getServers()));
             self.run();
             return; // TODO is this the best place to do this or should we transition from the FindBestServerToAsk state

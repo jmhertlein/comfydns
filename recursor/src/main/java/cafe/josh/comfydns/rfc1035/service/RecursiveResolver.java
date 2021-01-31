@@ -2,6 +2,7 @@ package cafe.josh.comfydns.rfc1035.service;
 
 import cafe.josh.comfydns.rfc1035.cache.AuthoritativeRecordsContainer;
 import cafe.josh.comfydns.rfc1035.cache.NegativeCache;
+import cafe.josh.comfydns.rfc1035.cache.RRCache;
 import cafe.josh.comfydns.rfc1035.cache.RRContainer;
 import cafe.josh.comfydns.rfc1035.service.request.Request;
 import cafe.josh.comfydns.rfc1035.service.search.ResolverContext;
@@ -40,13 +41,13 @@ public class RecursiveResolver {
             }
         });
     }
-    private final RRContainer cache;
+    private final RRCache cache;
     private final NegativeCache negativeCache;
     private final TruncatingTransport primary;
     private final NonTruncatingTransport fallback;
     private volatile AuthoritativeRecordsContainer authorityZones;
 
-    public RecursiveResolver(RRContainer cache, NegativeCache negativeCache, TruncatingTransport primary, NonTruncatingTransport fallback) {
+    public RecursiveResolver(RRCache cache, NegativeCache negativeCache, TruncatingTransport primary, NonTruncatingTransport fallback) {
         this.cache = cache;
         this.negativeCache = negativeCache;
         this.primary = primary;

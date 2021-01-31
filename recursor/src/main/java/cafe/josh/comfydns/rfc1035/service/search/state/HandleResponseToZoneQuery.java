@@ -5,6 +5,7 @@ import cafe.josh.comfydns.rfc1035.message.InvalidMessageException;
 import cafe.josh.comfydns.rfc1035.message.UnsupportedRRTypeException;
 import cafe.josh.comfydns.rfc1035.message.field.header.RCode;
 import cafe.josh.comfydns.rfc1035.message.field.rr.KnownRRType;
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
 import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.SOARData;
 import cafe.josh.comfydns.rfc1035.message.struct.Message;
 import cafe.josh.comfydns.rfc1035.message.struct.Question;
@@ -19,6 +20,8 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class HandleResponseToZoneQuery implements RequestState {
     private static final Logger log = LoggerFactory.getLogger(HandleResponseToZoneQuery.class);
@@ -142,6 +145,13 @@ public class HandleResponseToZoneQuery implements RequestState {
         }
 
         log.debug("[{}]: Processing RRs in response.", sCtx.getRequest().getId());
+        if(hasNSDNamesInTheirOwnZoneWithoutARecords(m)) {
+            serverQueried.incrementFailureCount();
+            self.setState(new SendServerQuery(false));
+            self.run();
+            return;
+        }
+
         List<RR<?>> rrs = new ArrayList<>();
         m.forEach(rrs::add);
         for (RR<?> rr : rrs) {
@@ -154,6 +164,40 @@ public class HandleResponseToZoneQuery implements RequestState {
 
         self.setState(new TryToAnswerWithLocalInformation());
         self.run();
+    }
+
+    public static boolean hasNSDNamesInTheirOwnZoneWithoutARecords(Message m) {
+        /*
+
+        NAME: zdns.google, TYPE: NS, CLASS: IN, TTL: 10800, RDATA:
+         NSDNAME: ns3.zdns.google
+         */
+
+        Set<String> nsDNamesThatNeedARecords = m.getAuthorityRecords().stream().filter(rr -> rr.getRrType() == KnownRRType.NS)
+                .filter(rr -> {
+                    NSRData d = (NSRData) rr.getTData();
+                    String[] split = d.getNsDName().split("\\.", 2);
+                    if(split.length == 2 && !split[1].isBlank()) {
+                        return d.getNsDName().equals(rr.getName()) || split[1].equals(rr.getName());
+                    }
+                    return d.getNsDName().endsWith(rr.getName());
+                }).map(rr -> {
+                    NSRData d = (NSRData) rr.getTData();
+                    return d.getNsDName();
+                })
+                .collect(Collectors.toSet());
+
+        Set<String> aRecordNamesFound = m.getAdditionalRecords().stream()
+                .filter(r -> r.getRrType() == KnownRRType.A)
+                .map(RR::getName)
+                .collect(Collectors.toSet());
+
+        if(!nsDNamesThatNeedARecords.equals(aRecordNamesFound)) {
+            log.warn("Rejecting a response of NSDNAMES who are in their own zone that don't supply A records.\n{}", m);
+            return true;
+        }
+
+        return false;
     }
 
     @Override

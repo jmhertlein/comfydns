@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutorService;
 
 public class ResolverContext {
     private final RecursiveResolver recursiveResolver;
-    private final RRContainer globalCache;
+    private final RRCache globalCache;
     private final ExecutorService pool;
     private final TruncatingTransport primary;
     private final NonTruncatingTransport fallback;
@@ -17,7 +17,7 @@ public class ResolverContext {
     private final NegativeCache negativeCache;
 
     public ResolverContext(RecursiveResolver recursiveResolver,
-                           RRContainer globalCache,
+                           RRCache globalCache,
                            ExecutorService pool,
                            TruncatingTransport primary,
                            NonTruncatingTransport fallback,
@@ -31,7 +31,7 @@ public class ResolverContext {
         this.negativeCache = negativeCache;
     }
 
-    public RRContainer getGlobalCache() {
+    public RRCache getGlobalCache() {
         return globalCache;
     }
 

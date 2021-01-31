@@ -221,4 +221,12 @@ public class IntegrationTest {
             r.shutdown();
         }
     }
+
+    @Test
+    @Disabled // this doesnt repro the issue
+    public void testRecursiveInternalQueryWeirdness() throws ExecutionException, InterruptedException {
+        // ns3.zdns.google
+        // dns.google
+        assertNotServerFailure(testQuery(new Question("ns3.zdns.google", KnownRRType.A, KnownRRClass.IN)));
+    }
 }

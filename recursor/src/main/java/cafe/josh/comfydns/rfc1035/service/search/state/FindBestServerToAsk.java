@@ -41,7 +41,7 @@ public class FindBestServerToAsk implements RequestState {
             sList.setZone("");
             sList.getServers().clear();
             List<SList.SListServer> tmp = DNSRootZone.ROOT_SERVERS.stream().map(rs -> {
-                SList.SListServer sls = sList.newServerEntry(rs.getName());
+                SList.SListServer sls = sList.newServerEntry(rs.getName(), null);
                 sls.setIp(rs.getAddress());
                 return sls;
             }).collect(Collectors.toList());
@@ -52,7 +52,7 @@ public class FindBestServerToAsk implements RequestState {
             sList.getServers().clear();
             for (RR<?> rr : search) {
                 NSRData tData = (NSRData) rr.getTData();
-                SList.SListServer s = sList.newServerEntry(tData.getNsDName());
+                SList.SListServer s = sList.newServerEntry(tData.getNsDName(), (RR<NSRData>) rr);
                 List<RR<?>> aSearch = sCtx.getOverlay().search(tData.getNsDName(), KnownRRType.A, q.getqClass(), OffsetDateTime.now());
                 if(!aSearch.isEmpty()) {
                     ARData nsIp = (ARData) aSearch.get((int) (Math.random() * aSearch.size())).getTData();

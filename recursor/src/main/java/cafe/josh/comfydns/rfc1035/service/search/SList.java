@@ -1,5 +1,8 @@
 package cafe.josh.comfydns.rfc1035.service.search;
 
+import cafe.josh.comfydns.rfc1035.message.field.rr.rdata.NSRData;
+import cafe.josh.comfydns.rfc1035.message.struct.RR;
+
 import java.net.InetAddress;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,26 +53,29 @@ public class SList {
         return best;
     }
 
-    public SListServer newServerEntry(String hostname) {
-        return new SListServer(hostname);
-    }
-
-    public SListServer newServerEntry(String hostname, InetAddress ip) {
-        return new SListServer(hostname, ip);
+    public SListServer newServerEntry(String hostname, RR<NSRData> nsRecord) {
+        return new SListServer(hostname, nsRecord);
     }
 
     public class SListServer implements Comparable<SListServer> {
         private final String hostname;
+        private final RR<NSRData> nsRecord;
 
         private InetAddress ip;
 
-        public SListServer(String hostname) {
+        public SListServer(String hostname, RR<NSRData> nsRecord) {
             this.hostname = hostname;
+            this.nsRecord = nsRecord;
         }
 
-        public SListServer(String hostname, InetAddress ip) {
+        public SListServer(String hostname, RR<NSRData> nsRecord, InetAddress ip) {
             this.hostname = hostname;
+            this.nsRecord = nsRecord;
             this.ip = ip;
+        }
+
+        public Optional<RR<NSRData>> getNsRecord() {
+            return Optional.ofNullable(nsRecord);
         }
 
         public void setIp(InetAddress ip) {
