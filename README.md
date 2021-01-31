@@ -4,10 +4,6 @@
 
 ### Not Implemented:
 
-#### Caching
-
-* Negative caching.
-
 #### Query Types
 
 * Inverse Queries
