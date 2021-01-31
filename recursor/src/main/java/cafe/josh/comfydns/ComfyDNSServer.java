@@ -128,7 +128,6 @@ public class ComfyDNSServer implements Runnable {
             try { bossGroup.shutdownGracefully().sync(); } catch (InterruptedException ignore) {}
             try { workerGroup.shutdownGracefully().sync(); } catch (InterruptedException ignore) {}
             this.cron.shutdown();
-            resolver.shutdown();
         }
         this.ready.set(true);
     }

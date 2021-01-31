@@ -13,6 +13,7 @@ import cafe.josh.comfydns.rfc1035.message.struct.Question;
 import cafe.josh.comfydns.rfc1035.message.struct.RR;
 import cafe.josh.comfydns.rfc1035.service.request.Request;
 import cafe.josh.comfydns.rfc1035.service.transport.TestTruncatingTransport;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -94,16 +95,12 @@ public class RecursiveResolverTest {
                 new NegativeCache(), new TestTruncatingTransport(responses),
                 null
         );
-        try {
-            r.resolve(req);
-            Message message = fM.get();
-            Assertions.assertEquals(1, message.getHeader().getANCount());
-            Assertions.assertEquals("192.168.1.100",
-                    ((ARData) message.getAnswerRecords().get(0).getTData())
-                            .getAddress().getHostAddress());
-        } finally {
-            r.shutdown();
-        }
+        r.resolve(req);
+        Message message = fM.get();
+        Assertions.assertEquals(1, message.getHeader().getANCount());
+        Assertions.assertEquals("192.168.1.100",
+                ((ARData) message.getAnswerRecords().get(0).getTData())
+                        .getAddress().getHostAddress());
     }
 
     @Test

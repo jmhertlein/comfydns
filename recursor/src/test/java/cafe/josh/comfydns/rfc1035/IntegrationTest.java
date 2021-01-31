@@ -30,6 +30,11 @@ public class IntegrationTest {
         Assumptions.assumeTrue(Objects.equals(System.getenv("COMFYDNS_BENCH"), "1"));
     }
 
+    @AfterEach
+    public void hangOn() throws InterruptedException {
+        Thread.sleep(1000);
+    }
+
     @Test
     public void simpleRootServerHit() throws IOException, UnsupportedRRTypeException, InvalidMessageException {
         DNSRootZone.Server s = DNSRootZone.getRandomRootServer();
@@ -134,7 +139,7 @@ public class IntegrationTest {
     // TODO: test idk if this should be name_error or no_error
     @Test
     public void testRipeHackathon() throws ExecutionException, InterruptedException {
-        assertHasAnswer(testQuery(new Question("ripe-hackathon6-ns.nlnetlabs.nl", KnownRRType.A, KnownRRClass.IN)));
+        assertNameError(testQuery(new Question("ripe-hackathon6-ns.nlnetlabs.nl", KnownRRType.A, KnownRRClass.IN)));
     }
 
     /*
@@ -210,16 +215,10 @@ public class IntegrationTest {
                 new NegativeCache(), new AsyncTruncatingTransport(),
                 new AsyncNonTruncatingTransport()
         );
-        try {
-            r.resolve(req);
-            Message message = fM.get();
-            System.out.println(message);
-            return message;
-        } catch (InterruptedException | ExecutionException e) {
-            throw e;
-        } finally {
-            r.shutdown();
-        }
+        r.resolve(req);
+        Message message = fM.get();
+        System.out.println(message);
+        return message;
     }
 
     @Test
@@ -229,4 +228,5 @@ public class IntegrationTest {
         // dns.google
         assertNotServerFailure(testQuery(new Question("ns3.zdns.google", KnownRRType.A, KnownRRClass.IN)));
     }
+
 }

@@ -13,12 +13,20 @@ import io.prometheus.client.Gauge;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class RecursiveResolver {
     private static final ExecutorService pool;
     static {
-        pool = Executors.newCachedThreadPool();
+        pool = Executors.newCachedThreadPool(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = Executors.defaultThreadFactory().newThread(r);
+                t.setDaemon(true);
+                return t;
+            }
+        });
         Gauge tasksPending = Gauge.build().name("tasks_pending")
                 .help("Tasks pending on the state machine thread pool")
                 .register();
@@ -71,7 +79,7 @@ public class RecursiveResolver {
         pool.submit(t);
     }
 
-    public void shutdown() {
+    private static void shutdown() {
         pool.shutdown();
     }
 }

@@ -13,9 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SendNSDNameLookup implements RequestState {
+    private final int MAX_SUBQUERY_DEPTH = 10;
     private static final Logger log = LoggerFactory.getLogger(SendNSDNameLookup.class);
     private final List<SList.SListServer> servers;
 
@@ -43,14 +45,21 @@ public class SendNSDNameLookup implements RequestState {
         log.info("[{}]: Trying to answer |{}|, sending internal request: \n{}",
                 sCtx.getRequest().getId(), sCtx.getCurrentQuestion(), m);
 
-        InternalRequest req = new InternalRequest(m, message -> {
+        Consumer<Message> onAnswer = message -> {
             try {
                 self.setState(new HandleResponseToNSDNameLookup(message, servers));
             } catch (StateTransitionCountLimitExceededException e) {
                 self.setImmediateDeathState();
             }
             rCtx.getPool().submit(self);
-        });
+        };
+
+        InternalRequest req = new InternalRequest(m, onAnswer, sCtx.getRequest());
+        if(req.getSubqueryDepth() > MAX_SUBQUERY_DEPTH) {
+            log.warn("[{}] Query hit max subquery depth while trying to answer: {}",
+                    sCtx.getRequest().getId(), sCtx.getCurrentQuestion());
+            throw new NameResolutionException("Hit max subquery depth. Failing.");
+        }
 
         rCtx.getRecursiveResolver().resolve(req);
     }

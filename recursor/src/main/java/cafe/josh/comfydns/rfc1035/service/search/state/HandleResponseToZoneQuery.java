@@ -17,10 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class HandleResponseToZoneQuery implements RequestState {
@@ -145,15 +142,20 @@ public class HandleResponseToZoneQuery implements RequestState {
         }
 
         log.debug("[{}]: Processing RRs in response.", sCtx.getRequest().getId());
-        if(hasNSDNamesInTheirOwnZoneWithoutARecords(m)) {
-            serverQueried.incrementFailureCount();
-            self.setState(new SendServerQuery(false));
-            self.run();
-            return;
-        }
-
         List<RR<?>> rrs = new ArrayList<>();
         m.forEach(rrs::add);
+        if(m.getHeader().getANCount() > 0) {
+            Set<RR<NSRData>> badRecords = filterNSDNamesInTheirOwnZoneWithoutARecords(m);
+            rrs.removeAll(badRecords);
+        } else {
+            if(!filterNSDNamesInTheirOwnZoneWithoutARecords(m).isEmpty()) {
+                serverQueried.incrementFailureCount();
+                self.setState(new SendServerQuery(false));
+                self.run();
+                return;
+            }
+        }
+
         for (RR<?> rr : rrs) {
             if(rr.getTtl() == 0) {
                 sCtx.getRequestCache().cache(rr, OffsetDateTime.now());
@@ -166,38 +168,29 @@ public class HandleResponseToZoneQuery implements RequestState {
         self.run();
     }
 
-    public static boolean hasNSDNamesInTheirOwnZoneWithoutARecords(Message m) {
+    public static Set<RR<NSRData>> filterNSDNamesInTheirOwnZoneWithoutARecords(Message m) {
         /*
 
         NAME: zdns.google, TYPE: NS, CLASS: IN, TTL: 10800, RDATA:
          NSDNAME: ns3.zdns.google
          */
-
-        Set<String> nsDNamesThatNeedARecords = m.getAuthorityRecords().stream().filter(rr -> rr.getRrType() == KnownRRType.NS)
-                .filter(rr -> {
-                    NSRData d = (NSRData) rr.getTData();
-                    String[] split = d.getNsDName().split("\\.", 2);
-                    if(split.length == 2 && !split[1].isBlank()) {
-                        return d.getNsDName().equals(rr.getName()) || split[1].equals(rr.getName());
-                    }
-                    return d.getNsDName().endsWith(rr.getName());
-                }).map(rr -> {
-                    NSRData d = (NSRData) rr.getTData();
-                    return d.getNsDName();
-                })
-                .collect(Collectors.toSet());
-
         Set<String> aRecordNamesFound = m.getAdditionalRecords().stream()
                 .filter(r -> r.getRrType() == KnownRRType.A)
                 .map(RR::getName)
                 .collect(Collectors.toSet());
 
-        if(!nsDNamesThatNeedARecords.equals(aRecordNamesFound)) {
-            log.warn("Rejecting a response of NSDNAMES who are in their own zone that don't supply A records.\n{}", m);
-            return true;
-        }
-
-        return false;
+        return m.getAuthorityRecords().stream()
+                .filter(rr -> rr.getRrType() == KnownRRType.NS)
+                .map(rr -> (RR<NSRData>) rr)
+                .filter(rr -> {
+                    String[] split = rr.getTData().getNsDName().split("\\.", 2);
+                    if(split.length == 2 && !split[1].isBlank()) {
+                        return rr.getTData().getNsDName().equals(rr.getName()) || split[1].equals(rr.getName());
+                    }
+                    return rr.getTData().getNsDName().endsWith(rr.getName());
+                })
+                .filter(rr -> !aRecordNamesFound.contains(rr.getTData().getNsDName()))
+                .collect(Collectors.toSet());
     }
 
     @Override

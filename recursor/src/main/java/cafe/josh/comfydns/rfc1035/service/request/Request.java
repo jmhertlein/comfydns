@@ -58,4 +58,8 @@ public abstract class Request {
     public boolean isInternal() {
         return false;
     }
+
+    public int getSubqueryDepth() {
+        return 0;
+    }
 }

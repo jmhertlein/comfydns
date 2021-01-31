@@ -24,7 +24,7 @@ public class DetectServerIsItsOwnNSTest {
         m.getHeader().setQR(true);
         m.getAuthorityRecords().add(new RR<>("zdns.google", KnownRRType.NS, KnownRRClass.IN, 10800,
                 new NSRData("ns2.zdns.google")));
-        Assertions.assertTrue(HandleResponseToZoneQuery.hasNSDNamesInTheirOwnZoneWithoutARecords(m));
+        Assertions.assertFalse(HandleResponseToZoneQuery.filterNSDNamesInTheirOwnZoneWithoutARecords(m).isEmpty());
     }
 
     @Test
@@ -37,6 +37,6 @@ public class DetectServerIsItsOwnNSTest {
                 new NSRData("ns2.zdns.google")));
         m.getAdditionalRecords().add(new RR<>("ns2.zdns.google", KnownRRType.A, KnownRRClass.IN, 10800,
                 new ARData((Inet4Address) Inet4Address.getByName("192.168.1.24"))));
-        Assertions.assertFalse(HandleResponseToZoneQuery.hasNSDNamesInTheirOwnZoneWithoutARecords(m));
+        Assertions.assertTrue(HandleResponseToZoneQuery.filterNSDNamesInTheirOwnZoneWithoutARecords(m).isEmpty());
     }
 }
