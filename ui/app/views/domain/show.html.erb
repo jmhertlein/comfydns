@@ -1,0 +1,58 @@
+<div class="row">
+  <div class="col">
+    <h2>.<%= @zone.name %></h2>
+  </div>
+</div>
+
+<div class="row shadow p-3 mb-5 bg-white rounded">
+  <div class="col">
+    <%= form_with(url: "/domain/#{@zone.id}", method: :post) do |form| %>
+      <%= form.hidden_field :rrtype, value: "A" %>
+      <%= form.hidden_field :rrclass, value: "IN" %>
+      <%= form.hidden_field :ttl, value: "60" %>
+      <div class="row align-items-end">
+        <div class="col">
+          <%= form.label :hostname, "Hostname" %>
+          <div class="input-group">
+            <%= form.text_field :hostname, class: "form-control inline-form-control", pattern: "[^.]+", placeholder: "myhost (no dots)", title: "Format: no dots", autocomplete: "off" %>
+            <div class="input-group-append">
+              <div class="input-group-text"><%= ".#{@zone.name}" %></div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <%= form.label :hostname, "IP Address" %>
+          <%= form.text_field :ip_address, class: "form-control inline-form-control", placeholder: "192.168.1.42", autocomplete: "off" %>
+        </div>
+
+        <div class="col"><%= form.submit "Add", class: "btn btn-primary" %></div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <table class="table">
+      <thead>
+      <th>Hostname</th>
+      <th>IP Address</th>
+      <th>Action</th>
+      </thead>
+      <tbody>
+      <% @host_records.each do |h| %>
+        <tr>
+          <td><%= h.name[0..(h.name.length - 1 - @zone.name.length - 1)] %></td>
+          <td><%= h.rdata["address"] %></td>
+          <td>
+            <%= form_with(url: "/domain/#{@zone.id}/#{h.id}", method: :delete) do |form| %>
+              <%= form.submit "Delete", class: "btn btn-outline-secondary" %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+

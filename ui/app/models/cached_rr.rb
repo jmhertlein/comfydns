@@ -1,0 +1,2 @@
+class CachedRR < ApplicationRecord
+end

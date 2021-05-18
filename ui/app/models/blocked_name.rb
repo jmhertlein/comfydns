@@ -1,0 +1,2 @@
+class BlockedName < ApplicationRecord
+end

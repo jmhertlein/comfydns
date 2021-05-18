@@ -1,0 +1,2 @@
+class BlockList < ApplicationRecord
+end

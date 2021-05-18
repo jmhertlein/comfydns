@@ -1,0 +1,23 @@
+<div class="row">
+  <div class="col" align="center">
+    <h3>Updating <%= @server.id %></h3>
+  </div>
+</div>
+<div class="row justify-content-center">
+  <div class="col-3">
+    <%= form_with url: "/server/#{@server.id}", method: :patch do |form| %>
+      <div class="mb-3">
+        <%= form.label :hostname, "Server Fully-Qualified Domain Name" %>
+        <%= form.text_field :hostname, class: "form-control", placeholder: "dns1.mytld", pattern: "[a-zA-Z0-9-_.]*", autocomplete: "off", value: @server.hostname %>
+      </div>
+      <div class="mb-3">
+        <%= form.label :ip_address, "IP Address" %>
+        <%= form.text_field :ip_address, class: "form-control", placeholder: "192.168.1.23", autocomplete: "off", pattern: "()|(\\d+\\.\\d+\\.\\d+\\.\\d+)", value: @server.ip_address %>
+      </div>
+
+      <%= form.submit "Update", class: "btn btn-primary" %>
+      </div>
+    </div>
+    <% end %>
+  </div>
+</div>

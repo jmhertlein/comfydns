@@ -1,0 +1,22 @@
+// Place all the styles related to the domain controller here.
+// They will automatically be included in application.css.
+// You can use Sass (SCSS) here: https://sass-lang.com/
+
+.domain-add-host-field {
+  display: inline-block;
+  width: auto;
+}
+
+.new-record-form {
+  display: table;
+}
+
+.delete-zone-form {
+  display: inline-block;
+}
+
+@media (max-width: 575.98px) {
+  .domain-view-button {
+    margin-bottom: 4px;
+  }
+}

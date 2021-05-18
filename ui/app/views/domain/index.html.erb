@@ -1,0 +1,74 @@
+<div class="col">
+  <div class="row">
+    <table class="table">
+      <thead>
+      <th>TLD</th>
+      <th>Serial</th>
+      <th>Hosts</th>
+      <th>Action</th>
+      </thead>
+      <tbody>
+      <% @zones.each do |zone| %>
+        <tr>
+          <td><%= zone.name %></td>
+          <td><%= zone.start_of_authority.serial %></td>
+          <td><%= @zone_host_counts.has_key?(zone.id) ? @zone_host_counts[zone.id] : 0 %></td>
+          <td align="center">
+            <a href="/domain/<%= zone.id %>" ><button type="button" class="btn btn-primary domain-view-button">View</button></a>
+            <button type="button" class="btn btn-primary delete-zone-form"  data-bs-toggle="modal" data-bs-target="#deleteZoneModal-<%= zone.id %>">Delete</button>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+  <div class="row">
+    <div class="col" align="center">
+    <button type="button" class="btn btn-primary zone-index-add-tld-button"  data-bs-toggle="modal" data-bs-target="#addTLDModal">Add Domain</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addTLDModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addTLDModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+    <%= form_with url: "/domain", method: :post do |form| %>
+      <div class="modal-header">
+        <h5 class="modal-title" id="addTLDModalLabel">Add Domain</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form.label :name, "Top-Level Domain Name" %>
+        <%= form.text_field :name, class: "form-control", placeholder: "mydomain", autocomplete: "off" %>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <%= form.submit "Add", class: "btn btn-primary" %>
+      </div>
+    </div>
+    <% end %>
+  </div>
+</div>
+
+<% @zones.each do |zone| %>
+  <div class="modal fade" id="deleteZoneModal-<%= zone.id %>" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="deleteZoneModal-<%= zone.id %>Label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+      <%= form_with url: "/domain/#{zone.id}", method: :delete do |form| %>
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteZoneModal-<%= zone.id %>Label">Add TLD</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>  
+        <div class="modal-body">
+          <%= form.label :name, "Please re-type the name of the zone you wish to delete." %>
+          <%= form.text_field :name, class: "form-control", placeholder: zone.name, pattern: zone.name, autocomplete: "off" %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <%= form.submit "Delete", class: "btn btn-primary" %>
+        </div>
+      </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

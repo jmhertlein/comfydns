@@ -1,0 +1,80 @@
+<p class="alert alert-warning">This area is for advanced users only. It may be difficult to navigate without some knowledge of how DNS works. Be careful when deleting records. If you delete glue records, you might end up with an inconsistent cache.</p>
+
+<%= form_with url: "/cache", class: "row align-items-center justify-content-center", method: :get, local: true do |form| %>
+  <div class="col-4">
+    <%= form.label :name, "Domain name" %>
+    <%= form.text_field :name, value: @search_performed ? @name : "",pattern: ".+", class: "form-control mb-3", placeholder: "comfydns.com", autocomplete: "off" %>
+  </div>
+  <div class="col-1">
+    <%= form.label :host_mask, "Query Type" %>
+    <%= form.select :qtype, @supported_qtypes, {selected: @search_performed ? @qtype : ""}, class: "form-select mb-3", autocomplete: "off" %>
+  </div>
+  <div class="col-1">
+    <%= form.submit "Search", class: "btn btn-primary" %>
+  </div>
+<% end %>
+
+<% if @search_performed %>
+<h4 class="mt-5">Resource Records</h4>
+<table class="table mb-5">
+  <thead>
+    <th>Name</th>
+    <th>Type</th>
+    <th>Class</th>
+    <th>Original TTL</th>
+    <th>Expires At</th>
+    <th>Data</th>
+    <th>Action</th>
+  </thead>
+  <tbody>
+  <% @found_rrs.each do |rr| %>
+    <tr>
+      <td><%= rr.name %></td>
+      <td><%= rr.rrtype %></td>
+      <td><%= rr.rrclass %></td>
+      <td><%= rr.ttl %></td>
+      <td><%= rr.expires_at %></td>
+      <td><%= rr.rdata %></td>
+      <td>
+        <%= form_with(url: "/cache/positive/#{rr.id}", method: :delete) do |form| %>
+          <%= form.hidden_field :search_name, value: @name %>
+          <%= form.hidden_field :search_type, value: @qtype %>
+          <%= form.submit "Delete", class: "btn btn-outline-secondary" %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+
+<h4>Negative Caches</h4>
+<table class="table">
+  <thead>
+    <th>Name</th>
+    <th>Type</th>
+    <th>Class</th>
+    <th>Original TTL</th>
+    <th>Expires At</th>
+    <th>Action</th>
+  </thead>
+  <tbody>
+  <% @found_negatives.each do |neg| %>
+    <tr>
+      <td><%= neg.name %></td>
+      <td><%= neg.qtype %></td>
+      <td><%= neg.qclass %></td>
+      <td><%= neg.ttl %></td>
+      <td><%= neg.expires_at %></td><td>
+        <%= form_with(url: "/cache/negative/#{neg.id}", method: :delete) do |form| %>
+          <%= form.hidden_field :search_name, value: @name %>
+          <%= form.hidden_field :search_type, value: @qtype %>
+          <%= form.submit "Delete", class: "btn btn-outline-secondary" %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+
+
+<% end %>

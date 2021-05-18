@@ -1,0 +1,180 @@
+<% unless Flag.adblock_enabled? %>
+  <p class="alert alert-warning">Ad blocking is not enabled, so while you can configure things here, the resolver will not block any domains.</p>
+<% end %>
+
+<%= form_with url: "/flag/adblock/", method: :post, class: "mt-3", local: true do |form| %>
+<div class="row align-items-center justify-content-begin" align="center">
+  <div class="col-auto pr-0">
+    <%= form.label :enabled, "Ad Blocking Enabled" %>
+  </div>
+  <div class="col-auto pl-0">
+    <%= form.check_box :enabled, {onclick: "toggle_display_none(\"apply-adblock-enabled-button\")", class: "form-check form-switch", checked: Flag.adblock_enabled?}, true, false  %>
+  </div>
+  <div id="apply-adblock-enabled-button" class="col-1 display-none">
+    <%= form.submit "Apply", class: "btn btn-primary" %>
+  </div>
+</div>
+<% end %>
+
+<h3 class="mt-5">Block Lists</h3>
+<p>The resource a blocklist URL points to should be a line-separated list of domains.</p>
+
+<div class="row">
+  <table class="table">
+    <thead>
+      <th>Name</th>
+      <th>URL</th>
+      <th>Update Frequency</th>
+      <th>Last Update</th>
+      <th>Entries</th>
+      <th>Action</th>
+    </thead>
+    <tbody>
+    <% @lists.each do |l| %>
+      <tr>
+        <td><%= l.name %></td>
+        <td><%= l.url %></td>
+        <td><%= l.update_frequency %></td>
+        <td><%= @last_updates[l.id] %></td>
+        <td><%= @entries[l.id] %></td>
+        <td align="center">
+            <% if @refresh_running[l.id] %>
+              <span class="badge rounded-pill bg-primary">Refreshing</span>
+            <% else %>
+              <%= form_with(url: "/block_list/#{l.id}/refresh", method: :post, class: "cdns-not-full-width") do |form| %>
+                <%= form.submit "Refresh", class: "btn btn-primary domain-view-button", disabled: @refresh_running[l.id] %>
+              <% end %>
+            <% end %>
+
+            <%= render partial: "shared/td_form_button", locals: {
+              url: "/block_list/#{l.id}", 
+              method: :delete, 
+              btn_text: "Delete", 
+              btn: :secondary} 
+            %>
+          </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>
+
+<div class="row">
+  <div class="col">
+    <button 
+      type="button" 
+      class="btn btn-primary zone-index-add-tld-button"  
+      data-bs-toggle="modal"
+      data-bs-target="#addBlockListModal">
+        Add
+    </button>
+  </div>
+</div>
+
+<div class="modal fade" id="addBlockListModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addBlockListModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+    <%= form_with url: "/block_list", method: :post, class: "mt-3", local: true do |form| %>
+      <div class="modal-header">
+        <h5 class="modal-title" id="addBlockListModalLabel">Add Block List</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form.label :name %>
+        <%= form.text_field :name, class: "form-control" %>
+
+        <%= form.label :url %>
+        <%= form.text_field :url, class: "form-control" %>
+
+        <%= form.label :list_type %>
+        <%= form.select :list_type, @supported_list_types, {}, class: "form-select", autocomplete: "off" %>
+
+        <%= form.label :auto_update %>
+        <%= form.check_box :auto_update, class: "form-check" %>
+
+        <%= form.label :update_frequency %>
+        <%= form.select :update_frequency, @supported_update_frequencies, {}, class: "form-select", autocomplete: "off" %>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <%= form.submit "Add Blocklist", class: "btn btn-primary" %>
+      </div>
+    </div>
+    <% end %>
+  </div>
+</div>
+
+<hr class="mt-5" />
+
+<h3 class="mt-5">Clients</h3>
+<%= form_with url: "/flag/adblock_client_default_on/", method: :post, class: "mt-1", local: true do |form| %>
+<div class="row align-items-center justify-content-begin" align="center">
+  <div class="col-auto pr-0">
+    <%= form.label :enabled, "Block By Default" %>
+  </div>
+  <div class="col-auto pl-0">
+    <%= form.check_box :enabled, {onclick: "toggle_display_none(\"block-by-default-button\")", class: "form-check form-switch", checked: Flag.adblock_client_default_on?}, true, false  %>
+  </div>
+  <div id="block-by-default-button", class="col-1 display-none" >
+    <%= form.submit "Apply", class: "btn btn-primary" %>
+  </div>
+</div>
+<% end %>
+<table class="table">
+  <thead>
+    <th>IP/Subnet</th>
+    <th>Block Ads?</th>
+    <th>Action</th>
+  </thead>
+  <tbody>
+    <% @client_configs.each do |cc| %>
+      <tr>
+        <td><%= cc.ip %>/<%= cc.ip.prefix %></td>
+        <td><%= cc.block_ads %></td>
+        <td><%= render partial: "shared/td_form_button", locals: {
+          url: "/block_list_client_config/#{cc.id}", 
+          method: :delete, 
+          btn_text: "Delete", 
+          btn: :secondary} %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+
+<div class="row">
+  <div class="col">
+    <button 
+      type="button" 
+      class="btn btn-primary zone-index-add-tld-button"  
+      data-bs-toggle="modal"
+      data-bs-target="#addClientConfigModal">
+        Add
+    </button>
+  </div>
+</div>
+
+<div class="modal fade" id="addClientConfigModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addClientConfigModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+    <%= form_with url: "/block_list_client_config", method: :post, class: "mt-3", local: true do |form| %>
+      <div class="modal-header">
+        <h5 class="modal-title" id="addClientConfigModalLabel">Add Block List</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form.label :ip, "IP Address/Subnet" %>
+        <%= form.text_field :ip, class: "form-control", placeholder: "Examples: 192.168.1.2 or 192.168.1.0/24" %>
+
+        <%= form.label :block_ads, class: "mt-2" %>
+        <%= form.check_box :block_ads, class: "form-check" %>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <%= form.submit "Add Client", class: "btn btn-primary" %>
+      </div>
+    </div>
+    <% end %>
+  </div>
+</div>

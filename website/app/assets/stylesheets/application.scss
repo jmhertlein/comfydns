@@ -1,0 +1,44 @@
+/*
+ * This is a manifest file that'll be compiled into application.css, which will include all the files
+ * listed below.
+ *
+ * Any CSS and SCSS file within this directory, lib/assets/stylesheets, or any plugin's
+ * vendor/assets/stylesheets directory can be referenced here using a relative path.
+ *
+ * You're free to add application-wide styles to this file and they'll appear at the bottom of the
+ * compiled file so the styles you add here take precedence over styles defined in any other CSS/SCSS
+ * files in this directory. Styles in this file should be added after the last require_* statement.
+ * It is generally better to create a new file per style scope.
+ *
+ *= require_tree .
+ *= require_self
+ */
+
+$fut-dgreen: #2c3531;
+$fut-green: #116466;
+$fut-dtan: #D9B08C;
+$fut-tan: #FFCB9A;
+$fut-blue: #D1E8E2;
+
+body {
+  background-color: $fut-dgreen;
+  color: $fut-blue;
+}
+
+.card {
+  background-color: $fut-green;
+  color: $fut-blue;
+}
+
+.navbar {
+  background-color: $fut-green;
+  border-radius: 0 0 1em 1em;
+}
+
+.navbar, .navbar > * > a, .navbar > * > * > * > * > a {
+  color: white;
+}
+
+.navbar > a {
+  color: white;
+}

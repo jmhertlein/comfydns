@@ -1,0 +1,2 @@
+class CachedNegative < ApplicationRecord
+end

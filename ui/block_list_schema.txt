@@ -1,0 +1,4 @@
+BlockList(id, name, url)
+BlockListSnapshot(id, block_list_id)
+BlockedName(block_list_snapshot_id, name)
+ServerBlockListState(server_id, block_list_id, block_list_snapshot_id)

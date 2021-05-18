@@ -1,0 +1,2 @@
+class BlockListSnapshot < ApplicationRecord
+end

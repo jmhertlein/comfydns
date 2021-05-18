@@ -1,0 +1,2 @@
+class AdBlockClientConfig < ApplicationRecord
+end
