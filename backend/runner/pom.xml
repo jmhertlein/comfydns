@@ -7,13 +7,13 @@
     <parent>
         <groupId>com.comfydns</groupId>
         <artifactId>comfydns-backend</artifactId>
-        <version>1.0-rc1</version>
+        <version>1.0</version>
     </parent>
 
     <name>ComfyDNS Central Runner</name>
 
     <artifactId>comfydns-runner</artifactId>
-    <version>1.0-rc1</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
     <build>
@@ -65,13 +65,13 @@
         <dependency>
             <groupId>com.comfydns</groupId>
             <artifactId>comfydns-recursor</artifactId>
-            <version>1.0-rc1</version>
+            <version>1.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.comfydns</groupId>
             <artifactId>comfydns-util</artifactId>
-            <version>1.0-rc1</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
