@@ -20,7 +20,8 @@ set -x
 
 bin/rails db:create db:migrate
 
-rm -r /app/website/nginxmnt/*
-cp -r /app/website/public/* /app/website/nginxmnt/
+test -e /app/website/nginxmnt && rm -r /app/website/nginxmnt/*
+mkdir -p /app/website/nginxmnt
+cp -r /app/website/public/* /app/website/nginxmnt
 
 bundle exec rails server
