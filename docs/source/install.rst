@@ -34,7 +34,6 @@ Install Steps
     docker run -it --name comfydns \
       -v comfydns-data:/opt/comfydns/ \
       -p 53:53/tcp \
-      -p 33200:33200/tcp \
       -p 53:53/udp \
       -p 8080:3000/tcp \
       -e COMFYDNS_UI_PASSPHRASE=changeme \
