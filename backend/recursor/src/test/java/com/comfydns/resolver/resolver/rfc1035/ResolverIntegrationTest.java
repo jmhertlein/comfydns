@@ -337,4 +337,9 @@ REFRESH: 1958748768, RETRY: 1071239168, EXPIRE: 921600, MINIMUM: 230400
         assertHasAnswer(testQuery(new Question("ssl.google-analytics.com", KnownRRType.A, KnownRRClass.IN)));
     }
 
+    @Test
+    public void testPotteryBarnKids() throws ExecutionException, InterruptedException {
+        assertHasAnswer(testQuery(new Question("www.potterybarnkids.com", KnownRRType.A, KnownRRClass.IN)));
+    }
+
 }

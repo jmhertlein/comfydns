@@ -5,32 +5,40 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import com.comfydns.resolver.resolver.rfc1035.service.search.state.ImmediateDeathState;
 import com.comfydns.resolver.resolver.rfc1035.service.search.state.InitialCheckingState;
+import com.comfydns.resolver.resolver.rfc1035.service.search.state.SendResponseState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 public class RecursiveResolverTask implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(RecursiveResolverTask.class);
 
-    public static final int STATE_TRANSITION_COUNT_LIMIT = 128;
-
     private final SearchContext sCtx;
     private final ResolverContext rCtx;
     private RequestState state;
-    private int stateTransitionCount;
 
     public RecursiveResolverTask(SearchContext sCtx, ResolverContext rCtx) {
         this.sCtx = sCtx;
         this.rCtx = rCtx;
         this.state = new InitialCheckingState();
-        this.stateTransitionCount = 0;
+    }
+
+    public RecursiveResolverTask(SearchContext sCtx, ResolverContext rCtx, RequestState cur) throws StateTransitionCountLimitExceededException {
+        this.sCtx = sCtx;
+        this.rCtx = rCtx;
+        setState(cur);
     }
 
     @Override
     public void run() {
         try {
-            this.state.run(rCtx, sCtx, this);
+            Optional<RequestState> next = this.state.run(rCtx, sCtx);
+            if(next.isPresent()) {
+                setState(next.get());
+                run();
+            }
         } catch(OptionalFeatureNotImplementedException e) {
             sCtx.sendNotImplemented();
         } catch (CacheAccessException | NameResolutionException | StateTransitionCountLimitExceededException e) {
@@ -55,12 +63,13 @@ public class RecursiveResolverTask implements Runnable {
         return state;
     }
 
-    public void setState(RequestState state) throws StateTransitionCountLimitExceededException {
-        log.debug("[{}]: STATE {} -> {}", sCtx.getRequest().getId(), this.state.getName(), state.getName());
-        if(stateTransitionCount > STATE_TRANSITION_COUNT_LIMIT) {
-            throw new StateTransitionCountLimitExceededException("Limit: " + STATE_TRANSITION_COUNT_LIMIT);
-        }
-        stateTransitionCount++;
+    private void setState(RequestState state) throws StateTransitionCountLimitExceededException {
+        log.debug("[{}]: STATE {} -> {}",
+                sCtx.getRequest().getId(),
+                this.state == null ? "<callback>" : this.state.getName(),
+                state.getName()
+        );
+        sCtx.incrementStateTransitionCount();
         this.state = state;
     }
 
@@ -69,6 +78,6 @@ public class RecursiveResolverTask implements Runnable {
     }
 
     public int getStateTransitionCount() {
-        return stateTransitionCount;
+        return sCtx.getStateTransitionCount();
     }
 }

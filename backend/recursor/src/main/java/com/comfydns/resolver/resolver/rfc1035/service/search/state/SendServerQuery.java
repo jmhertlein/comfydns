@@ -44,13 +44,11 @@ public class SendServerQuery implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
         Optional<SList.SListServer> best = sCtx.getSList().getBestServer();
         if(best.isEmpty()) {
             log.debug("{}While looking to send a query for zone {}, we couldn't find any healthy servers to service the request. Question was: {}", sCtx.getRequestLogPrefix(), sCtx.getSList().getZone(), sCtx.getCurrentQuestion());
-            self.setState(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
-            self.run();
-            return;
+            return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
         }
         SList.SListServer bestServer = best.get();
         if(bestServer.getIp() == null) {
@@ -69,9 +67,7 @@ public class SendServerQuery implements RequestState {
                 rCtx.getGlobalCache().expunge(removals);
                 throw new NameResolutionException("We almost went into infinite recursion. Try again later.");
             }
-            self.setState(new SendNSDNameLookup(sCtx.getSList().getServers()));
-            self.run();
-            return; // TODO is this the best place to do this or should we transition from the FindBestServerToAsk state
+            return Optional.of(new SendNSDNameLookup(sCtx.getSList().getServers()));
         }
 
         Question q = sCtx.getCurrentQuestion();
@@ -92,21 +88,28 @@ public class SendServerQuery implements RequestState {
         }
 
         Consumer<byte[]> onSuccess = payload -> {
+            RecursiveResolverTask t;
             try {
-                self.setState(new HandleResponseToZoneQuery(bestServer, m, payload));
+                t = new RecursiveResolverTask(
+                        sCtx,
+                        rCtx,
+                        new HandleResponseToZoneQuery(bestServer, m, payload));
             } catch (StateTransitionCountLimitExceededException e) {
-                self.setImmediateDeathState();
+                t = new RecursiveResolverTask(sCtx, rCtx);
+                t.setImmediateDeathState();
             }
-            rCtx.getPool().submit(self);
+            rCtx.getPool().submit(t);
         };
 
         Consumer<Throwable> onError = e -> {
+            RecursiveResolverTask t;
             try {
-                self.setState(new HandleResponseToZoneQuery(bestServer, m, e));
+                t = new RecursiveResolverTask(sCtx, rCtx, new HandleResponseToZoneQuery(bestServer, m, e));
             } catch (StateTransitionCountLimitExceededException e2) {
-                self.setImmediateDeathState();
+                t = new RecursiveResolverTask(sCtx, rCtx);
+                t.setImmediateDeathState();
             }
-            rCtx.getPool().submit(self);
+            rCtx.getPool().submit(t);
         };
 
         log.debug("[{}]: QUERY: {} ({})", sCtx.getRequest().getId(), bestServer.getHostname(), bestServer.getIp());
@@ -120,6 +123,7 @@ public class SendServerQuery implements RequestState {
         } else {
             rCtx.getPrimary().send(m.write(), bestServer.getIp(), onSuccess, onError);
         }
+        return Optional.empty();
     }
 
     @Override

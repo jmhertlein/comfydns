@@ -6,16 +6,17 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.query.QOnlyType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import io.prometheus.client.Counter;
+
+import java.util.Optional;
 
 public class InitialCheckingState implements RequestState {
     private static final Counter dnsQuestions = Counter.build()
             .name("dns_questions").help("DNS Questions received.")
             .labelNames("rrtype", "source").register();
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
         Message m = sCtx.getRequest().getMessage();
         if(m.getHeader().getOpCode() == OpCode.IQUERY) {
             throw new OptionalFeatureNotImplementedException("OpCode not implemented: IQUERY");
@@ -31,13 +32,9 @@ public class InitialCheckingState implements RequestState {
                 throw new OptionalFeatureNotImplementedException("Multi-question where one question is AXFR is not supported.");
             }
 
-            self.setState(new ZoneTransferState());
-            self.run();
-            return;
+            return Optional.of(new ZoneTransferState());
         }
-
-        self.setState(new SNameCheckingState());
-        self.run();
+        return Optional.of(new SNameCheckingState());
     }
 
     @Override

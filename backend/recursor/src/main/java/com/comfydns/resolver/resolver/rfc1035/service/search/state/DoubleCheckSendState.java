@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class DoubleCheckSendState implements RequestState {
@@ -22,51 +23,49 @@ public class DoubleCheckSendState implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
         if(!EnvConfig.isDoubleCheckingEnabled()) {
             log.debug("Skipping double-check - no upstream configured.");
             DoubleCheckResultState.doubleCheckResults.labels("skipped").inc();
-            self.setState(new SendResponseState(ourResponse));
-            self.run();
-            return;
+            return Optional.of(new SendResponseState(ourResponse));
         }
 
         if(sCtx.getRequest().isInternal()) {
             log.debug("Skipping double-check - internal request.");
             DoubleCheckResultState.doubleCheckResults.labels("skipped").inc();
-            self.setState(new SendResponseState(ourResponse));
-            self.run();
-            return;
+            return Optional.of(new SendResponseState(ourResponse));
         }
 
         for (String d : rCtx.getAuthorityZones().getAuthoritativeForDomains()) {
             if(sCtx.getRequest().getMessage().getQuestions().stream().anyMatch(q -> q.getQName().toLowerCase().endsWith(d.toLowerCase()))) {
                 log.debug("Skipping double-check - we are authoritative for this domain.");
                 DoubleCheckResultState.doubleCheckResults.labels("skipped").inc();
-                self.setState(new SendResponseState(ourResponse));
-                self.run();
-                return;
+                return Optional.of(new SendResponseState(ourResponse));
             }
         }
 
         Consumer<byte[]> onSuccess = payload -> {
+            RecursiveResolverTask t;
             try {
-                self.setState(new DoubleCheckResultState(ourResponse, payload));
+                t = new RecursiveResolverTask(sCtx, rCtx, new DoubleCheckResultState(ourResponse, payload));
             } catch (StateTransitionCountLimitExceededException e) {
-                self.setImmediateDeathState();
+                t = new RecursiveResolverTask(sCtx, rCtx);
+                t.setImmediateDeathState();
             }
-            rCtx.getPool().submit(self);
+            rCtx.getPool().submit(t);
         };
 
         Consumer<Throwable> onError = e -> {
+            RecursiveResolverTask t;
             try {
                 log.warn("Error double-checking our response: {}", ourResponse);
+                t = new RecursiveResolverTask(sCtx, rCtx, new SendResponseState(ourResponse));
                 DoubleCheckResultState.doubleCheckResults.labels("error").inc();
-                self.setState(new SendResponseState(ourResponse));
             } catch (StateTransitionCountLimitExceededException e2) {
-                self.setImmediateDeathState();
+                t = new RecursiveResolverTask(sCtx, rCtx);
+                t.setImmediateDeathState();
             }
-            rCtx.getPool().submit(self);
+            rCtx.getPool().submit(t);
         };
 
         try {
@@ -74,6 +73,7 @@ public class DoubleCheckSendState implements RequestState {
         } catch (UnknownHostException e) {
             throw new NameResolutionException(e);
         }
+        return Optional.empty();
     }
 
     @Override

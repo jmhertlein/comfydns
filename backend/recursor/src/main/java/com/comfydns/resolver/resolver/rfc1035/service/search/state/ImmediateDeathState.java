@@ -4,10 +4,12 @@ import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 
+import java.util.Optional;
+
 public class ImmediateDeathState implements RequestState {
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
-        throw new StateTransitionCountLimitExceededException("Limit: " + RecursiveResolverTask.STATE_TRANSITION_COUNT_LIMIT);
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
+        throw new StateTransitionCountLimitExceededException("Limit: " + SearchContext.STATE_TRANSITION_COUNT_LIMIT);
     }
 
     @Override

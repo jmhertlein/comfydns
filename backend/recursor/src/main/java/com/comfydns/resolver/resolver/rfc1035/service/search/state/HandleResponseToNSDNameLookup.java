@@ -7,16 +7,12 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.ARData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class HandleResponseToNSDNameLookup implements RequestState {
@@ -30,7 +26,7 @@ public class HandleResponseToNSDNameLookup implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
         if(m.getHeader().getRCode() != RCode.NO_ERROR) {
             log.debug("A IN record search for " + serversInQuestion.stream().map(SList.SListServer::getHostname).collect(Collectors.joining(",")) +
                     " yielded an RCode of " + m.getHeader().getRCode().name() + ": " + m.getHeader().getRCode().getExplanation());
@@ -68,8 +64,7 @@ public class HandleResponseToNSDNameLookup implements RequestState {
             }
         }
 
-        self.setState(new FindBestServerToAsk());
-        self.run();
+        return Optional.of(new FindBestServerToAsk());
     }
 
     @Override

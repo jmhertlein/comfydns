@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SearchContext {
+    public static final int STATE_TRANSITION_COUNT_LIMIT = 128;
     public static final int SUB_QUERY_COUNT_LIMIT = 100;
     private final Request request;
     private final AtomicInteger questionIndex;
@@ -26,6 +27,7 @@ public class SearchContext {
     private Boolean answerAuthoritative;
     private final QSet qSet;
 
+    private int stateTransitionCount;
     private int subQueriesMade;
 
     private String sName;
@@ -47,6 +49,8 @@ public class SearchContext {
 
         sList = new SList();
         setsName(getCurrentQuestion().getQName());
+
+        this.stateTransitionCount = 0;
         subQueriesMade = 0;
 
 
@@ -257,5 +261,16 @@ public class SearchContext {
                 )
         );
         request.answer(m);
+    }
+
+    public void incrementStateTransitionCount() throws StateTransitionCountLimitExceededException {
+        if(stateTransitionCount > STATE_TRANSITION_COUNT_LIMIT) {
+            throw new StateTransitionCountLimitExceededException("Limit: " + STATE_TRANSITION_COUNT_LIMIT);
+        }
+        stateTransitionCount++;
+    }
+
+    public int getStateTransitionCount() {
+        return stateTransitionCount;
     }
 }

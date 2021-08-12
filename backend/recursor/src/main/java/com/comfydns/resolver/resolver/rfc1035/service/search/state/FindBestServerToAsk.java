@@ -4,13 +4,10 @@ import com.comfydns.resolver.resolver.internet.DNSRootZone;
 import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
 import com.comfydns.resolver.resolver.rfc1035.message.LabelCache;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.RData;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.AAAARData;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.ARData;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.NSRData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -27,7 +25,7 @@ import java.util.stream.Collectors;
 public class FindBestServerToAsk implements RequestState {
     private final Logger log = LoggerFactory.getLogger(FindBestServerToAsk.class);
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, StateTransitionCountLimitExceededException {
         Question q = sCtx.getCurrentQuestion();
         List<String> domains = LabelCache.genSuffixes(sCtx.getSName());
         List<RR<?>> search = null;
@@ -38,9 +36,7 @@ public class FindBestServerToAsk implements RequestState {
              */
             if(rCtx.getAuthorityZones().isAuthoritativeFor(d)) {
                 log.debug("{}We're authoritative for {}, returning NAME_ERROR for {}", sCtx.getRequestLogPrefix(), d, sCtx.getSName());
-                self.setState(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
-                self.run();
-                return;
+                return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
             }
 
             search = sCtx.getOverlay().search(d, KnownRRType.NS, q.getqClass(), OffsetDateTime.now());
@@ -77,8 +73,7 @@ public class FindBestServerToAsk implements RequestState {
             }
         }
 
-        self.setState(new SendServerQuery(false));
-        self.run();
+        return Optional.of(new SendServerQuery(false));
     }
 
     @Override

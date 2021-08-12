@@ -6,14 +6,15 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
-import com.comfydns.resolver.resolver.rfc1035.service.request.InternalRequest;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
+import com.comfydns.resolver.resolver.rfc1035.service.request.InternalRequest;
 import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,7 @@ public class SendNSDNameLookup implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException {
         sCtx.incrementSubQueriesMade();
         if(sCtx.getSubQueriesMade() > SearchContext.SUB_QUERY_COUNT_LIMIT) {
             log.debug("[{}] Reached max subquery count while trying to answer {}",
@@ -58,12 +59,14 @@ public class SendNSDNameLookup implements RequestState {
                 sCtx.getRequest().getId(), sCtx.getCurrentQuestion(), m);
 
         Consumer<Message> onAnswer = message -> {
+            RecursiveResolverTask t;
             try {
-                self.setState(new HandleResponseToNSDNameLookup(message, servers));
+                t = new RecursiveResolverTask(sCtx, rCtx, new HandleResponseToNSDNameLookup(message, servers));
             } catch (StateTransitionCountLimitExceededException e) {
-                self.setImmediateDeathState();
+                t = new RecursiveResolverTask(sCtx, rCtx);
+                t.setImmediateDeathState();
             }
-            rCtx.getPool().submit(self);
+            rCtx.getPool().submit(t);
         };
 
         InternalRequest req = new InternalRequest(m, onAnswer, sCtx.getRequest(), sCtx.getQSet());
@@ -74,6 +77,7 @@ public class SendNSDNameLookup implements RequestState {
         }
 
         rCtx.getRecursiveResolver().resolve(req);
+        return Optional.empty();
     }
 
     @Override

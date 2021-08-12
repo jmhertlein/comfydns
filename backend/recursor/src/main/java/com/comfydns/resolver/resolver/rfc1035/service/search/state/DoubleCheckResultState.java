@@ -8,13 +8,13 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 public class DoubleCheckResultState implements RequestState {
@@ -35,7 +35,7 @@ public class DoubleCheckResultState implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
         Message theirs;
         try {
             theirs = Message.read(theirResponse);
@@ -53,14 +53,12 @@ public class DoubleCheckResultState implements RequestState {
                 (ourResponse.getHeader().getRCode() == theirs.getHeader().getRCode() && (theirs.getHeader().getANCount() > 0 == ourResponse.getHeader().getANCount() > 0))) {
             log.debug("Double-check passed.");
             doubleCheckResults.labels("pass").inc();
-            self.setState(new SendResponseState(ourResponse));
+            return Optional.of(new SendResponseState(ourResponse));
         } else {
             log.warn("Double-check failed: OURS:\n{}\nTHEIRS:\n{}\n", ourResponse, theirs);
-            self.setState(new SendResponseState(theirs));
             doubleCheckResults.labels("fail").inc();
+            return Optional.of(new SendResponseState(theirs));
         }
-        self.run();
-        return;
     }
 
     @Override

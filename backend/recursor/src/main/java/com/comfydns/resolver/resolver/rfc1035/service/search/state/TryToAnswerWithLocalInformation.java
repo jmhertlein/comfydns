@@ -6,7 +6,6 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.CNameRData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
@@ -16,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class TryToAnswerWithLocalInformation implements RequestState {
     private static final Logger log = LoggerFactory.getLogger(TryToAnswerWithLocalInformation.class);
@@ -38,15 +38,13 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             .register();
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, StateTransitionCountLimitExceededException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, StateTransitionCountLimitExceededException {
         Question q = sCtx.getCurrentQuestion();
 
         if(rCtx.getNegativeCache().cachedNegative(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now())) {
             cachedNegativesUsed.inc();
             log.debug("{}Cached negative used.", sCtx.getRequestLogPrefix());
-            self.setState(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
-            self.run();
-            return;
+            return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
         }
 
         List<RRSource> sources = new ArrayList<>();
@@ -60,14 +58,12 @@ public class TryToAnswerWithLocalInformation implements RequestState {
                 sCtx.updateAnswerAuthoritative(source.isAuthoritative());
                 sCtx.nextQuestion();
                 if(sCtx.allQuestionsAnswered()) {
-                    completedRequestStateTransitionCount.labels("no_error").observe(self.getStateTransitionCount());
+                    completedRequestStateTransitionCount.labels("no_error").observe(sCtx.getStateTransitionCount());
                     completedRequestSubQueryCount.labels("no_error").observe(sCtx.getSubQueriesMade());
-                    self.setState(new DoubleCheckSendState(sCtx.buildResponse()));
+                    return Optional.of(new DoubleCheckSendState(sCtx.buildResponse()));
                 } else {
-                    self.setState(new TryToAnswerWithLocalInformation());
+                    return Optional.of(new TryToAnswerWithLocalInformation());
                 }
-                self.run();
-                return;
             }
 
             List<RR<?>> cnameSearch = source.search(sCtx.getSName(), KnownRRType.CNAME, q.getqClass(), OffsetDateTime.now());
@@ -75,21 +71,16 @@ public class TryToAnswerWithLocalInformation implements RequestState {
                 sCtx.addAnswerRR(cnameSearch.get(0));
                 sCtx.updateAnswerAuthoritative(source.isAuthoritative());
                 sCtx.setsName(((CNameRData) cnameSearch.get(0).getRData()).getDomainName());
-                self.setState(new SNameCheckingState());
-                self.run();
-                return;
+                return Optional.of(new SNameCheckingState());
             }
         }
 
         if(sCtx.getRequest().getMessage().getHeader().getRD()) {
-            self.setState(new FindBestServerToAsk());
-            self.run();
+            return Optional.of(new FindBestServerToAsk());
         } else {
             log.debug("{}No local answer found and client did not request recursion.", sCtx.getRequestLogPrefix());
             DoubleCheckResultState.doubleCheckResults.labels("skipped").inc();
-            self.setState(new SendResponseState(sCtx.buildNameErrorResponse()));
-            self.run();
-            return;
+            return Optional.of(new SendResponseState(sCtx.buildNameErrorResponse()));
         }
     }
 

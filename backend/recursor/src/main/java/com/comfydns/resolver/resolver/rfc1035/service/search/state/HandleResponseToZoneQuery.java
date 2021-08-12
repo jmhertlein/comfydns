@@ -11,7 +11,6 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
@@ -48,15 +47,13 @@ public class HandleResponseToZoneQuery implements RequestState {
     }
 
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
         if(error != null) {
             serverQueried.incrementFailureCount();
             slistServerFailures.inc();
             sCtx.getQSet().remove(serverQueried.getIp(), sent.getQuestions().get(0));
             log.debug("[{}]: Zone query resulted in error: {} {}", sCtx.getRequest().getId(), error.getClass().getSimpleName(), error.getMessage());
-            self.setState(new SendServerQuery(false));
-            self.run();
-            return;
+            return Optional.of(new SendServerQuery(false));
         }
 
         if(response == null) {
@@ -71,9 +68,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             log.debug("Error while reading zone query response", e);
             serverQueried.incrementFailureCount();
             sCtx.getQSet().remove(serverQueried.getIp(), sent.getQuestions().get(0));
-            self.setState(new SendServerQuery(false));
-            self.run();
-            return;
+            return Optional.of(new SendServerQuery(false));
         } catch (UnsupportedRRTypeException e) {
             throw new OptionalFeatureNotImplementedException("Encountered an unsupported RRType while reading zone response",
                     e);
@@ -88,9 +83,7 @@ public class HandleResponseToZoneQuery implements RequestState {
         if(m.getHeader().getTC()) {
             log.debug("Response had TC=1, retrying via tcp.");
             sCtx.removeFromQSet(serverQueried.getIp(), m.getQuestions().get(0));
-            self.setState(new SendServerQuery(true, sent.getHeader().getId()));
-            self.run();
-            return;
+            return Optional.of(new SendServerQuery(true, sent.getHeader().getId()));
         }
 
 
@@ -101,16 +94,12 @@ public class HandleResponseToZoneQuery implements RequestState {
             case SERVER_FAILURE:
                 serverQueried.incrementFailureCount();
                 log.debug("[{}]: We got a SERVER_FAILURE back from {}: {}", sCtx.getRequest().getId(), serverQueried.getHostname(), m.toString());
-                self.setState(new SendServerQuery(false));
-                self.run();
-                return;
+                return Optional.of(new SendServerQuery(false));
             case REFUSED:
             case NOT_IMPLEMENTED:
             case FORMAT_ERROR:
                 sCtx.getSList().removeServer(serverQueried);
-                self.setState(new SendServerQuery(false));
-                self.run();
-                return;
+                return Optional.of(new SendServerQuery(false));
             case NAME_ERROR:
                 if(m.getHeader().getANCount() > 0 && m.getAnswerRecords().stream().anyMatch(r -> r.getRrType() == KnownRRType.CNAME)) {
                     /*
@@ -122,15 +111,12 @@ public class HandleResponseToZoneQuery implements RequestState {
                     log.debug("[{}] Received authoritative name error.", sCtx.getRequest().getId());
                     handleNegativeCache(rCtx, sCtx, m);
                     log.debug("{}Received authoritative name error.", sCtx.getRequestLogPrefix());
-                    self.setState(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
-                    self.run();
+                    return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
                 } else {
                     log.debug("[{}] Received non-authoritative name error.", sCtx.getRequest().getId());
                     sCtx.getSList().removeServer(serverQueried);
-                    self.setState(new SendServerQuery(false));
-                    self.run();
+                    return Optional.of(new SendServerQuery(false));
                 }
-                return;
             default:
                 throw new RuntimeException("Unhandled RCODE:" + rCode);
 
@@ -139,16 +125,12 @@ public class HandleResponseToZoneQuery implements RequestState {
         if(m.getHeader().getANCount() == 0 && m.getHeader().getNSCount() == 0) {
             log.debug("Server gave us an empty response, what the heck.");
             sCtx.getSList().removeServer(serverQueried);
-            self.setState(new SendServerQuery(false));
-            self.run();
-            return;
+            return Optional.of(new SendServerQuery(false));
         }
 
         if(handleNegativeCache(rCtx, sCtx, m)) {
             log.debug("{}Received negative cache instruction (SOA record) + NAME_ERROR", sCtx.getRequestLogPrefix());
-            self.setState(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
-            self.run();
-            return;
+            return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
         }
 
 
@@ -182,9 +164,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             if(!badRecords.isEmpty()) {
                 serverQueried.incrementFailureCount();
                 sCtx.getQSet().remove(serverQueried.getIp(), m.getQuestions().get(0));
-                self.setState(new SendServerQuery(false));
-                self.run();
-                return;
+                return Optional.of(new SendServerQuery(false));
             }
         }
 
@@ -196,8 +176,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             }
         }
 
-        self.setState(new TryToAnswerWithLocalInformation());
-        self.run();
+        return Optional.of(new TryToAnswerWithLocalInformation());
     }
 
     private boolean handleNegativeCache(ResolverContext rCtx, SearchContext sCtx, Message m) throws CacheAccessException {

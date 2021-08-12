@@ -1,35 +1,34 @@
 package com.comfydns.resolver.resolver.rfc1035.service.search.state;
 
 import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
-import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ZoneTransferState implements RequestState {
     private static final Logger log = LoggerFactory.getLogger(ZoneTransferState.class);
     @Override
-    public void run(ResolverContext rCtx, SearchContext sCtx, RecursiveResolverTask self) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
+    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
         log.info("AXFR starting.");
         if(!rCtx.getRecursiveResolver().getAllowZoneTransferToAddresses()
             .contains(sCtx.getRequest().getRemoteAddress().get())) {
             sCtx.sendRefusedResponse("Zone transfer refused.");
             log.info("Zone transfer refused from {}", sCtx.getRequest().getRemoteAddress().orElse(InetAddress.getLoopbackAddress()));
-            return;
+            return Optional.empty();
         }
 
         if(sCtx.getRequest().transportIsTruncating()) {
             sCtx.sendRefusedResponse("Please only do AXFR's over TCP.");
             log.info("Refused to AXFR over UDP.");
-            return;
+            return Optional.empty();
         }
 
         List<RR<SOARData>> soas = rCtx.getAuthorityZones().getSOAs().stream().filter(soa -> soa.getName().equals(sCtx.getSName()))
@@ -48,8 +47,7 @@ public class ZoneTransferState implements RequestState {
         Message resp = sCtx.buildResponse();
         log.info("ZONE TRANSFER RESPONSE:\n{}", resp);
         log.info("{}Zone transfer complete.", sCtx.getRequestLogPrefix());
-        self.setState(new SendResponseState(resp));
-        self.run();
+        return Optional.of(new SendResponseState(resp));
     }
 
     @Override
