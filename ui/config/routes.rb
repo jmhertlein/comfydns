@@ -30,4 +30,6 @@ Rails.application.routes.draw do
   delete "/block_list_client_config/:id", to: "block_list#destroy_client_config"
 
   post "/flag/:flag", to: "block_list#set_flag"
+
+  get "/qtrace", to: "qtrace#index"
 end

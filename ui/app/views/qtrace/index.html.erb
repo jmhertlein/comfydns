@@ -1,0 +1,23 @@
+<h1>Query Trace</h1>
+
+<%= form_with url: "/qtrace", class: "row 
+  d-flex 
+  flex-sm-row 
+  align-items-sm-end 
+  align-items-center
+  justify-content-center 
+  justify-content-sm-between
+  flex-column
+  ", method: :get, local: true do |form| %>
+  <div class="col">
+    <%= form.label :name, "Domain name" %>
+    <%= form.text_field :name, class: "form-control", placeholder: "comfydns.com", autocomplete: "off" %>
+  </div>
+  <div class="col">
+    <%= form.label :host_mask, "Query Type" %>
+    <%= form.select :qtype, @supported_qtypes, {}, class: "form-select", autocomplete: "off" %>
+  </div>
+  <div class="col mt-2 m-sm-0">
+    <%= form.submit "Trace", class: "btn btn-primary m-auto m-sm-0 d-block d-sm-inline" %>
+  </div>
+<% end %>
