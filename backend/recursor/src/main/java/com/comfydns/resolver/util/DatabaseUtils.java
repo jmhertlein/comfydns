@@ -1,7 +1,7 @@
 package com.comfydns.resolver.util;
 
 
-import com.comfydns.resolver.resolver.rfc1035.cache.impl.AuthoritativeRecordsContainer;
+import com.comfydns.resolver.resolver.rfc1035.cache.AuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import org.slf4j.Logger;
@@ -37,7 +37,7 @@ public class DatabaseUtils {
         }
     }
 
-    public static void updateServerAuthoritativeZoneState(Connection c, AuthoritativeRecordsContainer container, UUID serverId) throws SQLException {
+    public static void updateServerAuthoritativeZoneState(Connection c, AuthorityRRSource container, UUID serverId) throws SQLException {
         // delete what's there
         try(PreparedStatement ps = c.prepareStatement("delete from server_authority_state where server_id=?")) {
             ps.setObject(1, serverId);

@@ -1,7 +1,7 @@
 package com.comfydns.resolver.resolver.rfc1035.cache.impl;
 
+import com.comfydns.resolver.resolver.rfc1035.cache.AuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.RR2Tuple;
-import com.comfydns.resolver.resolver.rfc1035.cache.RRSource;
 import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
 import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QClass;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * An RRSource that is immutable and specifically holds RRs that the server is authoritative for.
  */
 
-public class AuthoritativeRecordsContainer implements RRSource {
+public class AuthoritativeRecordsContainer implements AuthorityRRSource {
     private static final Logger log = LoggerFactory.getLogger(AuthoritativeRecordsContainer.class);
 
     private final Map<String, Map<RR2Tuple, List<RR<?>>>> zoneRecords;
@@ -45,7 +45,7 @@ public class AuthoritativeRecordsContainer implements RRSource {
         authoritativeForDomains = Set.of();
     }
 
-    public static AuthoritativeRecordsContainer load(Connection c) throws SQLException, InvalidMessageException, UnsupportedRRTypeException {
+    public static AuthorityRRSource load(Connection c) throws SQLException, InvalidMessageException, UnsupportedRRTypeException {
         List<RR<?>> records = new ArrayList<>();
 
         List<RR<SOARData>> soaRecords = new ArrayList<>();
@@ -164,10 +164,12 @@ public class AuthoritativeRecordsContainer implements RRSource {
         return ret;
     }
 
+    @Override
     public boolean isAuthoritativeFor(String domain) {
         return authoritativeForDomains.contains(domain);
     }
 
+    @Override
     public Set<String> getAuthoritativeForDomains() {
         return authoritativeForDomains;
     }
@@ -179,10 +181,12 @@ public class AuthoritativeRecordsContainer implements RRSource {
         rrs.add(record);
     }
 
+    @Override
     public List<String> getNames() {
         return new ArrayList<>(zoneRecords.keySet());
     }
 
+    @Override
     public List<RR<SOARData>> getSOAs() {
         List<RR<SOARData>> ret = new ArrayList<>();
         for (Map.Entry<String, Map<RR2Tuple, List<RR<?>>>> e : zoneRecords.entrySet()) {
@@ -202,10 +206,6 @@ public class AuthoritativeRecordsContainer implements RRSource {
     }
 
     @Override
-    public boolean isAuthoritative() {
-        return true;
-    }
-
     public List<RR<?>> getZoneTransferPayload(String zoneName) {
         return zoneRecords.values().stream()
                 .flatMap(m -> m.values().stream()

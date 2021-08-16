@@ -1,5 +1,6 @@
 package com.comfydns.resolver.task;
 
+import com.comfydns.resolver.resolver.rfc1035.cache.AuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.AuthoritativeRecordsContainer;
 import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
@@ -35,7 +36,7 @@ public class ReloadZonesTask implements Task {
         log.debug("Starting zone reload.");
         context.getResolver().getAuthorityZonesLock().lock();
         try {
-            AuthoritativeRecordsContainer newZones = AuthoritativeRecordsContainer.load(c);
+            AuthorityRRSource newZones = AuthoritativeRecordsContainer.load(c);
             DatabaseUtils.updateServerAuthoritativeZoneState(c, newZones, context.getServerId());
             context.getResolver().setAuthorityZones(newZones);
             log.info("Finished zone reload.");

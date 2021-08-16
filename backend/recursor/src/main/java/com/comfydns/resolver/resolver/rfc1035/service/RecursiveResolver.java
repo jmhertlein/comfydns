@@ -2,6 +2,7 @@ package com.comfydns.resolver.resolver.rfc1035.service;
 
 import com.comfydns.resolver.resolver.block.DomainBlocker;
 import com.comfydns.resolver.resolver.block.NoOpDomainBlocker;
+import com.comfydns.resolver.resolver.rfc1035.cache.AuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.AuthoritativeRecordsContainer;
 import com.comfydns.resolver.resolver.rfc1035.cache.NegativeCache;
@@ -29,7 +30,7 @@ public class RecursiveResolver {
     private final TruncatingTransport primary;
     private final NonTruncatingTransport fallback;
     private final ReentrantLock authorityZonesLock;
-    private volatile AuthoritativeRecordsContainer authorityZones;
+    private volatile AuthorityRRSource authorityZones;
     private volatile DomainBlocker domainBlocker;
     private final Set<InetAddress> allowZoneTransferToAddresses;
 
@@ -49,7 +50,7 @@ public class RecursiveResolver {
         this.domainBlocker = new NoOpDomainBlocker();
     }
 
-    public void setAuthorityZones(AuthoritativeRecordsContainer authorityZones) throws CacheAccessException {
+    public void setAuthorityZones(AuthorityRRSource authorityZones) throws CacheAccessException {
         if(!authorityZonesLock.isHeldByCurrentThread()) {
             throw new IllegalStateException("Lock not held by current thread!");
         }
@@ -69,7 +70,7 @@ public class RecursiveResolver {
         return authorityZonesLock;
     }
 
-    public AuthoritativeRecordsContainer getAuthorityZones() {
+    public AuthorityRRSource getAuthorityZones() {
         return authorityZones;
     }
 

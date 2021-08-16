@@ -3,6 +3,7 @@ package com.comfydns.resolver.resolver;
 import com.comfydns.resolver.resolver.block.DBDomainBlocker;
 import com.comfydns.resolver.resolver.block.DomainBlocker;
 import com.comfydns.resolver.resolver.block.NoOpDomainBlocker;
+import com.comfydns.resolver.resolver.rfc1035.cache.AuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBNegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.AuthoritativeRecordsContainer;
@@ -135,7 +136,7 @@ public class ComfyResolverThread implements Runnable {
         resolver.getAuthorityZonesLock().lock();
         try(Connection c = dbPool.getConnection().get()) {
             c.setAutoCommit(false);
-            AuthoritativeRecordsContainer container = AuthoritativeRecordsContainer.load(c);
+            AuthorityRRSource container = AuthoritativeRecordsContainer.load(c);
             DatabaseUtils.updateServerAuthoritativeZoneState(c, container, serverId);
             c.commit();
             resolver.setAuthorityZones(container);
