@@ -6,6 +6,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.MalformedLabelException;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolver.rfc1035.message.write.Writeable;
+import com.google.gson.JsonObject;
 
 import java.util.Objects;
 
@@ -81,5 +82,13 @@ public class Question implements Writeable {
     @Override
     public int hashCode() {
         return Objects.hash(qName, qType, qClass);
+    }
+
+    public JsonObject toJson() {
+        JsonObject ret = new JsonObject();
+        ret.addProperty("qname", qName);
+        ret.addProperty("qtype", qType.getIntValue());
+        ret.addProperty("qclass", qClass.getIntValue());
+        return ret;
     }
 }

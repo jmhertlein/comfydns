@@ -1,6 +1,7 @@
-package com.comfydns.resolver.resolver.rfc1035.service.request;
+package com.comfydns.resolver.resolver.trace;
 
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
+import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
 import com.comfydns.resolver.resolver.rfc1035.service.search.QSet;
 
 import java.util.function.Consumer;

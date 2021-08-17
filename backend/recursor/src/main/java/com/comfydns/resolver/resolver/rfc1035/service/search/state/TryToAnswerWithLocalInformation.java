@@ -64,7 +64,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
                     completedRequestSubQueryCount.labels("no_error").observe(sCtx.getSubQueriesMade());
                     return Optional.of(new DoubleCheckSendState(sCtx.buildResponse()));
                 } else {
-                    return Optional.of(new TryToAnswerWithLocalInformation());
+                    return Optional.of(new SNameCheckingState());
                 }
             }
 
@@ -72,9 +72,10 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             if(!cnameSearch.isEmpty()) {
                 sCtx.addAnswerRR(cnameSearch.get(0));
                 sCtx.updateAnswerAuthoritative(source.isAuthoritative());
+                String oldSName = sCtx.getSName();
                 sCtx.setsName(((CNameRData) cnameSearch.get(0).getRData()).getDomainName());
                 sCtx.forEachListener(l -> l.onAnswerAdded(cnameSearch.get(0)));
-                sCtx.forEachListener(l -> l.onSNameChange(sCtx.getSName()));
+                sCtx.forEachListener(l -> l.onSNameChange(oldSName, sCtx.getSName()));
                 return Optional.of(new SNameCheckingState());
             }
         }
