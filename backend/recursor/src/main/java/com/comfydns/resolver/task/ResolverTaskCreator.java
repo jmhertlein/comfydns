@@ -12,6 +12,8 @@ public class ResolverTaskCreator implements TaskCreator {
                 return new ReloadZonesTask(d);
             case "RELOAD_ADBLOCK_CONFIG":
                 return new ReloadAdblockingStateTask(d);
+            case "TRACE_QUERY":
+                return new TraceQueryTask(d);
             default:
                 throw new IllegalArgumentException("ResolverTaskCreator does not support task type " + d.getAction());
         }

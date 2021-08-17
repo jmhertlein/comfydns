@@ -9,8 +9,11 @@ import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public abstract class Request {
     protected static final Counter requestsIn = Counter.build()
@@ -27,9 +30,12 @@ public abstract class Request {
     protected final UUID id;
     private final Histogram.Timer requestTimer;
 
+    private final List<RequestListener> listeners;
+
     public Request() {
         id = UUID.randomUUID();
-        requestTimer = requestDurations.labels(isInternal() ? "internal" : "external")
+        listeners = new ArrayList<>();
+        requestTimer = requestDurations.labels(isLocal() ? isSubquery() ? "internal" : "trace" : "external")
         .startTimer();
     }
 
@@ -39,6 +45,10 @@ public abstract class Request {
 
     public Optional<InetAddress> getRemoteAddress() {
         return Optional.empty();
+    }
+
+    public void addListener(RequestListener l) {
+        listeners.add(l);
     }
 
     protected void recordAnswer(Message m, String requestProtocol) {
@@ -62,9 +72,11 @@ public abstract class Request {
         return id;
     }
 
-    public boolean isInternal() {
+    public boolean isSubquery() {
         return false;
     }
+
+    public boolean isLocal() { return false; }
 
     public int getSubqueryDepth() {
         return 0;
@@ -75,4 +87,8 @@ public abstract class Request {
     }
 
     public abstract boolean transportIsTruncating();
+
+    public void forEachListener(Consumer<? super RequestListener> action) {
+        listeners.forEach(action);
+    }
 }

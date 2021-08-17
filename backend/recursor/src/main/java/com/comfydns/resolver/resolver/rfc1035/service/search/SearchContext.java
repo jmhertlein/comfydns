@@ -12,11 +12,13 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
+import com.comfydns.resolver.resolver.rfc1035.service.request.RequestListener;
 import org.slf4j.Logger;
 
 import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 public class SearchContext {
     public static final int STATE_TRANSITION_COUNT_LIMIT = 128;
@@ -185,6 +187,7 @@ public class SearchContext {
         h.setANCount(0);
         m.setHeader(h);
         m.getQuestions().addAll(request.getMessage().getQuestions());
+        request.forEachListener(l -> l.onResponse(m));
         request.answer(m);
     }
 
@@ -208,6 +211,7 @@ public class SearchContext {
                         new TXTRData(message)
                 )
         );
+        request.forEachListener(l -> l.onResponse(m));
         request.answer(m);
     }
 
@@ -227,6 +231,7 @@ public class SearchContext {
         h.setRA(true);
         m.setHeader(h);
         m.getQuestions().addAll(request.getMessage().getQuestions());
+        request.forEachListener(l -> l.onResponse(m));
         request.answer(m);
     }
 
@@ -260,6 +265,7 @@ public class SearchContext {
                         new TXTRData(reason)
                 )
         );
+        request.forEachListener(l -> l.onResponse(m));
         request.answer(m);
     }
 
@@ -272,5 +278,9 @@ public class SearchContext {
 
     public int getStateTransitionCount() {
         return stateTransitionCount;
+    }
+
+    public void forEachListener(Consumer<? super RequestListener> action) {
+        request.forEachListener(action);
     }
 }

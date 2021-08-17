@@ -30,7 +30,7 @@ public class DoubleCheckSendState implements RequestState {
             return Optional.of(new SendResponseState(ourResponse));
         }
 
-        if(sCtx.getRequest().isInternal()) {
+        if(sCtx.getRequest().isSubquery()) {
             log.debug("Skipping double-check - internal request.");
             DoubleCheckResultState.doubleCheckResults.labels("skipped").inc();
             return Optional.of(new SendResponseState(ourResponse));

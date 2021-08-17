@@ -24,7 +24,7 @@ public class InitialCheckingState implements RequestState {
 
         for (Question q : sCtx.getRequest().getMessage().getQuestions()) {
             dnsQuestions.labels(q.getqType() instanceof KnownRRType ? q.getqType().getType().toLowerCase() : "other",
-                    sCtx.getRequest().isInternal() ? "internal" : "external");
+                    sCtx.getRequest().isSubquery() ? "internal" : "external");
         }
 
         if(sCtx.getRequest().getMessage().getQuestions().stream().anyMatch(q -> q.getqType() == QOnlyType.AXFR)) {

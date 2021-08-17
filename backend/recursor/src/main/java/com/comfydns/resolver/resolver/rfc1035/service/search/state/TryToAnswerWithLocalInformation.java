@@ -44,6 +44,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
         if(rCtx.getNegativeCache().cachedNegative(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now())) {
             cachedNegativesUsed.inc();
             log.debug("{}Cached negative used.", sCtx.getRequestLogPrefix());
+            sCtx.forEachListener(l -> l.onNegativeCacheUse(sCtx.getSName(), q.getqType(), q.getqClass()));
             return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
         }
 
@@ -51,10 +52,11 @@ public class TryToAnswerWithLocalInformation implements RequestState {
         sources.add(rCtx.getAuthorityZones());
         sources.add(sCtx.getOverlay());
         for (RRSource source : sources) {
-            List<RR<?>> potentialAnswer = source.search(
+            List<RR<?>> cachedAnswer = source.search(
                     sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
-            if(!potentialAnswer.isEmpty()) {
-                potentialAnswer.forEach(sCtx::addAnswerRR);
+            if(!cachedAnswer.isEmpty()) {
+                cachedAnswer.forEach(sCtx::addAnswerRR);
+                cachedAnswer.forEach(a -> sCtx.forEachListener(l -> l.onAnswerAdded(a)));
                 sCtx.updateAnswerAuthoritative(source.isAuthoritative());
                 sCtx.nextQuestion();
                 if(sCtx.allQuestionsAnswered()) {
@@ -71,6 +73,8 @@ public class TryToAnswerWithLocalInformation implements RequestState {
                 sCtx.addAnswerRR(cnameSearch.get(0));
                 sCtx.updateAnswerAuthoritative(source.isAuthoritative());
                 sCtx.setsName(((CNameRData) cnameSearch.get(0).getRData()).getDomainName());
+                sCtx.forEachListener(l -> l.onAnswerAdded(cnameSearch.get(0)));
+                sCtx.forEachListener(l -> l.onSNameChange(sCtx.getSName()));
                 return Optional.of(new SNameCheckingState());
             }
         }

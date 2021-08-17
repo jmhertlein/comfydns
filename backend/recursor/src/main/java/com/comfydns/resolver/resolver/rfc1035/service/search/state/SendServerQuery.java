@@ -114,6 +114,7 @@ public class SendServerQuery implements RequestState {
 
         log.debug("[{}]: QUERY: {} ({})", sCtx.getRequest().getId(), bestServer.getHostname(), bestServer.getIp());
         sCtx.addToQSet(bestServer.getIp(), m.getQuestions().get(0));
+        sCtx.forEachListener(l -> l.onUpstreamQuerySent(m, bestServer));
         externalQueriesSent.inc();
         if(useNonTruncating) {
             if(useId != null) {

@@ -35,7 +35,7 @@ public class InternalRequest extends Request {
     }
 
     @Override
-    public boolean isInternal() {
+    public boolean isSubquery() {
         return true;
     }
 
@@ -51,6 +51,11 @@ public class InternalRequest extends Request {
 
     public Request getParent() {
         return parent;
+    }
+
+    @Override
+    public boolean isLocal() {
+        return true;
     }
 
     @Override

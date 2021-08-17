@@ -14,6 +14,7 @@ public class SendResponseState implements RequestState {
     }
     @Override
     public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
+        sCtx.forEachListener(l -> l.onResponse(response));
         sCtx.getRequest().answer(response);
         return Optional.empty();
     }

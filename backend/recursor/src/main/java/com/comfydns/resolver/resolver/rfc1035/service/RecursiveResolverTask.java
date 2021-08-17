@@ -40,11 +40,14 @@ public class RecursiveResolverTask implements Runnable {
                 run();
             }
         } catch(OptionalFeatureNotImplementedException e) {
+            sCtx.forEachListener(l -> l.onException(e));
             sCtx.sendNotImplemented();
         } catch (CacheAccessException | NameResolutionException | StateTransitionCountLimitExceededException e) {
+            sCtx.forEachListener(l -> l.onException(e));
             log.debug("[" + sCtx.getRequest().getId() + "]: Returning SERVER_FAILURE to client for request: " + sCtx.getRequest().getMessage(), e);
             sCtx.sendOops("Sorry, something went wrong.");
         } catch(Throwable t) {
+            sCtx.forEachListener(l -> l.onException(t));
             int idx = sCtx.getQuestionIndex().get();
             if(idx < sCtx.getRequest().getMessage().getQuestions().size()) {
                 log.debug(String.format("[%s]: Unhandled exception for question: %s", sCtx.getRequest().getId(),

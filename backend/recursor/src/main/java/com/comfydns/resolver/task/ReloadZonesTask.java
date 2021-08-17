@@ -16,7 +16,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public class ReloadZonesTask implements Task {
-    private final Logger log = LoggerFactory.getLogger(ReloadZonesTask.class);
+    private static final Logger log = LoggerFactory.getLogger(ReloadZonesTask.class);
     private final TaskDefinition def;
 
     public ReloadZonesTask(TaskDefinition d) {

@@ -52,6 +52,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             serverQueried.incrementFailureCount();
             slistServerFailures.inc();
             sCtx.getQSet().remove(serverQueried.getIp(), sent.getQuestions().get(0));
+            sCtx.forEachListener(l -> l.onUpstreamQueryResult(serverQueried, Optional.empty(), Optional.of(error)));
             log.debug("[{}]: Zone query resulted in error: {} {}", sCtx.getRequest().getId(), error.getClass().getSimpleName(), error.getMessage());
             return Optional.of(new SendServerQuery(false));
         }
@@ -68,11 +69,14 @@ public class HandleResponseToZoneQuery implements RequestState {
             log.debug("Error while reading zone query response", e);
             serverQueried.incrementFailureCount();
             sCtx.getQSet().remove(serverQueried.getIp(), sent.getQuestions().get(0));
+            sCtx.forEachListener(l -> l.onUpstreamQueryResult(serverQueried, Optional.empty(), Optional.of(e)));
             return Optional.of(new SendServerQuery(false));
         } catch (UnsupportedRRTypeException e) {
             throw new OptionalFeatureNotImplementedException("Encountered an unsupported RRType while reading zone response",
                     e);
         }
+
+        sCtx.forEachListener(l -> l.onUpstreamQueryResult(serverQueried, Optional.of(m), Optional.empty()));
 
         if(m.getHeader().getId() != sent.getHeader().getId()) {
             log.warn("[{}]: Received message w/ nonmatching ID: expected {} but found {}", sCtx.getRequest().getId(), sent.getHeader().getId(), m.getHeader().getId());
@@ -162,6 +166,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             rrs.removeAll(badRecords);
         } else {
             if(!badRecords.isEmpty()) {
+                sCtx.forEachListener(l -> l.remark("Server " + serverQueried + " had NS records that needed glue records but had no glue records. Filtering results and treating request as failed."));
                 serverQueried.incrementFailureCount();
                 sCtx.getQSet().remove(serverQueried.getIp(), m.getQuestions().get(0));
                 return Optional.of(new SendServerQuery(false));

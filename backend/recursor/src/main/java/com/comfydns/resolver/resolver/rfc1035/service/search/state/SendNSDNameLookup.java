@@ -45,7 +45,7 @@ public class SendNSDNameLookup implements RequestState {
 
         // first check to see if we're going to loop...
         Request tmp = sCtx.getRequest();
-        while(tmp.isInternal()) {
+        while(tmp.isSubquery()) {
             tmp = ((InternalRequest) tmp).getParent();
             for(Question q : questions) {
                 if(tmp.getMessage().getQuestions().contains(q)) {
@@ -76,6 +76,7 @@ public class SendNSDNameLookup implements RequestState {
             throw new NameResolutionException("Hit max subquery depth. Failing.");
         }
 
+        sCtx.forEachListener(l -> l.onSubquerySent(m));
         rCtx.getRecursiveResolver().resolve(req);
         return Optional.empty();
     }

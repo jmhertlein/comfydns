@@ -74,8 +74,12 @@ public class RecursiveResolver {
         return authorityZones;
     }
 
+    /**
+     * Submits a Request to the resolver. This method returns immediately and does not block.
+     * @param r
+     */
     public void resolve(Request r) {
-        if(!r.isInternal()) {
+        if(!r.isSubquery()) {
             Optional<InetAddress> rAddr = r.getRemoteAddress();
             for (Question q : r.getMessage().getQuestions()) {
                 log.info("[Q] [{}]: {} | {}", rAddr.map(InetAddress::getHostAddress).orElse("N/A"), q, r.getId());
