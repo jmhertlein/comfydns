@@ -4,10 +4,8 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.query.QClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.search.SList;
 
 public abstract class TraceEntry {
-
     private final TraceEntryType type;
 
     protected TraceEntry(TraceEntryType type) {
@@ -16,7 +14,7 @@ public abstract class TraceEntry {
 
     public static class AnswerAddedEntry extends TraceEntry {
         private final RR<?> answerRecord;
-        protected AnswerAddedEntry(RR<?> rr) {
+        public AnswerAddedEntry(RR<?> rr) {
             super(TraceEntryType.ANSWER_ADDED);
             this.answerRecord = rr;
         }
@@ -24,31 +22,31 @@ public abstract class TraceEntry {
 
     public static class UpstreamQuerySentEntry extends TraceEntry {
         private final Message sent;
-        private final SList.SListServer destination;
+        private final String destHostname;
 
-        protected UpstreamQuerySentEntry(Message m, SList.SListServer destination) {
+        public UpstreamQuerySentEntry(Message m, String destination) {
             super(TraceEntryType.UPSTREAM_QUERY_SENT);
             this.sent = m;
-            this.destination = destination;
+            this.destHostname = destination;
         }
     }
 
     public static class UpstreamQueryResultEntry extends TraceEntry {
         private final Message result;
-        private final SList.SListServer destination;
+        private final String destHostname;
         private final Throwable error;
 
-        protected UpstreamQueryResultEntry(Message m, SList.SListServer destination) {
+        public UpstreamQueryResultEntry(Message m, String destination) {
             super(TraceEntryType.UPSTREAM_QUERY_RESULT);
             this.result = m;
-            this.destination = destination;
+            this.destHostname = destination;
             this.error = null;
         }
 
-        protected UpstreamQueryResultEntry(Throwable t, SList.SListServer destination) {
+        public UpstreamQueryResultEntry(Throwable t, String destination) {
             super(TraceEntryType.UPSTREAM_QUERY_RESULT);
             this.result = null;
-            this.destination = destination;
+            this.destHostname = destination;
             this.error = t;
         }
     }

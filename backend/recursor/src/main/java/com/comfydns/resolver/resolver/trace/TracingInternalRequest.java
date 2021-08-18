@@ -9,11 +9,18 @@ import java.util.function.Consumer;
 public class TracingInternalRequest extends Request {
     private final Message request;
     private final Consumer<Message> onAnswer;
+    private final Tracer tracer;
 
     public TracingInternalRequest(Message request, Consumer<Message> onAnswer) {
         this.request = request;
         this.onAnswer = onAnswer;
         requestsIn.labels("trace").inc();
+        tracer = new Tracer();
+        addListener(tracer);
+    }
+
+    public Tracer getTracer() {
+        return tracer;
     }
 
     @Override

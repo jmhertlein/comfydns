@@ -14,10 +14,14 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.UnknownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
+import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
 import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.AsyncTruncatingTransport;
+import com.comfydns.resolver.resolver.trace.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
@@ -249,6 +253,47 @@ public class ResolverIntegrationTest {
         } finally {
             stateMachinePool.shutdown();
         }
+    }
+
+    @Test
+    public void testTraceQuery() throws ExecutionException, InterruptedException {
+        ExecutorService stateMachinePool = Executors.newCachedThreadPool();
+        CompletableFuture<Message> fM = new CompletableFuture<>();
+        Message m = new Message();
+        Header h = new Header();
+        h.setQDCount(1);
+        h.setRD(true);
+        m.getQuestions().add(new Question(
+                "comfydns.com",
+                KnownRRType.A,
+                KnownRRClass.IN
+        ));
+        m.setHeader(h);
+        TracingInternalRequest req = new TracingInternalRequest(m, fM::complete);
+        try {
+            RecursiveResolver r = new RecursiveResolver(
+                    stateMachinePool, new InMemoryDNSCache(),
+                    new InMemoryNegativeCache(), new AsyncTruncatingTransport(),
+                    new AsyncNonTruncatingTransport(),
+                    new HashSet<>());
+            r.resolve(req);
+            Message message = fM.get();
+            // call write just to exercise that code path
+            message.write();
+            System.out.println(message);
+        } finally {
+            stateMachinePool.shutdown();
+        }
+
+        Tracer tracer = req.getTracer();
+        Gson gson = (new GsonBuilder())
+                .setPrettyPrinting()
+                .registerTypeAdapter(Throwable.class, new ThrowableSerializer())
+                .registerTypeAdapter(Message.class, new MessageCodec())
+                .registerTypeAdapter(RR.class, new RRCodec())
+                .registerTypeAdapter(Header.class, new HeaderCodec())
+                .create();
+        System.out.println(gson.toJson(tracer.getEntries()));
     }
 
     @Test

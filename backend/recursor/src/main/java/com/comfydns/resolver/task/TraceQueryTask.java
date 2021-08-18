@@ -4,6 +4,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
+import com.comfydns.resolver.resolver.trace.Tracer;
 import com.comfydns.resolver.resolver.trace.TracingInternalRequest;
 import com.comfydns.util.task.Task;
 import com.comfydns.util.task.TaskContext;
@@ -15,12 +16,11 @@ public class TraceQueryTask implements Task {
     private static final Logger log = LoggerFactory.getLogger(TraceQueryTask.class);
     private final TaskDefinition def;
 
+    private final TracingInternalRequest req;
+
     public TraceQueryTask(TaskDefinition def) {
         this.def = def;
-    }
 
-    @Override
-    public void run(TaskContext context) throws Exception {
         String qname = def.getArgs().get("qname").getAsString();
         int qtype = def.getArgs().get("qtype").getAsInt();
 
@@ -29,9 +29,13 @@ public class TraceQueryTask implements Task {
         m.getHeader().setQDCount(1);
         m.getHeader().setRD(true);
         m.getHeader().setIdRandomly();
-        m.validateHeader();
 
-        TracingInternalRequest req = new TracingInternalRequest(m, this::onAnswer);
+        req = new TracingInternalRequest(m, this::onAnswer);
+    }
+
+    @Override
+    public void run(TaskContext context) throws Exception {
+        req.getMessage().validateHeader();
 
         if(!(context instanceof ResolverTaskContext)) {
             throw new IllegalStateException("TraceQueryTask requires a ResolverTaskContext");
@@ -44,6 +48,9 @@ public class TraceQueryTask implements Task {
 
     private void onAnswer(Message m) {
         log.info("Trace query returned.");
+
+        Tracer tracer = req.getTracer();
+        // write to db
     }
 
     @Override
