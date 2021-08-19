@@ -1,4 +1,6 @@
-<h1>Query Trace</h1>
+<div class="row m-3">
+  <h1>Query Trace</h1>
+</div>
 
 <% if @servers.empty? %>
   <p>You have no servers configured. Go set one up, then come back here.</p>
@@ -11,6 +13,8 @@
   justify-content-center 
   justify-content-sm-between
   flex-column
+  m-3
+  card card-body bg-light
   ", method: :post, local: true do |form| %>
   <div class="col">
     <%= form.label :qname, "Domain name" %>
@@ -27,8 +31,27 @@
   <% else %>
     <%= form.hidden_field :server_id, value: @servers[0].id %>
   <% end %>
-  <div class="col mt-2 m-sm-0">
+  <div class="col-2 mt-2 m-sm-0">
     <%= form.submit "Trace", class: "btn btn-primary m-auto m-sm-0 d-block d-sm-inline" %>
   </div>
 <% end %>
 <% end %>
+
+<div class="row justify-content-center">
+  <div class="col-6">
+    <table class="table">
+      <thead>
+        <th>Query</th>
+        <th>Action</th>
+      </thead>
+      <tbody>
+      <% @traces.each do |trace| %>
+      <tr>
+        <td><%= "#{trace.qname} #{trace.qtype} #{trace.qclass}" %></td>
+        <td><a href=<%= "/qtrace/#{trace.id}" %> class="button">View</a></td>
+      </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

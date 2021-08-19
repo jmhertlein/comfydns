@@ -7,6 +7,8 @@ class QtraceController < ApplicationController
       .map{|l,r| [l, l]}
 
     @servers = Server.all
+
+    @traces = Trace.all
   end
 
   def qtrace
@@ -26,5 +28,24 @@ class QtraceController < ApplicationController
     server = Server.find(params[:server_id])
     
     Task.create!(action: "TRACE_QUERY", server_id: server.id, args: {qname: qname, qtype: qtype})
+
+    redirect_to "/qtrace/", notice: "Trace submitted: #{qname} #{raw_qtype} IN."
+  end
+
+  def destroy
+    id = params['id']
+    Trace.find(id).delete!
+  end
+
+  def view
+    id = params['id']
+    @trace = Trace.find(id)
+
+    if @trace.nil?
+      redirect_to "/qtrace", alert: "No such trace with id #{id}"
+      return
+    end
+
+    @events = TraceEvent.where(trace_id: @trace.id)
   end
 end

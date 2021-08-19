@@ -1,0 +1,11 @@
+<div class="col">
+  <div class="row">
+    <h2><%= "Trace: #{@trace.qname} #{@trace.qtype} #{@trace.qclass}" %></h2>
+  </div>
+
+  <% @events.each do |e| %>
+    <div class="row">
+      <%= e.event_type %>
+    </div>
+  <% end %>
+</div>

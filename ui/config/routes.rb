@@ -33,4 +33,6 @@ Rails.application.routes.draw do
 
   get "/qtrace", to: "qtrace#index"
   post "/qtrace", to: "qtrace#qtrace"
+  delete "/qtrace/:id", to: "qtrace#destroy"
+  get "/qtrace/:id", to: "qtrace#view"
 end
