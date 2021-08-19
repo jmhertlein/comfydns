@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_09_141532) do
+ActiveRecord::Schema.define(version: 2021_08_18_201336) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -137,6 +137,23 @@ ActiveRecord::Schema.define(version: 2021_04_09_141532) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  create_table "trace", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "task_id", null: false
+    t.string "qname", null: false
+    t.integer "qtype", null: false
+    t.integer "qclass", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "trace_event", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "trace_id", null: false
+    t.string "event_type", null: false
+    t.jsonb "event", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "user", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -165,4 +182,6 @@ ActiveRecord::Schema.define(version: 2021_04_09_141532) do
   add_foreign_key "server_block_list_state", "server", on_delete: :cascade
   add_foreign_key "start_of_authority", "zone", on_delete: :cascade
   add_foreign_key "task", "server", on_delete: :cascade
+  add_foreign_key "trace", "task", on_delete: :cascade
+  add_foreign_key "trace_event", "trace", on_delete: :cascade
 end

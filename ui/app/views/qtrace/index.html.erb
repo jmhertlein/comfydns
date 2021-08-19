@@ -1,5 +1,8 @@
 <h1>Query Trace</h1>
 
+<% if @servers.empty? %>
+  <p>You have no servers configured. Go set one up, then come back here.</p>
+<% else %>
 <%= form_with url: "/qtrace", class: "row 
   d-flex 
   flex-sm-row 
@@ -8,16 +11,24 @@
   justify-content-center 
   justify-content-sm-between
   flex-column
-  ", method: :get, local: true do |form| %>
+  ", method: :post, local: true do |form| %>
   <div class="col">
-    <%= form.label :name, "Domain name" %>
-    <%= form.text_field :name, class: "form-control", placeholder: "comfydns.com", autocomplete: "off" %>
+    <%= form.label :qname, "Domain name" %>
+    <%= form.text_field :qname, class: "form-control", placeholder: "comfydns.com", autocomplete: "off" %>
   </div>
   <div class="col">
-    <%= form.label :host_mask, "Query Type" %>
+    <%= form.label :qtype, "Query Type" %>
     <%= form.select :qtype, @supported_qtypes, {}, class: "form-select", autocomplete: "off" %>
   </div>
+  <% if @servers.size > 1 %>
+    <div class="col">
+    <%= form.label :server_id, "Server" %>
+    <%= form.select :server_id, @servers.map{|s| s.id}, {}, class: "form-select", autocomplete: "off" %>
+  <% else %>
+    <%= form.hidden_field :server_id, value: @servers[0].id %>
+  <% end %>
   <div class="col mt-2 m-sm-0">
     <%= form.submit "Trace", class: "btn btn-primary m-auto m-sm-0 d-block d-sm-inline" %>
   </div>
+<% end %>
 <% end %>

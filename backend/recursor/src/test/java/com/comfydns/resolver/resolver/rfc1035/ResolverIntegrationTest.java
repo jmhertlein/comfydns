@@ -269,7 +269,8 @@ public class ResolverIntegrationTest {
                 KnownRRClass.IN
         ));
         m.setHeader(h);
-        TracingInternalRequest req = new TracingInternalRequest(m, fM::complete);
+        TracingInternalRequest req = new TracingInternalRequest(m);
+        req.setOnAnswer(fM::complete);
         try {
             RecursiveResolver r = new RecursiveResolver(
                     stateMachinePool, new InMemoryDNSCache(),

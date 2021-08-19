@@ -1,0 +1,2 @@
+class TraceEvent < ApplicationRecord
+end

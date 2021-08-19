@@ -32,4 +32,5 @@ Rails.application.routes.draw do
   post "/flag/:flag", to: "block_list#set_flag"
 
   get "/qtrace", to: "qtrace#index"
+  post "/qtrace", to: "qtrace#qtrace"
 end

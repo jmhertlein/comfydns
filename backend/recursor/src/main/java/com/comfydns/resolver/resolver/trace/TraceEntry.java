@@ -12,6 +12,10 @@ public abstract class TraceEntry {
         this.type = type;
     }
 
+    public TraceEntryType getType() {
+        return type;
+    }
+
     public static class AnswerAddedEntry extends TraceEntry {
         private final RR<?> answerRecord;
         public AnswerAddedEntry(RR<?> rr) {
