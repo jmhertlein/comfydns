@@ -3,9 +3,11 @@
     <h2><%= "Trace: #{@trace.qname} #{@trace.qtype} #{@trace.qclass}" %></h2>
   </div>
 
-  <% @events.each do |e| %>
-    <div class="row">
-      <%= e.event_type %>
+  <div class="row">
+    <div class="accordion" id="eventsAccordion">
+      <% @events.each do |e| %>
+        <%= render e %>
+      <% end %>
     </div>
-  <% end %>
+  </div>
 </div>

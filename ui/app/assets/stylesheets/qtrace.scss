@@ -1,3 +1,87 @@
 // Place all the styles related to the qtrace controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: https://sass-lang.com/
+
+.header-grid {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  grid-template-rows: repeat(3, 2em);
+  grid-template-areas: 
+    "mid mid mid mid mid mid mid mid mid mid mid mid mid mid mid mid "
+    "qr opcode opcode opcode opcode aa tc rd ra z z z rcode rcode rcode rcode"
+    "qdcount qdcount qdcount qdcount ancount ancount ancount ancount nscount nscount nscount nscount arcount arcount arcount arcount"
+    ;
+  gap: 2px 2px;
+  place-items: center;
+  place-content: stretch;    
+  width: 40em;
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.header-grid > div {
+  padding: 2px;
+}
+
+.header-grid-flag-present {
+  opacity: 100%;
+}
+
+.header-grid-flag-absent {
+  opacity: 50%;
+}
+
+.header-mid {
+  grid-area: mid;
+}
+
+.header-qr {
+  grid-area: qr;
+}
+
+.header-opcode {
+  grid-area: opcode;
+}
+
+.header-aa {
+  grid-area: aa;
+}
+
+.header-tc {
+  grid-area: tc;
+}
+
+.header-rd {
+  grid-area: rd;
+}
+
+.header-ra {
+  grid-area: ra;
+}
+
+.header-z {
+  grid-area: z;
+}
+
+.header-rcode {
+  grid-area: rcode;
+}
+
+.header-qdcount {
+  grid-area: qdcount;
+}
+
+.header-ancount {
+  grid-area: ancount;
+}
+
+.header-nscount {
+  grid-area: nscount;
+}
+
+.header-arcount {
+  grid-area: arcount;
+}
+
+

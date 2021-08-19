@@ -1,0 +1,16 @@
+<div class="accordion-item">
+  <h2 class="accordion-header" id=<%= "heading-#{trace_event.id}" %>>
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target=<%= "#collapse-#{trace_event.id}" %> aria-expanded="false" aria-controls=<%= "collapse-#{trace_event.id}" %>>
+      <%= trace_event.event_type %>
+    </button>
+  </h2>
+  <div id=<%= "collapse-#{trace_event.id}" %> class="accordion-collapse collapse" aria-labelledby="<%= "heading-#{trace_event.id}" %>" data-bs-parent="#eventsAccordion">
+    <div class="accordion-body">
+      <% case trace_event.event_type 
+        when "UPSTREAM_QUERY_RESULT" %>
+        <%= render partial: "message", object: trace_event.event["result"] %>
+       <% else %>
+      <% end %>
+    </div>
+  </div>
+</div>
