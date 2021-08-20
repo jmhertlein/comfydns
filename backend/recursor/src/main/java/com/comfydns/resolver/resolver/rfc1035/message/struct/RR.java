@@ -24,25 +24,25 @@ public class RR<T extends RData> implements Writeable {
     private final RRType rrType;
     private final RRClass rrClass;
     private final int ttl;
-    private final T tData;
+    private final T rData;
 
     private final RR2Tuple classAndType;
 
-    public RR(String name, RRType rrType, RRClass rrClass, int ttl, T tData) {
+    public RR(String name, RRType rrType, RRClass rrClass, int ttl, T rData) {
         this.name = name.toLowerCase();
         this.rrType = rrType;
         this.rrClass = rrClass;
         this.ttl = ttl;
-        this.tData = tData;
+        this.rData = rData;
         this.classAndType = new RR2Tuple(rrClass.getValue(), rrType.getValue());
     }
 
-    private RR(Question q, RRType rrType, RRClass rrClass, int ttl, T tData) {
+    private RR(Question q, RRType rrType, RRClass rrClass, int ttl, T rData) {
         this.name = q.getQName();
         this.rrType = rrType;
         this.rrClass = rrClass;
         this.ttl = ttl;
-        this.tData = tData;
+        this.rData = rData;
         this.classAndType = new RR2Tuple(rrClass.getValue(), rrType.getValue());
     }
 
@@ -54,12 +54,12 @@ public class RR<T extends RData> implements Writeable {
         } else {
             newTTL = ttl - ((int) age);
         }
-        return new RR<>(name, rrType, rrClass, newTTL, tData);
+        return new RR<>(name, rrType, rrClass, newTTL, rData);
     }
 
     public RR<T> changeNamesToQuestionCase(Question q) {
         if(name.equalsIgnoreCase(q.getQName()) && !name.equals(q.getQName())) {
-            return new RR<>(q, rrType, rrClass, ttl, tData);
+            return new RR<>(q, rrType, rrClass, ttl, rData);
         } else {
             return this;
         }
@@ -82,7 +82,7 @@ public class RR<T extends RData> implements Writeable {
     }
 
     public T getRData() {
-        return tData;
+        return rData;
     }
 
     public RR2Tuple getClassAndType() {
@@ -108,7 +108,7 @@ public class RR<T extends RData> implements Writeable {
 
         index += RRTYPE.length + RRCLASS.length + TTL.length + RDLENGTH.length;
 
-        byte[] RDATA = this.tData.write(c, index);
+        byte[] RDATA = this.rData.write(c, index);
 
         PrettyByte.writeNBitUnsignedInt(RDATA.length, 16, RDLENGTH, 0, 0);
 
@@ -121,7 +121,7 @@ public class RR<T extends RData> implements Writeable {
     @Override
     public String toString() {
         return String.format("NAME: %s, TYPE: %s, CLASS: %s, TTL: %s, RDATA:\n %s",
-                name, rrType.getType(), rrClass.getType(), ttl, this.tData.toString());
+                name, rrType.getType(), rrClass.getType(), ttl, this.rData.toString());
     }
 
     public static ReadRR<?> read(byte[] bytes, int startPos) throws InvalidMessageException, UnsupportedRRTypeException {
@@ -201,11 +201,11 @@ public class RR<T extends RData> implements Writeable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RR<?> rr = (RR<?>) o;
-        return name.equals(rr.name) && rrType.equals(rr.rrType) && rrClass.equals(rr.rrClass) && tData.equals(rr.tData);
+        return name.equals(rr.name) && rrType.equals(rr.rrType) && rrClass.equals(rr.rrClass) && rData.equals(rr.rData);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, rrType, rrClass, tData);
+        return Objects.hash(name, rrType, rrClass, rData);
     }
 }

@@ -17,7 +17,7 @@ public class RRCodec implements JsonSerializer<RR<?>> {
         ret.addProperty("rrtype", src.getRrType().getIntValue());
         ret.addProperty("rrclass", src.getRrClass().getIntValue());
         ret.addProperty("ttl", src.getTtl());
-        ret.add("tdata", src.getRData().writeJson());
+        ret.add("rdata", src.getRData().writeJson());
         return ret;
     }
 }

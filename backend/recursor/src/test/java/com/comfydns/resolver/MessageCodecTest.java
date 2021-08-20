@@ -77,7 +77,7 @@ public class MessageCodecTest {
                 "      \"rrtype\": 1,\n" +
                 "      \"rrclass\": 1,\n" +
                 "      \"ttl\": 60,\n" +
-                "      \"tdata\": {\n" +
+                "      \"rdata\": {\n" +
                 "        \"address\": \"192.168.1.2\"\n" +
                 "      }\n" +
                 "    }\n" +
@@ -88,7 +88,7 @@ public class MessageCodecTest {
                 "      \"rrtype\": 2,\n" +
                 "      \"rrclass\": 1,\n" +
                 "      \"ttl\": 60,\n" +
-                "      \"tdata\": {\n" +
+                "      \"rdata\": {\n" +
                 "        \"nsdname\": \"ns1.comfydns.com\"\n" +
                 "      }\n" +
                 "    }\n" +
@@ -99,7 +99,7 @@ public class MessageCodecTest {
                 "      \"rrtype\": 16,\n" +
                 "      \"rrclass\": 1,\n" +
                 "      \"ttl\": 60,\n" +
-                "      \"tdata\": {\n" +
+                "      \"rdata\": {\n" +
                 "        \"txt-data\": \"yeet\"\n" +
                 "      }\n" +
                 "    }\n" +

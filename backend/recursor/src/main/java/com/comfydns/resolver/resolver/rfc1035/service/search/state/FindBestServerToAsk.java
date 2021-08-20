@@ -62,9 +62,9 @@ public class FindBestServerToAsk implements RequestState {
             sList.setZone(zone);
             sList.getServers().clear();
             for (RR<?> rr : search) {
-                NSRData tData = (NSRData) rr.getRData();
-                SList.SListServer s = sList.newServerEntry(tData.getNsDName(), (RR<NSRData>) rr);
-                List<RR<?>> aSearch = sCtx.getOverlay().search(tData.getNsDName(), KnownRRType.A, q.getqClass(), OffsetDateTime.now());
+                NSRData rData = (NSRData) rr.getRData();
+                SList.SListServer s = sList.newServerEntry(rData.getNsDName(), (RR<NSRData>) rr);
+                List<RR<?>> aSearch = sCtx.getOverlay().search(rData.getNsDName(), KnownRRType.A, q.getqClass(), OffsetDateTime.now());
                 if(!aSearch.isEmpty()) {
                     ARData nsIp = (ARData) aSearch.get((int) (Math.random() * aSearch.size())).getRData();
                     s.setIp(nsIp.getAddress());

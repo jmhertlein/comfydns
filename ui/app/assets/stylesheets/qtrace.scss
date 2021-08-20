@@ -76,4 +76,21 @@
   grid-area: arcount;
 }
 
+.message-card {
+  max-width: 33em;
+  margin-left: auto;
+  margin-right: auto;
+}
 
+.message-section-header {
+  width: auto;
+}
+
+.message-card > .card-body > hr {
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+}
+
+.message-section-code {
+  color: #444;
+}
