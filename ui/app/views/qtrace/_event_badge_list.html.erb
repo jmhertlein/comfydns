@@ -6,7 +6,7 @@
             <%= DNS::VALUE_TO_RCODE[event_badge_list.event["result"]["header"]["rcode"]] %>
           </span>
         <% else %>
-          <span class="badge rounded-pill bg-danger">Error</span>
+          <span class="badge rounded-pill bg-danger"><%= event_badge_list.event["error"]["type"].split(".")[-1] %></span>
         <% end %>
         <% when "UPSTREAM_QUERY_SENT" %>
           <span class="badge rounded-pill bg-secondary"><%= event_badge_list.event["destHostname"] %></span>
