@@ -2,14 +2,16 @@
   <div class="card-body">
     <div class="header-grid">
       <div class="badge bg-primary header-mid">ID: <%= message["header"]["id"] %></div>
-      <div class="header-qr"><%= message["header"]["qr"] ? "R" : "Q" %></div>
-      <div class="header-opcode">OPCODE: <%= message["header"]["opcode"] %></div>
-      <div class="<%= "header-aa header-grid-flag-#{(message["header"]["aa"] ? "present" : "absent")}" %>">AA</div>
-      <div class="<%= "header-tc header-grid-flag-#{(message["header"]["tc"] ? "present" : "absent")}" %>">TC</div>
-      <div class="<%= "header-rd header-grid-flag-#{(message["header"]["rd"] ? "present" : "absent")}" %>">RD</div>
-      <div class="<%= "header-ra header-grid-flag-#{(message["header"]["ra"] ? "present" : "absent")}" %>">RA</div>
-      <div class="header-z header-grid-flag-absent">Z</div>
-      <div class="header-rcode">RCODE: <%= message["header"]["rcode"] %></div>
+      <div class="badge bg-secondary header-qr"><%= message["header"]["qr"] ? "R" : "Q" %></div>
+      <div class="badge bg-secondary header-opcode">OPCODE: <%= message["header"]["opcode"] %></div>
+      <div class="badge bg-secondary header-aa <%= !message["header"]["aa"] ? "opacity-50" : "" %>">AA</div>
+      <div class="badge bg-secondary header-tc <%= !message["header"]["tc"] ? "opacity-50" : "" %>">TC</div>
+      <div class="badge bg-secondary header-rd <%= !message["header"]["rd"] ? "opacity-50" : "" %>">RD</div>
+      <div class="badge bg-secondary header-ra <%= !message["header"]["ra"] ? "opacity-50" : "" %>">RA</div>
+      <div class="badge bg-secondary header-z opacity-50">Z</div>
+      <div class="badge bg-<%= message["header"]["qr"] ?  (message["header"]["rcode"] == 0 ? "success" : "danger") : "secondary" %> header-rcode">
+        RCODE: <%= message["header"]["rcode"] %>
+      </div>
       <div class="header-qdcount">QDCOUNT: <%= message["header"]["qdcount"] %></div>
       <div class="header-ancount">ANCOUNT: <%= message["header"]["ancount"] %></div>
       <div class="header-nscount">NSCOUNT: <%= message["header"]["nscount"] %></div>

@@ -14,23 +14,15 @@
   gap: 2px 2px;
   place-items: center;
   place-content: stretch;    
-  width: 40em;
-  max-width: 80%;
+  max-width: 40em;
   margin-left: auto;
   margin-right: auto;
 }
-
-.header-grid > div {
-  padding: 2px;
+.header-grid > .badge {
+  font-size: 1em;
+  padding: 0.3em;
 }
 
-.header-grid-flag-present {
-  opacity: 100%;
-}
-
-.header-grid-flag-absent {
-  opacity: 50%;
-}
 
 .header-mid {
   grid-area: mid;
