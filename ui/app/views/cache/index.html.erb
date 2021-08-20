@@ -13,11 +13,11 @@
   ", method: :get, local: true do |form| %>
   <div class="col">
     <%= form.label :qname, "Domain name" %>
-    <%= form.text_field :name, value: @search_performed ? @name : "",pattern: ".+", class: "form-control", placeholder: "comfydns.com", autocomplete: "off" %>
+    <%= form.text_field :name, value: @search_performed ? @name : "",pattern: ".+", class: "form-control", placeholder: "comfydns.com", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
   </div>
   <div class="col flex-grow-0">
     <%= form.label :qtype, "Query Type" %>
-    <%= form.select :qtype, @supported_qtypes, {selected: @search_performed ? @qtype : ""}, class: "form-select trace-qtype-select", autocomplete: "off" %>
+    <%= form.select :qtype, @supported_qtypes, {selected: @search_performed ? @qtype : ""}, class: "form-select trace-qtype-select", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
   </div>
   <div class="col flex-grow-0 mt-2 m-sm-0">
     <%= form.submit "Search", class: "btn btn-primary m-auto m-sm-0 d-block d-sm-inline" %>

@@ -39,7 +39,7 @@
       </div>
       <div class="modal-body">
         <%= form.label :name, "Top-Level Domain Name" %>
-        <%= form.text_field :name, class: "form-control", placeholder: "mydomain", autocomplete: "off" %>
+        <%= form.text_field :name, class: "form-control", placeholder: "mydomain", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -61,7 +61,7 @@
         </div>  
         <div class="modal-body">
           <%= form.label :name, "Please re-type the name of the zone you wish to delete." %>
-          <%= form.text_field :name, class: "form-control", placeholder: zone.name, pattern: zone.name, autocomplete: "off" %>
+          <%= form.text_field :name, class: "form-control", placeholder: zone.name, pattern: zone.name, autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

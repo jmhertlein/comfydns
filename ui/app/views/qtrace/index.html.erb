@@ -18,16 +18,16 @@
   ", method: :post, local: true do |form| %>
   <div class="col">
     <%= form.label :qname, "Domain name" %>
-    <%= form.text_field :qname, class: "form-control", placeholder: "comfydns.com", autocomplete: "off" %>
+    <%= form.text_field :qname, class: "form-control", placeholder: "comfydns.com", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
   </div>
   <div class="col flex-grow-0">
     <%= form.label :qtype, "Query Type" %>
-    <%= form.select :qtype, @supported_qtypes, {}, class: "form-select trace-qtype-select", autocomplete: "off" %>
+    <%= form.select :qtype, @supported_qtypes, {}, class: "form-select trace-qtype-select", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
   </div>
   <% if @servers.size > 1 %>
     <div class="col">
     <%= form.label :server_id, "Server" %>
-    <%= form.select :server_id, @servers.map{|s| s.id}, {}, class: "form-select", autocomplete: "off" %>
+    <%= form.select :server_id, @servers.map{|s| s.id}, {}, class: "form-select", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
   <% else %>
     <%= form.hidden_field :server_id, value: @servers[0].id %>
   <% end %>

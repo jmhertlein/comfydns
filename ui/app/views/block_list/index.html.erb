@@ -87,13 +87,13 @@
         <%= form.text_field :url, class: "form-control" %>
 
         <%= form.label :list_type %>
-        <%= form.select :list_type, @supported_list_types, {}, class: "form-select", autocomplete: "off" %>
+        <%= form.select :list_type, @supported_list_types, {}, class: "form-select", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
 
         <%= form.label :auto_update %>
         <%= form.check_box :auto_update, class: "form-check" %>
 
         <%= form.label :update_frequency %>
-        <%= form.select :update_frequency, @supported_update_frequencies, {}, class: "form-select", autocomplete: "off" %>
+        <%= form.select :update_frequency, @supported_update_frequencies, {}, class: "form-select", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
