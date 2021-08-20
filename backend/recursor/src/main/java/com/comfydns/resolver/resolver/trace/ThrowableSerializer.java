@@ -17,7 +17,7 @@ public class ThrowableSerializer implements JsonSerializer<Throwable> {
 
     public static JsonObject serialize(Throwable t) {
         JsonObject ret = new JsonObject();
-        ret.addProperty("type", t.getClass().getName());
+        ret.addProperty("exc_type", t.getClass().getName());
         ret.addProperty("message", t.getMessage());
         StringWriter out = new StringWriter();
         PrintWriter pw = new PrintWriter(out);

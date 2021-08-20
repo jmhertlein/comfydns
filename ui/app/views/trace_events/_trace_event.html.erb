@@ -34,6 +34,10 @@
           Found cached negative: <span class="message-section-code"><%= "#{trace_event.event["sName"]} 
           #{DNS::value_to_rrtype trace_event.event["qType"]} 
           #{DNS::value_to_rrclass trace_event.event["qClass"]}" %></span>
+        <% when "EXCEPTION" %>
+          <h6><%= trace_event.event["error"]["type"] %>:</h6>
+          <p><%= trace_event.event["error"]["message"] %></p>
+          <code><%= trace_event.event["error"]["stack"] %></code>
         <% else %>
           <code>
           <%= trace_event.event %>

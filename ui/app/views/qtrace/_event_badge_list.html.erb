@@ -29,7 +29,8 @@
         <% when "REMARK" %>
           
         <% when "NEGATIVE_CACHE_USE" %>
-          
+        <% when "EXCEPTION" %>
+          <span class="badge rounded-pill bg-danger"><%= event_badge_list.event["error"]["type"].split(".")[-1] %></span>
         <% else %>
       <% end %>
 </span>
