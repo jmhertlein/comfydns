@@ -1,0 +1,33 @@
+<span class="ms-2">
+  <% case event_badge_list.event_type 
+        when "UPSTREAM_QUERY_RESULT" %>
+        <% if event_badge_list.event.has_key? "result" %>
+          <span class="badge bg-<%= event_badge_list.event["result"]["header"]["qr"] ? (event_badge_list.event["result"]["header"]["rcode"] == 0 ? "success" : "danger") : "secondary" %>">
+            <%= DNS::VALUE_TO_RCODE[event_badge_list.event["result"]["header"]["rcode"]] %>
+          </span>
+        <% else %>
+          <span class="badge rounded-pill bg-danger">Error</span>
+        <% end %>
+        <% when "UPSTREAM_QUERY_SENT" %>
+          <span class="badge rounded-pill bg-secondary"><%= event_badge_list.event["destHostname"] %></span>
+        <% when "SUBQUERY_SENT" %>
+          <span class="badge rounded-pill bg-secondary"><%= event_badge_list.event["sent"]["question"][0]["qname"] %></span>
+        <% when "SUBQUERY_RESULT" %>
+          <span class="badge bg-<%= event_badge_list.event["result"]["header"]["qr"] ? (event_badge_list.event["result"]["header"]["rcode"] == 0 ? "success" : "danger") : "secondary" %>">
+            <%= DNS::VALUE_TO_RCODE[event_badge_list.event["result"]["header"]["rcode"]] %>
+          </span>
+        <% when "ANSWER_ADDED" %>
+          <span class="badge rounded-pill bg-secondary">
+            <%= DNS::value_to_rrtype event_badge_list.event["answerRecord"]["rrtype"] %>
+          </span>
+        <% when "SNAME_CHANGE" %>
+          <span class="badge rounded-pill bg-secondary"><%= event_badge_list.event["newSName"] %></span>
+        <% when "RESPONSE" %>
+          
+        <% when "REMARK" %>
+          
+        <% when "NEGATIVE_CACHE_USE" %>
+          
+        <% else %>
+      <% end %>
+</span>

@@ -1,7 +1,8 @@
 <div class="accordion-item">
   <h2 class="accordion-header" id=<%= "heading-#{trace_event.id}" %>>
     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target=<%= "#collapse-#{trace_event.id}" %> aria-expanded="false" aria-controls=<%= "collapse-#{trace_event.id}" %>>
-      <%= trace_event.event_type %>
+      <span><%= trace_event.event_type.gsub(/_/, " ").humanize.gsub(/[sS][Nn]ame/, "SName") %></span>
+      <%= render partial: "event_badge_list", object: trace_event %>
     </button>
   </h2>
   <div id=<%= "collapse-#{trace_event.id}" %> class="accordion-collapse collapse" aria-labelledby="<%= "heading-#{trace_event.id}" %>" data-bs-parent="#eventsAccordion">
