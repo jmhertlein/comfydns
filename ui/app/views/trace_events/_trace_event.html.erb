@@ -12,7 +12,9 @@
         <% if trace_event.event.has_key? "result" %>
           <%= render partial: "message", object: trace_event.event["result"] %>
         <% else %>
-          <% #TODO %>
+          <h6><%= trace_event.event["error"]["type"] %>:</h6>
+          <p><%= trace_event.event["error"]["message"] %></p>
+          <code><%= trace_event.event["error"]["stack"] %></code>
         <% end %>
         <% when "UPSTREAM_QUERY_SENT" %>
           <%= render partial: "message", object: trace_event.event["sent"] %>
