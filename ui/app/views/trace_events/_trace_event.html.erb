@@ -8,8 +8,35 @@
     <div class="accordion-body">
       <% case trace_event.event_type 
         when "UPSTREAM_QUERY_RESULT" %>
-        <%= render partial: "message", object: trace_event.event["result"] %>
-       <% else %>
+        <% if trace_event.event.has_key? "result" %>
+          <%= render partial: "message", object: trace_event.event["result"] %>
+        <% else %>
+          <% #TODO %>
+        <% end %>
+        <% when "UPSTREAM_QUERY_SENT" %>
+          <%= render partial: "message", object: trace_event.event["sent"] %>
+        <% when "SUBQUERY_SENT" %>
+          <%= render partial: "message", object: trace_event.event["sent"] %>
+        <% when "SUBQUERY_RESULT" %>
+          <%= render partial: "message", object: trace_event.event["result"] %>
+        <% when "ANSWER_ADDED" %>
+          <div class="message-section-code">
+            <%= render partial: "rr", object: trace_event.event["answerRecord"] %>
+          </div>
+        <% when "SNAME_CHANGE" %>
+          <span><%= trace_event.event["oldSName"] %> → <%= trace_event.event["newSName"] %>
+        <% when "RESPONSE" %>
+          <%= render partial: "message", object: trace_event.event["response"] %>
+        <% when "REMARK" %>
+          <p><%= trace_event.event["remark"] %></p>
+        <% when "NEGATIVE_CACHE_USE" %>
+          Found cached negative: <span class="message-section-code"><%= "#{trace_event.event["sName"]} 
+          #{DNS::value_to_rrtype trace_event.event["qType"]} 
+          #{DNS::value_to_rrclass trace_event.event["qClass"]}" %></span>
+        <% else %>
+          <code>
+          <%= trace_event.event %>
+          </code>
       <% end %>
     </div>
   </div>

@@ -147,6 +147,7 @@ ActiveRecord::Schema.define(version: 2021_08_18_201336) do
   end
 
   create_table "trace_event", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "event_index", null: false
     t.uuid "trace_id", null: false
     t.string "event_type", null: false
     t.jsonb "event", null: false

@@ -88,12 +88,13 @@ public class TraceQueryTask implements Task {
 
             try(PreparedStatement ps = c.prepareStatement(
                     "insert into trace_event" +
-                            "(id, trace_id, event_type, event, created_at, updated_at) " +
-                            "values (DEFAULT, ?, ?, ?::jsonb, now(), now())")) {
+                            "(id, event_index, trace_id, event_type, event, created_at, updated_at) " +
+                            "values (DEFAULT, ?, ?, ?, ?::jsonb, now(), now())")) {
                 for (TraceEntry e : tracer.getEntries()) {
-                    ps.setObject(1, traceId);
-                    ps.setString(2, e.getType().name());
-                    ps.setString(3, gson.toJson(e));
+                    ps.setInt(1, e.getIndex());
+                    ps.setObject(2, traceId);
+                    ps.setString(3, e.getType().name());
+                    ps.setString(4, gson.toJson(e));
                     ps.addBatch();
                 }
 

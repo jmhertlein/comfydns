@@ -5,7 +5,7 @@
     </div>
     <div class="row justify-content-center">
       <div class="col flex-grow-0"><div class="badge bg-secondary"><%= message["header"]["qr"] ? "R" : "Q" %></div></div>
-      <div class="col flex-grow-0"><div class="badge bg-secondary">OPCODE: <%= message["header"]["opcode"] %></div></div>
+      <div class="col flex-grow-0"><div class="badge bg-secondary">OPCODE: <%= DNS::VALUE_TO_OPCODE[message["header"]["opcode"]] %></div></div>
       <div class="col flex-grow-0"><div class="badge bg-secondary <%= !message["header"]["aa"] ? "opacity-50" : "" %>">AA</div></div>
       <div class="col flex-grow-0"><div class="badge bg-secondary <%= !message["header"]["tc"] ? "opacity-50" : "" %>">TC</div></div>
       <div class="col flex-grow-0"><div class="badge bg-secondary <%= !message["header"]["rd"] ? "opacity-50" : "" %>">RD</div></div>
@@ -14,7 +14,7 @@
       <div class="col flex-grow-0"><div class="badge 
       bg-<%= message["header"]["qr"] ? (message["header"]["rcode"] == 0 ? "success" : "danger") : "secondary" %> 
       <%= message["header"]["qr"] ? "" : "opacity-50" %>">
-        RCODE: <%= message["header"]["rcode"] %>
+        RCODE: <%= DNS::VALUE_TO_RCODE[message["header"]["rcode"]] %>
       </div></div>
     </div>
     <div class="row justify-content-center">
@@ -32,16 +32,17 @@
     </div>
 
     <hr />
-    <div class="row justify-content-center">
+    <div class="row justify-content-center"><div class="col">
       <h6 class="text-center">Question</h6>
-      <code class="message-section-code">
+      <ol class="message-section-code">
       <% message["question"].each do |q| %>
-        <%= "#{q["qname"]} 
-        #{DNS::VALUE_TO_RRTYPE[q["qtype"]]} 
-        #{DNS::VALUE_TO_RRCLASS[q["qclass"]]}" %><br />
+        <li><%= "#{q["qname"]} 
+          #{DNS::value_to_rrtype q["qtype"]} 
+          #{DNS::value_to_rrclass q["qclass"]}" %>
+        </li>
       <% end %>
-      </code>
-    </div>
+      </ol>
+    </div></div>
 
     <% ["answer", "authority", "additional"].each do |rrsection| %>
     <hr />
@@ -50,13 +51,7 @@
       <h6 class="text-center"><%= rrsection.humanize %></h6>
       <ol class="message-section-code">
         <% message[rrsection].each do |rr| %>
-          <li><%= "
-          #{rr["name"]} 
-          #{DNS::VALUE_TO_RRTYPE[rr["rrtype"]]} 
-          #{DNS::VALUE_TO_RRCLASS[rr["rrclass"]]}
-          #{rr["ttl"]}
-          #{(rr.has_key?("tdata") ? rr["tdata"] : rr["rdata"]).each_pair.map{|k, v| "#{k}=#{v}"}.join(" ")}
-          " %></li>
+          <li><%= render partial: "rr", object: rr %></li>
         <% end %>
       </ol>
       </div>

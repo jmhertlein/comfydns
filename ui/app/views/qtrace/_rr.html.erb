@@ -1,0 +1,7 @@
+<%= "
+#{rr["name"]} 
+#{DNS::value_to_rrtype rr["rrtype"] } 
+#{DNS::value_to_rrclass rr["rrclass"] }
+#{rr["ttl"]}
+#{(rr.has_key?("tdata") ? rr["tdata"] : rr["rdata"]).each_pair.map{|k, v| "#{k}=#{v}"}.join(" ")}
+" %>

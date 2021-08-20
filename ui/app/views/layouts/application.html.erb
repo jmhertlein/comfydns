@@ -34,6 +34,9 @@
               <li class="nav-item">
                 <a class="nav-link" href="/block_list">Ad Blocking</a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/qtrace">Query Trace</a>
+              </li>
               <% if user_signed_in? %>
                 <li class="ms-auto nav-item">
                   <%= link_to "Sign Out", destroy_user_session_path, method: :delete, class: "nav-link" %>

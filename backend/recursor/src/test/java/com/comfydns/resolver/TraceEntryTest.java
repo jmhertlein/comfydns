@@ -29,12 +29,12 @@ public class TraceEntryTest {
                 .registerTypeAdapter(Header.class, new HeaderCodec())
                 .create();
 
-        TraceEntry.UpstreamQueryResultEntry entry = new TraceEntry.UpstreamQueryResultEntry(
+        TraceEntry.UpstreamQueryResultEntry entry = new TraceEntry.UpstreamQueryResultEntry(0,
                 new IllegalStateException("Memes not dank enough"),
                 "ns1.comfydns.com"
         );
 
-        TraceEntry.UpstreamQueryResultEntry entry2 = new TraceEntry.UpstreamQueryResultEntry(
+        TraceEntry.UpstreamQueryResultEntry entry2 = new TraceEntry.UpstreamQueryResultEntry(0,
                 m(), "ns1.comfydns.com"
         );
     }

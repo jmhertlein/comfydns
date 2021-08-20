@@ -46,6 +46,6 @@ class QtraceController < ApplicationController
       return
     end
 
-    @events = TraceEvent.where(trace_id: @trace.id)
+    @events = TraceEvent.where(trace_id: @trace.id).order(event_index: :asc)
   end
 end

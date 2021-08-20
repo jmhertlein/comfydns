@@ -52,4 +52,38 @@ module DNS
     3 => "CH",
     4 => "HS",
   }
+
+  VALUE_TO_OPCODE = {
+      0 => "QUERY",
+      2 => "IQUERY",
+      3 => "STATUS",
+  }
+
+  VALUE_TO_RCODE = {
+    0 => "NO ERROR",
+    1 => "FORMAT ERROR",
+    2 => "SERVER FAILURE",
+    3 => "NAME ERROR",
+    4 => "NOT IMPLEMENTED",
+    5 => "REFUSED",
+  }
+
+
+  def value_to_rrtype value
+    if VALUE_TO_RRTYPE.has_key? value
+      return VALUE_TO_RRTYPE[value]
+    else
+      return value.to_s(2)
+    end
+  end
+
+  def value_to_rrclass value
+    if VALUE_TO_RRCLASS.has_key? value
+      return VALUE_TO_RRCLASS[value]
+    else
+      return value.to_s(2)
+    end
+  end
+
+  module_function :value_to_rrclass, :value_to_rrtype
 end
