@@ -1,16 +1,26 @@
 <p class="alert alert-warning">This area is for advanced users only. It may be difficult to navigate without some knowledge of how DNS works. Be careful when deleting records. If you delete glue records, you might end up with an inconsistent cache.</p>
 
-<%= form_with url: "/cache", class: "row align-items-center justify-content-center", method: :get, local: true do |form| %>
-  <div class="col-4">
-    <%= form.label :name, "Domain name" %>
-    <%= form.text_field :name, value: @search_performed ? @name : "",pattern: ".+", class: "form-control mb-3", placeholder: "comfydns.com", autocomplete: "off" %>
+<%= form_with url: "/cache", class: "row 
+  d-flex 
+  flex-sm-row 
+  align-items-sm-end 
+  align-items-center
+  justify-content-center 
+  justify-content-sm-between
+  flex-column
+  m-3
+  card card-body bg-light
+  ", method: :get, local: true do |form| %>
+  <div class="col">
+    <%= form.label :qname, "Domain name" %>
+    <%= form.text_field :name, value: @search_performed ? @name : "",pattern: ".+", class: "form-control", placeholder: "comfydns.com", autocomplete: "off" %>
   </div>
-  <div class="col-1">
-    <%= form.label :host_mask, "Query Type" %>
-    <%= form.select :qtype, @supported_qtypes, {selected: @search_performed ? @qtype : ""}, class: "form-select mb-3", autocomplete: "off" %>
+  <div class="col flex-grow-0">
+    <%= form.label :qtype, "Query Type" %>
+    <%= form.select :qtype, @supported_qtypes, {selected: @search_performed ? @qtype : ""}, class: "form-select trace-qtype-select", autocomplete: "off" %>
   </div>
-  <div class="col-1">
-    <%= form.submit "Search", class: "btn btn-primary" %>
+  <div class="col flex-grow-0 mt-2 m-sm-0">
+    <%= form.submit "Search", class: "btn btn-primary m-auto m-sm-0 d-block d-sm-inline" %>
   </div>
 <% end %>
 
