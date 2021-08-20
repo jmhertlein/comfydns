@@ -23,7 +23,9 @@
         <% when "SNAME_CHANGE" %>
           <span class="badge rounded-pill bg-secondary"><%= event_badge_list.event["newSName"] %></span>
         <% when "RESPONSE" %>
-          
+          <span class="badge bg-<%= event_badge_list.event["response"]["header"]["qr"] ? (event_badge_list.event["response"]["header"]["rcode"] == 0 ? "success" : "danger") : "secondary" %>">
+            <%= DNS::VALUE_TO_RCODE[event_badge_list.event["response"]["header"]["rcode"]] %>
+          </span>
         <% when "REMARK" %>
           
         <% when "NEGATIVE_CACHE_USE" %>

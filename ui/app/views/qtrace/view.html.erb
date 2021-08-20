@@ -1,6 +1,6 @@
-<div class="col">
+<div class="col trace-col">
   <div class="row">
-    <h2><%= "Trace: #{@trace.qname} #{@trace.qtype} #{@trace.qclass}" %></h2>
+    <h2><%= "Trace: #{@trace.qname} #{DNS::value_to_rrtype @trace.qtype} #{DNS::value_to_rrclass @trace.qclass}" %></h2>
   </div>
 
   <div class="row">

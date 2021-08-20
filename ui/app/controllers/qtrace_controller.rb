@@ -8,7 +8,7 @@ class QtraceController < ApplicationController
 
     @servers = Server.all
 
-    @traces = Trace.all
+    @traces = Trace.all.order(created_at: :desc)
   end
 
   def qtrace
@@ -34,7 +34,8 @@ class QtraceController < ApplicationController
 
   def destroy
     id = params['id']
-    Trace.find(id).delete!
+    Trace.find(id).delete
+    redirect_to "/qtrace/", notice: "Trace deleted."
   end
 
   def view
