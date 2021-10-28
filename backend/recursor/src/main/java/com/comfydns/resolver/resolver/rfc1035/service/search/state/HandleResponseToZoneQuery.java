@@ -110,6 +110,7 @@ public class HandleResponseToZoneQuery implements RequestState {
                     This is specifically to fix console.aws.amazon.com. For some reason this is how their DNS servers behave. Go figure.
                      */
                     log.debug("We received a NAME_ERROR but they DID give us a CNAME answer back. Ignoring the name error.");
+                    sCtx.forEachListener(l -> l.remark("We received a NAME_ERROR but they DID give us a CNAME answer back. Ignoring the name error. (This specifically works around bad behavior by Amazon's DNS servers.)"));
                     break;
                 } else if(m.getHeader().getAA()) {
                     log.debug("[{}] Received authoritative name error.", sCtx.getRequest().getId());
