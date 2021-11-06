@@ -4,32 +4,36 @@
   </div>
 </div>
 
-<div class="row shadow p-3 mb-5 bg-white rounded">
+<%= form_with(url: "/domain/#{@zone.id}", method: :post, local: true, class: "
+row 
+d-flex 
+flex-sm-row 
+align-items-sm-end 
+align-items-center
+justify-content-center 
+justify-content-sm-between
+flex-column
+shadow p-3 mb-5 bg-white rounded
+") do |form| %>
+  <%= form.hidden_field :rrtype, value: "A" %>
+  <%= form.hidden_field :rrclass, value: "IN" %>
+  <%= form.hidden_field :ttl, value: "60" %>
   <div class="col">
-    <%= form_with(url: "/domain/#{@zone.id}", method: :post) do |form| %>
-      <%= form.hidden_field :rrtype, value: "A" %>
-      <%= form.hidden_field :rrclass, value: "IN" %>
-      <%= form.hidden_field :ttl, value: "60" %>
-      <div class="row align-items-end">
-        <div class="col">
-          <%= form.label :hostname, "Hostname" %>
-          <div class="input-group">
-            <%= form.text_field :hostname, class: "form-control inline-form-control", pattern: "[^.]+", placeholder: "myhost (no dots)", title: "Format: no dots", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
-            <div class="input-group-append">
-              <div class="input-group-text"><%= ".#{@zone.name}" %></div>
-            </div>
-          </div>
-        </div>
-        <div class="col">
-          <%= form.label :hostname, "IP Address" %>
-          <%= form.text_field :ip_address, class: "form-control inline-form-control", placeholder: "192.168.1.42", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
-        </div>
-
-        <div class="col"><%= form.submit "Add", class: "btn btn-primary" %></div>
+    <%= form.label :hostname, "Hostname" %>
+    <div class="input-group">
+      <%= form.text_field :hostname, class: "form-control inline-form-control", pattern: "[^.]+", placeholder: "myhost (no dots)", title: "Format: no dots", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
+      <div class="input-group-append">
+        <div class="input-group-text"><%= ".#{@zone.name}" %></div>
       </div>
-    <% end %>
+    </div>
   </div>
-</div>
+  <div class="col">
+    <%= form.label :hostname, "IP Address" %>
+    <%= form.text_field :ip_address, class: "form-control inline-form-control", placeholder: "192.168.1.42", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
+  </div>
+
+  <div class="col flex-grow-0 mt-2 m-sm-0"><%= form.submit "Add", class: "btn btn-primary m-auto m-sm-0 d-block d-sm-inline" %></div>
+<% end %>
 
 <div class="row">
   <div class="col">
