@@ -10,6 +10,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class AsyncTruncatingTransport implements TruncatingTransport {
+    private static final Counter udpTimeouts = Counter.build()
+            .name("udp_outbound_timeouts").help("Count of UDP packets where we sent a datagram expecting a response, but didn't receive one.")
+            .register();
+
     private static final Logger log = LoggerFactory.getLogger(AsyncTruncatingTransport.class);
     private static final int DNS_UDP_PORT = 53;
     private final EventLoopGroup group;
@@ -83,6 +88,7 @@ public class AsyncTruncatingTransport implements TruncatingTransport {
                 if(!done) {
                     log.debug("Timed out after 1 second waiting for UDP reply from " + ctx.channel().remoteAddress());
                     ctx.close();
+                    udpTimeouts.inc();
                 }
             }, 1, TimeUnit.SECONDS);
         }
