@@ -204,6 +204,10 @@ public class ResolverIntegrationTest {
         Assertions.assertTrue(m.getAnswerRecords().size() > 0);
     }
 
+    private static void assertHasFormatError(Message m) {
+        Assertions.assertEquals(RCode.FORMAT_ERROR, m.getHeader().getRCode());
+    }
+
     private static void assertNameError(Message m) {
         Assertions.assertEquals(RCode.NAME_ERROR, m.getHeader().getRCode());
     }
@@ -388,4 +392,8 @@ REFRESH: 1958748768, RETRY: 1071239168, EXPIRE: 921600, MINIMUM: 230400
         assertHasAnswer(testQuery(new Question("www.potterybarnkids.com", KnownRRType.A, KnownRRClass.IN)));
     }
 
+    @Test
+    public void testEmptyQName() throws ExecutionException, InterruptedException {
+        assertHasFormatError(testQuery(new Question("", KnownRRType.A, KnownRRClass.IN)));
+    }
 }

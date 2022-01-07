@@ -269,6 +269,28 @@ public class SearchContext {
         request.answer(m);
     }
 
+    public void sendFormatErrorResponse(String reason) {
+        Message m = new Message();
+        Header h = new Header(request.getMessage().getHeader());
+        h.setRCode(RCode.FORMAT_ERROR);
+        h.setQR(true);
+        h.setRA(true);
+        m.setHeader(h);
+        m.getQuestions().addAll(request.getMessage().getQuestions());
+        h.setARCount(1);
+        m.getAdditionalRecords().add(
+                new RR<>(
+                        getSName(),
+                        KnownRRType.TXT,
+                        KnownRRClass.IN,
+                        0,
+                        new TXTRData(reason)
+                )
+        );
+        request.forEachListener(l -> l.onResponse(m));
+        request.answer(m);
+    }
+
     public void incrementStateTransitionCount() throws StateTransitionCountLimitExceededException {
         if(stateTransitionCount > STATE_TRANSITION_COUNT_LIMIT) {
             throw new StateTransitionCountLimitExceededException("Limit: " + STATE_TRANSITION_COUNT_LIMIT);

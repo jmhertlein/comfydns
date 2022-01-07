@@ -34,6 +34,11 @@ public class InitialCheckingState implements RequestState {
 
             return Optional.of(new ZoneTransferState());
         }
+
+        if(sCtx.getRequest().getMessage().getQuestions().stream().anyMatch(q -> q.getQName().isBlank())) {
+            sCtx.sendFormatErrorResponse("QNAME must not be empty.");
+            return Optional.empty();
+        }
         return Optional.of(new SNameCheckingState());
     }
 
