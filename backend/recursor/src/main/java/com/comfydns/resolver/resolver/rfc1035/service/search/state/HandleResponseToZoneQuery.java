@@ -12,6 +12,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.TimeoutException;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,13 @@ public class HandleResponseToZoneQuery implements RequestState {
             sCtx.getQSet().remove(serverQueried.getIp(), sent.getQuestions().get(0));
             sCtx.forEachListener(l -> l.onUpstreamQueryResult(serverQueried, Optional.empty(), Optional.of(error)));
             log.debug("[{}]: Zone query resulted in error: {} {}", sCtx.getRequest().getId(), error.getClass().getSimpleName(), error.getMessage());
+            if(error instanceof TimeoutException) {
+                log.info("UDP timeout while asking {} about [{}], trying to resolve [{}].",
+                        serverQueried.getIp(), 
+                        sent.getQuestions().stream().map(Question::toString).collect(Collectors.joining(",")),
+                        sCtx.getCurrentQuestion()
+                );
+            }
             return Optional.of(new SendServerQuery(false));
         }
 
