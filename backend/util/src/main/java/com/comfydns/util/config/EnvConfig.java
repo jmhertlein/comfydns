@@ -30,6 +30,10 @@ public class EnvConfig {
         return isSet("CDNS_ROOT_PATH");
     }
 
+    public static int getDOHServerPort() {
+        return Integer.parseInt(getOrDefault("CDNS_DOH_SERVER_PORT", "443"));
+    }
+
     public static int getDnsServerPort() {
         return Integer.parseInt(getOrDefault("CDNS_DNS_SERVER_PORT", "53"));
     }
@@ -101,5 +105,17 @@ public class EnvConfig {
 
     public static int getMetricsServerPort() {
         return Integer.parseInt(getOrDefault("CDNS_METRICS_SERVER_PORT", "33200"));
+    }
+
+    public static String getDOHServerCertificateFile() {
+        return get("CDNS_DOH_TLS_CERT_FILE_PATH");
+    }
+
+    public static String getDOHServerKeyFile() {
+        return get("CDNS_DOH_TLS_KEY_FILE_PATH");
+    }
+
+    public static boolean getDOHUsesTLS() {
+        return !isSet("CDNS_DOH_USE_PLAIN_HTTP");
     }
 }

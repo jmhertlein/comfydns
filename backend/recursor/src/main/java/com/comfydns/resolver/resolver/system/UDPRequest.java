@@ -37,9 +37,9 @@ public class UDPRequest extends Request {
     public void answer(Message m) {
         ByteBuf out = Unpooled.buffer();
         byte[] payload = m.write();
-        if(payload.length > ((2 << 16) - 1)) {
+        if(payload.length > ((1 << 16) - 1)) {
             Header.setTruncated(payload);
-            out.writeBytes(payload, 0, (2 << 16) - 1);
+            out.writeBytes(payload, 0, (1 << 16) - 1);
         } else {
             out.writeBytes(payload);
         }

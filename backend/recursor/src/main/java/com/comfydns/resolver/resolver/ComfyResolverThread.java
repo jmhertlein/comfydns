@@ -15,6 +15,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.AsyncTruncatingTransport;
+import com.comfydns.resolver.resolver.system.HTTPServer;
 import com.comfydns.resolver.util.DatabaseUtils;
 import com.comfydns.resolver.resolver.system.TCPServer;
 import com.comfydns.resolver.resolver.system.UDPServer;
@@ -155,10 +156,12 @@ public class ComfyResolverThread implements Runnable {
         try {
             TCPServer tcp = new TCPServer(resolver, bossGroup, workerGroup);
             UDPServer udp = new UDPServer(resolver, bossGroup);
+            HTTPServer http = new HTTPServer(resolver, bossGroup, workerGroup);
             ready.set(true);
             log.info("Resolver ready.");
             tcp.waitFor();
             udp.waitFor();
+            http.waitFor();
         } catch (InterruptedException e) {
             log.error("Interrupted.", e);
         } finally {
