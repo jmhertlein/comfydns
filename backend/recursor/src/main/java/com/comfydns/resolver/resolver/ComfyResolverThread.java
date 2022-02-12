@@ -158,8 +158,10 @@ public class ComfyResolverThread implements Runnable {
             UDPServer udp = new UDPServer(resolver, bossGroup);
             HTTPServer http;
             if(EnvConfig.getDOHEnabled()) {
+                log.info("Started DOH HTTP server.");
                 http = new HTTPServer(resolver, bossGroup, workerGroup);
             } else {
+                log.debug("Not starting DOH HTTP server.");
                 http = null;
             }
             ready.set(true);
