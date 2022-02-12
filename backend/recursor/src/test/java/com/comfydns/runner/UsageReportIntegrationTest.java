@@ -1,5 +1,6 @@
 package com.comfydns.runner;
 
+import com.comfydns.resolver.task.UsageReportTask;
 import com.comfydns.util.db.SimpleConnectionPool;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;

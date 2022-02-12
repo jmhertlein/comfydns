@@ -1,4 +1,4 @@
-package com.comfydns.runner;
+package com.comfydns.resolver.task;
 
 import com.comfydns.util.UserAgent;
 import org.apache.http.HttpResponse;

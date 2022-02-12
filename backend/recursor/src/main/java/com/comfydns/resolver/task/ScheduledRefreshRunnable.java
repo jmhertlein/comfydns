@@ -1,4 +1,4 @@
-package com.comfydns.runner;
+package com.comfydns.resolver.task;
 
 import com.comfydns.resolver.resolver.block.BlockList;
 import com.comfydns.util.db.SimpleConnectionPool;
@@ -12,7 +12,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-import static com.comfydns.runner.RefreshBlockListsTask.updateBlockList;
+import static com.comfydns.resolver.task.RefreshBlockListsTask.updateBlockList;
 
 public class ScheduledRefreshRunnable implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(ScheduledRefreshRunnable.class);

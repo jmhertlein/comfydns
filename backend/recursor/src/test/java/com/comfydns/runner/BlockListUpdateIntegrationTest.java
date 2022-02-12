@@ -1,6 +1,8 @@
 package com.comfydns.runner;
 
+import com.comfydns.resolver.task.RefreshBlockListsTask;
 import com.comfydns.util.db.SimpleConnectionPool;
+import com.comfydns.util.task.TaskContext;
 import com.comfydns.util.task.TaskDefinition;
 import com.google.gson.JsonObject;
 import org.junit.jupiter.api.*;
@@ -50,7 +52,7 @@ public class BlockListUpdateIntegrationTest {
         }
 
         try(Connection c = pool.getConnection().get()) {
-            RunnerTaskContext ctx = new RunnerTaskContext(c);
+            TaskContext ctx = () -> c;
             t.run(ctx);
         }
     }

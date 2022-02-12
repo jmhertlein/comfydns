@@ -3,10 +3,8 @@ package com.comfydns.resolver;
 import com.comfydns.resolver.task.ResolverTaskCreator;
 import com.comfydns.resolver.resolver.ComfyResolverThread;
 import com.comfydns.resolver.task.ResolverTaskContext;
-import com.comfydns.runner.RunnerTaskContext;
-import com.comfydns.runner.RunnerTaskCreator;
-import com.comfydns.runner.ScheduledRefreshRunnable;
-import com.comfydns.runner.UsageReportTask;
+import com.comfydns.resolver.task.ScheduledRefreshRunnable;
+import com.comfydns.resolver.task.UsageReportTask;
 import com.comfydns.util.config.EnvConfig;
 import com.comfydns.util.config.IdFile;
 import com.comfydns.util.db.CommonDatabaseUtils;
@@ -85,8 +83,7 @@ public class ComfyNameDaemon {
                 c -> {
                     List<TaskDefinition> ret = new ArrayList<>();
                     try (PreparedStatement ps = c.prepareStatement("select * from task where " +
-                            "server_id=? and not done and not started")) {
-                        ps.setObject(1, serverId);
+                            "not done and not started")) {
                         try (ResultSet rs = ps.executeQuery()) {
                             while (rs.next()) {
                                 ret.add(new TaskDefinition(rs));
@@ -96,26 +93,6 @@ public class ComfyNameDaemon {
                     return ret;
                 }, new ResolverTaskCreator());
         cron.scheduleWithFixedDelay(taskDispatcher, 10, 1, TimeUnit.SECONDS);
-
-        TaskDispatcher runnerTaskDispatcher = new TaskDispatcher(dbPool,
-                taskPool,
-                RunnerTaskContext::new,
-                c -> {
-                    List<TaskDefinition> ret = new ArrayList<>();
-                    try (PreparedStatement ps = c.prepareStatement("select * from task where " +
-                            "server_id is null and not done and not started")) {
-                        try (ResultSet rs = ps.executeQuery()) {
-                            while (rs.next()) {
-                                ret.add(new TaskDefinition(rs));
-                            }
-                        }
-                    }
-                    return ret;
-                }, new RunnerTaskCreator());
-
-        cron.scheduleWithFixedDelay(
-                runnerTaskDispatcher,
-                10, 1, TimeUnit.SECONDS);
 
         cron.scheduleWithFixedDelay(
                 new ScheduledRefreshRunnable(dbPool),

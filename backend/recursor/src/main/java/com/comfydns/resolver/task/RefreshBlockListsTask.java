@@ -1,4 +1,4 @@
-package com.comfydns.runner;
+package com.comfydns.resolver.task;
 
 import com.comfydns.resolver.resolver.block.BlockList;
 import com.comfydns.util.task.Task;
@@ -81,12 +81,6 @@ public class RefreshBlockListsTask implements Task {
     public void run(TaskContext ctx) throws SQLException, MalformedURLException {
         OffsetDateTime now = OffsetDateTime.now();
         Connection c = ctx.getConnection();
-        RunnerTaskContext context;
-        if (ctx instanceof RunnerTaskContext) {
-            context = (RunnerTaskContext) ctx;
-        } else {
-            throw new RuntimeException("RefreshBlockListsTask requires a RunnerContext, was passed a " + ctx.getClass().getName());
-        }
 
         UUID listId = UUID.fromString(def.getArgs().get("block_list_id").getAsString());
 
