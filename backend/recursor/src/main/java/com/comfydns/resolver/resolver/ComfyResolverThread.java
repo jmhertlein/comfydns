@@ -156,12 +156,19 @@ public class ComfyResolverThread implements Runnable {
         try {
             TCPServer tcp = new TCPServer(resolver, bossGroup, workerGroup);
             UDPServer udp = new UDPServer(resolver, bossGroup);
-            HTTPServer http = new HTTPServer(resolver, bossGroup, workerGroup);
+            HTTPServer http;
+            if(EnvConfig.getDOHEnabled()) {
+                http = new HTTPServer(resolver, bossGroup, workerGroup);
+            } else {
+                http = null;
+            }
             ready.set(true);
             log.info("Resolver ready.");
             tcp.waitFor();
             udp.waitFor();
-            http.waitFor();
+            if(EnvConfig.getDOHEnabled()) {
+                http.waitFor();
+            }
         } catch (InterruptedException e) {
             log.error("Interrupted.", e);
         } finally {

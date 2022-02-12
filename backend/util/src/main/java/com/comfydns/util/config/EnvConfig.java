@@ -118,4 +118,8 @@ public class EnvConfig {
     public static boolean getDOHUsesTLS() {
         return !isSet("CDNS_DOH_USE_PLAIN_HTTP");
     }
+
+    public static boolean getDOHEnabled() {
+        return isSet("CDNS_DOH_ENABLED");
+    }
 }
