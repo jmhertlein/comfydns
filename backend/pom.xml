@@ -13,8 +13,6 @@
 
     <modules>
         <module>recursor</module>
-        <module>runner</module>
-        <module>util</module>
     </modules>
 
     <dependencies>
@@ -79,6 +77,11 @@
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>fluent-hc</artifactId>
+            <version>4.5.12</version>
         </dependency>
     </dependencies>
 

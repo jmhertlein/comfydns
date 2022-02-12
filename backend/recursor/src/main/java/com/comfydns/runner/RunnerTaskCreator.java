@@ -1,6 +1,5 @@
 package com.comfydns.runner;
 
-import com.comfydns.resolver.task.ReloadZonesTask;
 import com.comfydns.util.task.Task;
 import com.comfydns.util.task.TaskCreator;
 import com.comfydns.util.task.TaskDefinition;

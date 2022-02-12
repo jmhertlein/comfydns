@@ -2,14 +2,12 @@ package com.comfydns.resolver.resolver.block;
 
 import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
 import com.comfydns.resolver.resolver.rfc1035.message.LabelCache;
-import com.comfydns.resolver.resolver.rfc1035.message.LabelMaker;
 import com.comfydns.util.db.Flag;
 import com.comfydns.util.db.SimpleConnectionPool;
 import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.sql.*;
 import java.util.ArrayList;
