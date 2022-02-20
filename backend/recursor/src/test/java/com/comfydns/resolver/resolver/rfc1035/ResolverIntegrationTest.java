@@ -2,6 +2,7 @@ package com.comfydns.resolver.resolver.rfc1035;
 
 import com.comfydns.resolver.resolver.butil.PrettyByte;
 import com.comfydns.resolver.resolver.internet.DNSRootZone;
+import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryAuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryNegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryDNSCache;
 import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
@@ -245,6 +246,7 @@ public class ResolverIntegrationTest {
 
             RecursiveResolver r = new RecursiveResolver(
                     stateMachinePool, new InMemoryDNSCache(),
+                    new InMemoryAuthorityRRSource(),
                     new InMemoryNegativeCache(), new AsyncTruncatingTransport(),
                     new AsyncNonTruncatingTransport(),
                     new HashSet<>());
@@ -278,6 +280,7 @@ public class ResolverIntegrationTest {
         try {
             RecursiveResolver r = new RecursiveResolver(
                     stateMachinePool, new InMemoryDNSCache(),
+                    new InMemoryAuthorityRRSource(),
                     new InMemoryNegativeCache(), new AsyncTruncatingTransport(),
                     new AsyncNonTruncatingTransport(),
                     new HashSet<>());

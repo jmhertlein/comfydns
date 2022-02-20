@@ -22,7 +22,7 @@ public class CommonDatabaseUtils {
 
         pgPool.setDatabaseName(config.getDbName());
         pgPool.setUser("comfydns");
-        if(config.getPassword() != null) {
+        if (config.getPassword() != null) {
             pgPool.setPassword(config.getPassword());
         }
         log.debug(pgPool.getURL());

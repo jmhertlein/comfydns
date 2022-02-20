@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_12_234412) do
+ActiveRecord::Schema.define(version: 2022_02_20_155829) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -89,38 +89,8 @@ ActiveRecord::Schema.define(version: 2022_02_12_234412) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "server", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "hostname"
-    t.string "ip_address"
-    t.boolean "use_https_for_api"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-  end
-
-  create_table "server_authority_state", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "soa_name"
-    t.bigint "soa_serial"
-    t.uuid "server_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-  end
-
-  create_table "start_of_authority", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "mname"
-    t.string "rname"
-    t.integer "serial", default: 0
-    t.integer "refresh", default: 360
-    t.integer "retry", default: 60
-    t.integer "expire", default: 720
-    t.integer "minimum", default: 60
-    t.uuid "zone_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-  end
-
   create_table "task", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "action", null: false
-    t.uuid "server_id"
     t.boolean "started", default: false
     t.boolean "done", default: false
     t.boolean "failed", default: false
@@ -164,14 +134,13 @@ ActiveRecord::Schema.define(version: 2022_02_12_234412) do
     t.boolean "gen_ptrs"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.uuid "soa_rr_id"
   end
 
   add_foreign_key "block_list_snapshot", "block_list", on_delete: :cascade
   add_foreign_key "blocked_name", "block_list_snapshot", on_delete: :cascade
   add_foreign_key "rr", "zone", on_delete: :cascade
-  add_foreign_key "server_authority_state", "server", on_delete: :cascade
-  add_foreign_key "start_of_authority", "zone", on_delete: :cascade
-  add_foreign_key "task", "server", on_delete: :cascade
   add_foreign_key "trace", "task", on_delete: :cascade
   add_foreign_key "trace_event", "trace", on_delete: :cascade
+  add_foreign_key "zone", "rr", column: "soa_rr_id"
 end

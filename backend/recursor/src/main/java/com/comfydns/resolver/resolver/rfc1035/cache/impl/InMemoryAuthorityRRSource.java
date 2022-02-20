@@ -28,19 +28,19 @@ import java.util.stream.Collectors;
  * An RRSource that is immutable and specifically holds RRs that the server is authoritative for.
  */
 
-public class AuthoritativeRecordsContainer implements AuthorityRRSource {
-    private static final Logger log = LoggerFactory.getLogger(AuthoritativeRecordsContainer.class);
+public class InMemoryAuthorityRRSource implements AuthorityRRSource {
+    private static final Logger log = LoggerFactory.getLogger(InMemoryAuthorityRRSource.class);
 
     private final Map<String, Map<RR2Tuple, List<RR<?>>>> zoneRecords;
     private final Set<String> authoritativeForDomains;
 
-    public AuthoritativeRecordsContainer(List<RR<?>> records) {
+    public InMemoryAuthorityRRSource(List<RR<?>> records) {
         zoneRecords = new HashMap<>();
         records.forEach(this::cache);
         authoritativeForDomains = getSOAs().stream().map(RR::getName).collect(Collectors.toSet());
     }
 
-    public AuthoritativeRecordsContainer() {
+    public InMemoryAuthorityRRSource() {
         zoneRecords = new HashMap<>();
         authoritativeForDomains = Set.of();
     }
@@ -144,7 +144,7 @@ public class AuthoritativeRecordsContainer implements AuthorityRRSource {
 
         log.debug("Loaded {} records from db info", records.size());
 
-        return new AuthoritativeRecordsContainer(records);
+        return new InMemoryAuthorityRRSource(records);
     }
 
     @Override

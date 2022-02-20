@@ -8,8 +8,6 @@ public class ResolverTaskCreator implements TaskCreator {
     @Override
     public Task create(TaskDefinition d) {
         switch(d.getAction()) {
-            case "RELOAD_ZONES":
-                return new ReloadZonesTask(d);
             case "RELOAD_ADBLOCK_CONFIG":
                 return new ReloadAdblockingStateTask(d);
             case "TRACE_QUERY":

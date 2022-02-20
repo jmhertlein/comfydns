@@ -4,19 +4,15 @@ import com.comfydns.resolver.resolver.block.DBDomainBlocker;
 import com.comfydns.resolver.resolver.block.DomainBlocker;
 import com.comfydns.resolver.resolver.block.NoOpDomainBlocker;
 import com.comfydns.resolver.resolver.rfc1035.cache.AuthorityRRSource;
-import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
-import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBNegativeCache;
-import com.comfydns.resolver.resolver.rfc1035.cache.impl.AuthoritativeRecordsContainer;
-import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBDNSCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.NegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.RRCache;
-import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
-import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException;
+import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBAuthorityRRSource;
+import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBDNSCache;
+import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBNegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.AsyncTruncatingTransport;
 import com.comfydns.resolver.resolver.system.HTTPServer;
-import com.comfydns.resolver.util.DatabaseUtils;
 import com.comfydns.resolver.resolver.system.TCPServer;
 import com.comfydns.resolver.resolver.system.UDPServer;
 import com.comfydns.util.config.EnvConfig;
@@ -71,6 +67,8 @@ public class ComfyResolverThread implements Runnable {
         new MemoryPoolsExports().register();
         new GarbageCollectorExports().register();
 
+        AuthorityRRSource authorityRecords = new DBAuthorityRRSource(dbPool);
+
         RRCache cache = new DBDNSCache(dbPool);
         cron.scheduleAtFixedRate(() -> {
             try {
@@ -113,8 +111,14 @@ public class ComfyResolverThread implements Runnable {
             throw new RuntimeException("Error loading list of IPs to allow zone transfers to.", e);
         }
 
-        resolver = new RecursiveResolver(stateMachinePool, cache, negativeCache, new AsyncTruncatingTransport(workerGroup),
-                new AsyncNonTruncatingTransport(workerGroup), allowZoneTransferToAddresses);
+        resolver = new RecursiveResolver(
+                stateMachinePool,
+                cache,
+                authorityRecords,
+                negativeCache,
+                new AsyncTruncatingTransport(workerGroup),
+                new AsyncNonTruncatingTransport(workerGroup),
+                allowZoneTransferToAddresses);
 
         resolver.setDomainBlocker(domainBlocker);
     }
@@ -133,18 +137,7 @@ public class ComfyResolverThread implements Runnable {
         }
     }
 
-    public void doRun() throws SQLException, UnsupportedRRTypeException, InvalidMessageException, ExecutionException, InterruptedException, CacheAccessException {
-        resolver.getAuthorityZonesLock().lock();
-        try(Connection c = dbPool.getConnection().get()) {
-            c.setAutoCommit(false);
-            AuthorityRRSource container = AuthoritativeRecordsContainer.load(c);
-            DatabaseUtils.updateServerAuthoritativeZoneState(c, container, serverId);
-            c.commit();
-            resolver.setAuthorityZones(container);
-        } finally {
-            resolver.getAuthorityZonesLock().unlock();
-        }
-
+    public void doRun() throws SQLException, ExecutionException, InterruptedException {
         try(Connection c = dbPool.getConnection().get()) {
             if(DBDomainBlocker.isEnabled(c)) {
                 resolver.setDomainBlocker(new DBDomainBlocker(dbPool));

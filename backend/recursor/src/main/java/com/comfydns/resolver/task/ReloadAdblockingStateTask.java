@@ -16,7 +16,7 @@ import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
 
 public class ReloadAdblockingStateTask implements Task {
-    private static final Logger log = LoggerFactory.getLogger(ReloadZonesTask.class);
+    private static final Logger log = LoggerFactory.getLogger(ReloadAdblockingStateTask.class);
     private final TaskDefinition def;
 
     public ReloadAdblockingStateTask(TaskDefinition d) {

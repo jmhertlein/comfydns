@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Set;
 
 public interface AuthorityRRSource extends RRSource {
-    public boolean isAuthoritativeFor(String domain);
-    public Set<String> getAuthoritativeForDomains();
-    public List<RR<SOARData>> getSOAs();
-    public List<RR<?>> getZoneTransferPayload(String zoneName);
-    public List<String> getNames();
+    public boolean isAuthoritativeFor(String domain) throws CacheAccessException;
+    public Set<String> getAuthoritativeForDomains() throws CacheAccessException;
+    public List<RR<SOARData>> getSOAs() throws CacheAccessException;
+    public List<RR<?>> getZoneTransferPayload(String zoneName) throws CacheAccessException;
+    public List<String> getNames() throws CacheAccessException;
 
     @Override
     default boolean isAuthoritative() {

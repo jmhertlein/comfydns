@@ -1,6 +1,7 @@
 package com.comfydns.resolver.resolver.rfc1035.service;
 
 import com.comfydns.resolver.resolver.internet.DNSRootZone;
+import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryAuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryNegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryDNSCache;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
@@ -101,6 +102,7 @@ public class RecursiveResolverTest {
         try {
             RecursiveResolver r = new RecursiveResolver(
                     stateMachinePool, new InMemoryDNSCache(),
+                    new InMemoryAuthorityRRSource(),
                     new InMemoryNegativeCache(), new TestTruncatingTransport(responses),
                     null,
                     new HashSet<>());

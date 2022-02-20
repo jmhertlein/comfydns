@@ -37,25 +37,4 @@ public class DatabaseUtils {
         }
     }
 
-    public static void updateServerAuthoritativeZoneState(Connection c, AuthorityRRSource container, UUID serverId) throws SQLException {
-        // delete what's there
-        try(PreparedStatement ps = c.prepareStatement("delete from server_authority_state where server_id=?")) {
-            ps.setObject(1, serverId);
-            int rows = ps.executeUpdate();
-            log.debug("Deleted {} rows from server_authority_state", rows);
-        }
-
-        // fill out with proper stuff
-        try(PreparedStatement ps = c.prepareStatement("insert into server_authority_state (id, soa_name, soa_serial, server_id, created_at, updated_at) values (DEFAULT, ?, ?, ?, now(), now())")) {
-            for (RR<SOARData> soa : container.getSOAs()) {
-                ps.setString(1, soa.getName());
-                ps.setLong(2, soa.getRData().getSerial());
-                ps.setObject(3, serverId);
-                ps.addBatch();
-            }
-            int[] rowsChanged = ps.executeBatch();
-
-            log.debug("Inserted {} rows into server_authority_state", IntStream.of(rowsChanged).sum());
-        }
-    }
 }

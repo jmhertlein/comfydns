@@ -80,6 +80,8 @@ class DomainController < ApplicationController
     )
     zone.start_of_authority.increment!(:serial)
 
+    # TODO this needs to now bust negative caches now too
+
     redirect_to "/domain/#{zone.id}", notice: "Record added!"
   end
 

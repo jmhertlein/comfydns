@@ -32,6 +32,14 @@ public class CacheMetrics {
 
 
 
+    public static final Histogram authorityRRReadTimeSeconds = Histogram.build()
+            .name("authority_rr_read_time")
+            .help("How long it takes to read the authoritative rr table.")
+            .buckets(0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 1.0, 2, 5, 10)
+            .register();
+
+
+
     public static final Counter cachedNegativeRecordsTotal = Counter.build()
             .name("cached_negative_records_total")
             .help("Total number of records ever put into the cache.")
