@@ -5,6 +5,9 @@ import com.comfydns.resolver.resolver.block.NoOpDomainBlocker;
 import com.comfydns.resolver.resolver.rfc1035.cache.AuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.NegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.RRCache;
+import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryAuthorityRRSource;
+import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryDNSCache;
+import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryNegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
 import com.comfydns.resolver.resolver.rfc1035.service.search.ResolverContext;
@@ -26,16 +29,35 @@ public class RecursiveResolver {
     private final NegativeCache negativeCache;
     private final TruncatingTransport primary;
     private final NonTruncatingTransport fallback;
-    private volatile AuthorityRRSource authorityZones;
+    private final AuthorityRRSource authorityZones;
     private volatile DomainBlocker domainBlocker;
     private final Set<InetAddress> allowZoneTransferToAddresses;
 
-    public RecursiveResolver(ExecutorService stateMachinePool,
-                             RRCache cache,
-                             AuthorityRRSource authorityRecords,
-                             NegativeCache negativeCache,
-                             TruncatingTransport primary,
-                             NonTruncatingTransport fallback, Set<InetAddress> allowZoneTransferToAddresses) {
+    public RecursiveResolver(
+            ExecutorService stateMachinePool,
+            TruncatingTransport primary,
+            NonTruncatingTransport fallback,
+            Set<InetAddress> allowZoneTransferToAddresses
+    ) {
+        this.stateMachinePool = stateMachinePool;
+        this.cache = new InMemoryDNSCache();
+        this.authorityZones = new InMemoryAuthorityRRSource();
+        this.negativeCache = new InMemoryNegativeCache();
+        this.primary = primary;
+        this.fallback = fallback;
+        this.domainBlocker = new NoOpDomainBlocker();
+        this.allowZoneTransferToAddresses = allowZoneTransferToAddresses;
+    }
+
+    public RecursiveResolver(
+            ExecutorService stateMachinePool,
+            RRCache cache,
+            AuthorityRRSource authorityRecords,
+            NegativeCache negativeCache,
+            TruncatingTransport primary,
+            NonTruncatingTransport fallback,
+            Set<InetAddress> allowZoneTransferToAddresses
+    ) {
         this.stateMachinePool = stateMachinePool;
         this.cache = cache;
         this.negativeCache = negativeCache;
