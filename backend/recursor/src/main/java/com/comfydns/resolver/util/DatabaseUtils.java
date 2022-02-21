@@ -19,22 +19,4 @@ public class DatabaseUtils {
 
     private DatabaseUtils() {}
 
-    public static void updateServerDBRecord(Connection c, UUID serverId) throws SQLException {
-        boolean exists = false;
-        try(PreparedStatement ps = c.prepareStatement("select id from server where id=?")) {
-            ps.setObject(1, serverId);
-            try(ResultSet rs = ps.executeQuery()) {
-                exists = rs.next();
-            }
-        }
-        if(exists) {
-            return;
-        }
-
-        try(PreparedStatement ps = c.prepareStatement("insert into server (id, created_at, updated_at) values (?, now(), now())")) {
-            ps.setObject(1, serverId);
-            ps.executeUpdate();
-        }
-    }
-
 }

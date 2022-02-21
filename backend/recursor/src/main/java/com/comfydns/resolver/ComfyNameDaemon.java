@@ -32,12 +32,8 @@ public class ComfyNameDaemon {
     final static Logger log = LoggerFactory.getLogger(ComfyNameDaemon.class);
 
     public static void main(String... args) throws IOException, InterruptedException, SQLException, ExecutionException {
-        IdFile serverIdFile = new IdFile(EnvConfig.getPersistentRootPath().resolve("server_id.txt"));
-        UUID serverId = serverIdFile.readOrGenerateAndRead();
-
         IdFile installIdFile = new IdFile(EnvConfig.getPersistentRootPath().resolve("install_id.txt"));
         UUID installId = installIdFile.readOrGenerateAndRead();
-        log.info("Server id is: {}", serverId);
 
         NioEventLoopGroup bossGroup, workerGroup;
         bossGroup = new NioEventLoopGroup();
@@ -56,17 +52,9 @@ public class ComfyNameDaemon {
             return;
         }
 
-        try (Connection c = dbPool.getConnection().get()) {
-            DatabaseUtils.updateServerDBRecord(c, serverId);
-        } catch (SQLException | ExecutionException throwables) {
-            log.error("Error updating server record in db", throwables);
-            System.exit(1);
-            return;
-        }
-
         ExecutorService apps = Executors.newCachedThreadPool();
 
-        ComfyResolverThread d = new ComfyResolverThread(serverId, workerGroup, bossGroup, cron, stateMachinePool, dbPool);
+        ComfyResolverThread d = new ComfyResolverThread(workerGroup, bossGroup, cron, stateMachinePool, dbPool);
         apps.submit(d);
 
         Thread.sleep(50);
@@ -79,7 +67,7 @@ public class ComfyNameDaemon {
         //TODO: this has gotten out of hand, now there are two of them. (move this into a subclass... ResolverTaskDispatcher?
         TaskDispatcher taskDispatcher = new TaskDispatcher(dbPool,
                 taskPool,
-                c -> new ResolverTaskContext(serverId, d.getResolver(), dbPool, c),
+                c -> new ResolverTaskContext(d.getResolver(), dbPool, c),
                 c -> {
                     List<TaskDefinition> ret = new ArrayList<>();
                     try (PreparedStatement ps = c.prepareStatement("select * from task where " +

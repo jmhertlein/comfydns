@@ -8,13 +8,11 @@ import java.sql.Connection;
 import java.util.UUID;
 
 public class ResolverTaskContext implements TaskContext {
-    private final UUID serverId;
     private final RecursiveResolver resolver;
     private final Connection c;
     private final SimpleConnectionPool dbPool;
 
-    public ResolverTaskContext(UUID serverId, RecursiveResolver resolver, SimpleConnectionPool dbPool, Connection c) {
-        this.serverId = serverId;
+    public ResolverTaskContext(RecursiveResolver resolver, SimpleConnectionPool dbPool, Connection c) {
         this.resolver = resolver;
         this.dbPool = dbPool;
         this.c = c;
@@ -31,9 +29,5 @@ public class ResolverTaskContext implements TaskContext {
     @Override
     public Connection getConnection() {
         return c;
-    }
-
-    public UUID getServerId() {
-        return serverId;
     }
 }

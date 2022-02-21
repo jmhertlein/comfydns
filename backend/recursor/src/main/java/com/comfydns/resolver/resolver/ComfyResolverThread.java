@@ -44,7 +44,6 @@ public class ComfyResolverThread implements Runnable {
     private final NioEventLoopGroup bossGroup;
     private final NioEventLoopGroup workerGroup;
 
-    private final UUID serverId;
     private final ScheduledExecutorService cron;
     private final SimpleConnectionPool dbPool;
     private final AtomicBoolean ready;
@@ -52,11 +51,10 @@ public class ComfyResolverThread implements Runnable {
     private final RecursiveResolver resolver;
 
     public ComfyResolverThread(
-            UUID serverId, NioEventLoopGroup workerGroup, NioEventLoopGroup bossGroup,
+            NioEventLoopGroup workerGroup, NioEventLoopGroup bossGroup,
             ScheduledExecutorService cron,
             ExecutorService stateMachinePool,
             SimpleConnectionPool dbPool) throws SQLException, ExecutionException, InterruptedException {
-        this.serverId = serverId;
         this.bossGroup = bossGroup;
         this.workerGroup = workerGroup;
         this.cron = cron;
