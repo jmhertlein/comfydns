@@ -1,5 +1,6 @@
 package com.comfydns.util.task;
 
+import com.comfydns.resolver.task.ResolverTaskContext;
 import com.comfydns.util.db.SimpleConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,13 +20,13 @@ public class TaskDispatcher implements Runnable {
 
     private final SimpleConnectionPool dbPool;
     private final ExecutorService taskPool;
-    private final Function<Connection, TaskContext> contextCreator;
+    private final Function<Connection, ResolverTaskContext> contextCreator;
     private final TaskLoader taskLoader;
     private final TaskCreator taskCreator;
 
     public TaskDispatcher(SimpleConnectionPool dbPool,
                           ExecutorService taskPool,
-                          Function<Connection, TaskContext> contextCreator, TaskLoader taskLoader, TaskCreator taskCreator) {
+                          Function<Connection, ResolverTaskContext> contextCreator, TaskLoader taskLoader, TaskCreator taskCreator) {
         this.dbPool = dbPool;
         this.taskPool = taskPool;
         this.contextCreator = contextCreator;

@@ -8,7 +8,6 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.trace.*;
 import com.comfydns.util.task.Task;
-import com.comfydns.util.task.TaskContext;
 import com.comfydns.util.task.TaskDefinition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -29,7 +28,7 @@ public class TraceQueryTask implements Task {
     }
 
     @Override
-    public void run(TaskContext context) throws Exception {
+    public void run(ResolverTaskContext context) throws Exception {
         String qname = def.getArgs().get("qname").getAsString();
         int qtype = def.getArgs().get("qtype").getAsInt();
 

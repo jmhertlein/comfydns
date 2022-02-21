@@ -1,5 +1,6 @@
 package com.comfydns.util.task;
 
+import com.comfydns.resolver.task.ResolverTaskContext;
 import com.comfydns.util.db.SimpleConnectionPool;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
@@ -21,10 +22,10 @@ public class TaskRunner implements Runnable {
     }
     private static final Logger log = LoggerFactory.getLogger(TaskRunner.class);
     private final Task t;
-    private final Function<Connection, TaskContext> contextCreator;
+    private final Function<Connection, ResolverTaskContext> contextCreator;
     private final SimpleConnectionPool dbPool;
 
-    public TaskRunner(Task t, Function<Connection, TaskContext> contextCreator, SimpleConnectionPool dbPool) {
+    public TaskRunner(Task t, Function<Connection, ResolverTaskContext> contextCreator, SimpleConnectionPool dbPool) {
         this.t = t;
         this.contextCreator = contextCreator;
         this.dbPool = dbPool;

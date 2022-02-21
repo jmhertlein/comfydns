@@ -2,12 +2,10 @@ package com.comfydns.resolver.task;
 
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
 import com.comfydns.util.db.SimpleConnectionPool;
-import com.comfydns.util.task.TaskContext;
 
 import java.sql.Connection;
-import java.util.UUID;
 
-public class ResolverTaskContext implements TaskContext {
+public class ResolverTaskContext {
     private final RecursiveResolver resolver;
     private final Connection c;
     private final SimpleConnectionPool dbPool;
@@ -26,7 +24,6 @@ public class ResolverTaskContext implements TaskContext {
         return dbPool;
     }
 
-    @Override
     public Connection getConnection() {
         return c;
     }
