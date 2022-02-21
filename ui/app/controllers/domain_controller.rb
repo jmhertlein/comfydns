@@ -70,17 +70,32 @@ class DomainController < ApplicationController
       hostname = "#{params[:hostname]}.#{zone.name}"
     end
 
-    record = RR.create(
-      name: hostname, 
-      rrtype: DNS::RRTYPE_TO_VALUE[params[:rrtype]],
-      rrclass: DNS::RRCLASS_TO_VALUE[params[:rrclass]],
-      ttl: params[:ttl].to_i,
-      zone_id: zone.id,
-      rdata: {"address": params[:ip_address]}
-    )
-    zone.start_of_authority.increment!(:serial)
+    RR.transaction do
+      record = RR.create(
+        name: hostname, 
+        rrtype: DNS::RRTYPE_TO_VALUE[params[:rrtype]],
+        rrclass: DNS::RRCLASS_TO_VALUE[params[:rrclass]],
+        ttl: params[:ttl].to_i,
+        zone_id: zone.id,
+        rdata: {"address": params[:ip_address]}
+      )
+      if params[:rrtype] == "A" && zone.gen_ptrs
+        ptr_record = RR.create(
+          name: DNS::ip_to_in_addr(params[:ip_address]),
+          rrtype: DNS::RRTYPE_TO_VALUE["PTR"],
+          rrclass: DNS::RRCLASS_TO_VALUE["IN"],
+          ttl: params[:ttl].to_i,
+          zone_id: zone.id,
+          rdata: {"ptrdname": hostname}
+        )
+      end
 
-    # TODO this needs to now bust negative caches now too
+      soa_rr = RR.find zone.soa_rr_id
+      soa_rr.rdata["serial"] = soa_rr.rdata["serial"] + 1
+      soa_rr.save!
+      
+      CachedNegative.connection.execute("delete from cached_negative where name like ?", "SQL", [["%."+hostname]])
+    end
 
     redirect_to "/domain/#{zone.id}", notice: "Record added!"
   end

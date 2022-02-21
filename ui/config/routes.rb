@@ -6,12 +6,6 @@ Rails.application.routes.draw do
   post "/domain/:id", to: "domain#create_record"
   delete "/domain/:zid/:rrid", to: "domain#destroy_record"
 
-  get "/server", to: "server#index"
-  get "/server/:id", to: "server#edit"
-  post "/server/refresh_all", to: "server#refresh_all"
-  patch "/server/:id", to: "server#update"
-  post "/server/:id/refresh", to: "server#refresh"
-
   get "/cache", to: "cache#index"
   delete "/cache/:cache_type/:id", to: "cache#destroy"
 

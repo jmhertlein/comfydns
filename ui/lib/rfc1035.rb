@@ -85,5 +85,9 @@ module DNS
     end
   end
 
-  module_function :value_to_rrclass, :value_to_rrtype
+  def ip_to_in_addr ip
+    return ip.split(".").reverse.join(".") + ".in-addr.arpa"
+  end
+
+  module_function :value_to_rrclass, :value_to_rrtype, :ip_to_in_addr
 end

@@ -12,38 +12,6 @@
 
 <div class="row mb-3">
   <div class="col">
-    <h3>Server Status</h3>
-    <% if !@servers_need_refresh.empty? %>
-      <div class="row mb-3 justify-content-begin align-items-center">
-        <div class="col-md-auto"><span>You have servers with pending zone updates.</span></div>
-        <div class="col-sm-auto"><a href="/server"><button class="btn btn-primary">View</button></a></div>
-      </div>
-      <div class="row mb-3">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Server ID</th>
-              <th>Zone Name</th>
-              <th>Zone Serial</th>
-              <th>Server's Zone Serial</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @servers_need_refresh.each do |s| %>
-              <tr>
-                <td><%= s[0] %></td>  
-                <td><%= s[1] %></td>  
-                <td><%= s[2] %></td>  
-                <td><%= s[3] %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-
-    <% else %>
-      <span>All servers have up-to-date zone information.</span>
-    <% end %>
+    <h3>Nothing to see here now :)</h3>
   </div>
 </div>

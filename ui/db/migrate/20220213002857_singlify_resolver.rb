@@ -17,7 +17,7 @@ class SinglifyResolver < ActiveRecord::Migration[6.1]
             rdata: {
               "mname": "",
               "rname": "",
-              "serial": 0,
+              "serial": zone.start_of_authority.serial,
               "refresh": 360,
               "retry": 60,
               "expire": 720,

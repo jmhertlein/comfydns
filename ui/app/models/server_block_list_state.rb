@@ -1,2 +1,0 @@
-class ServerBlockListState < ApplicationRecord
-end
