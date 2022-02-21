@@ -14,7 +14,24 @@ class DomainController < ApplicationController
     end
 
     zone = Zone.create name: params[:name]
-    soa = StartOfAuthority.create zone_id: zone.id
+    soa_record = RR.create(
+            name: zone.name, 
+            rrtype: DNS::RRTYPE_TO_VALUE["SOA"],
+            rrclass: DNS::RRCLASS_TO_VALUE["IN"],
+            ttl: 60,
+            zone_id: zone.id,
+            rdata: {
+              "mname": "",
+              "rname": "",
+              "serial": 1,
+              "refresh": 360,
+              "retry": 60,
+              "expire": 720,
+              "minimum": 60,
+            }
+          )
+    zone.soa_rr_id = soa_record.id
+    zone.save!
 
     redirect_to domain_path(zone)
   end
@@ -94,7 +111,7 @@ class DomainController < ApplicationController
       soa_rr.rdata["serial"] = soa_rr.rdata["serial"] + 1
       soa_rr.save!
       
-      CachedNegative.connection.execute("delete from cached_negative where name like ?", "SQL", [["%."+hostname]])
+      CachedNegative.connection.execute("delete from cached_negative where name like ?", [["%."+hostname]])
     end
 
     redirect_to "/domain/#{zone.id}", notice: "Record added!"
@@ -115,7 +132,9 @@ class DomainController < ApplicationController
 
     rr.delete
 
-    zone.start_of_authority.increment!(:serial)
+    soa_rr = RR.find zone.soa_rr_id
+    soa_rr.rdata["serial"] = soa_rr.rdata["serial"] + 1
+    soa_rr.save!
 
     redirect_to "/domain/#{zone.id}", notice: "Record deleted!"
   end

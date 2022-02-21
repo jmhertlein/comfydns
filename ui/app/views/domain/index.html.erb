@@ -11,7 +11,7 @@
       <% @zones.each do |zone| %>
         <tr>
           <td><%= zone.name %></td>
-          <td><%= zone.start_of_authority.serial %></td>
+          <td><%= zone.start_of_authority["serial"] %></td>
           <td><%= @zone_host_counts.has_key?(zone.id) ? @zone_host_counts[zone.id] : 0 %></td>
           <td align="center">
             <a href="/domain/<%= zone.id %>" ><button type="button" class="btn btn-primary domain-view-button">View</button></a>
