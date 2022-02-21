@@ -1,6 +1,6 @@
-package com.comfydns.util.task;
+package com.comfydns.resolver.task;
 
-import com.comfydns.resolver.task.ResolverTaskContext;
+import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
 import com.comfydns.util.db.SimpleConnectionPool;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 public class TaskRunner implements Runnable {
     private static final Counter taskErrors, taskDBErrors;
@@ -22,13 +21,13 @@ public class TaskRunner implements Runnable {
     }
     private static final Logger log = LoggerFactory.getLogger(TaskRunner.class);
     private final Task t;
-    private final Function<Connection, ResolverTaskContext> contextCreator;
     private final SimpleConnectionPool dbPool;
+    private final RecursiveResolver resolver;
 
-    public TaskRunner(Task t, Function<Connection, ResolverTaskContext> contextCreator, SimpleConnectionPool dbPool) {
+    public TaskRunner(Task t, SimpleConnectionPool dbPool, RecursiveResolver resolver) {
         this.t = t;
-        this.contextCreator = contextCreator;
         this.dbPool = dbPool;
+        this.resolver = resolver;
     }
 
     @Override
@@ -36,7 +35,7 @@ public class TaskRunner implements Runnable {
         try(Connection c = dbPool.getConnection().get()) {
             try {
                 log.info("Started running task {}", t.getDefinition().getId());
-                t.run(contextCreator.apply(c));
+                t.run(new TaskContext(resolver, dbPool, c));
                 log.info("Finished running task {}", t.getDefinition().getId());
                 updateTask(c, true);
             } catch (Throwable t) {

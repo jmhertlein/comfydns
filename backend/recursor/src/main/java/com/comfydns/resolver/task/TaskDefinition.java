@@ -1,4 +1,4 @@
-package com.comfydns.util.task;
+package com.comfydns.resolver.task;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;

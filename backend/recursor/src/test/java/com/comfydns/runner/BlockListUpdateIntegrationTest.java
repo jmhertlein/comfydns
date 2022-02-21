@@ -1,9 +1,9 @@
 package com.comfydns.runner;
 
 import com.comfydns.resolver.task.RefreshBlockListsTask;
-import com.comfydns.resolver.task.ResolverTaskContext;
+import com.comfydns.resolver.task.TaskContext;
 import com.comfydns.util.db.SimpleConnectionPool;
-import com.comfydns.util.task.TaskDefinition;
+import com.comfydns.resolver.task.TaskDefinition;
 import com.google.gson.JsonObject;
 import org.junit.jupiter.api.*;
 import org.postgresql.ds.PGConnectionPoolDataSource;
@@ -52,7 +52,7 @@ public class BlockListUpdateIntegrationTest {
         }
 
         try(Connection c = pool.getConnection().get()) {
-            ResolverTaskContext ctx = new ResolverTaskContext(null, pool, c);
+            TaskContext ctx = new TaskContext(null, pool, c);
             t.run(ctx);
         }
     }

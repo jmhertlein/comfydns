@@ -5,8 +5,6 @@ import com.comfydns.resolver.resolver.block.NoOpDomainBlocker;
 import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
 import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
 import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException;
-import com.comfydns.util.task.Task;
-import com.comfydns.util.task.TaskDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,11 +21,11 @@ public class ReloadAdblockingStateTask implements Task {
     }
 
     @Override
-    public void run(ResolverTaskContext ctx) throws UnsupportedRRTypeException, SQLException, InvalidMessageException, CacheAccessException, ExecutionException, InterruptedException {
+    public void run(TaskContext ctx) throws UnsupportedRRTypeException, SQLException, InvalidMessageException, CacheAccessException, ExecutionException, InterruptedException {
         Connection c = ctx.getConnection();
-        ResolverTaskContext context;
-        if(ctx instanceof ResolverTaskContext) {
-            context = (ResolverTaskContext) ctx;
+        TaskContext context;
+        if(ctx instanceof TaskContext) {
+            context = (TaskContext) ctx;
         } else {
             throw new RuntimeException("ReloadAdblockingStateTask requires a ResolverContext, was passed a " + ctx.getClass().getName());
         }

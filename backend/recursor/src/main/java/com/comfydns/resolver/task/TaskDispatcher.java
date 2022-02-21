@@ -1,17 +1,18 @@
-package com.comfydns.util.task;
+package com.comfydns.resolver.task;
 
-import com.comfydns.resolver.task.ResolverTaskContext;
+import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
 import com.comfydns.util.db.SimpleConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -20,18 +21,14 @@ public class TaskDispatcher implements Runnable {
 
     private final SimpleConnectionPool dbPool;
     private final ExecutorService taskPool;
-    private final Function<Connection, ResolverTaskContext> contextCreator;
-    private final TaskLoader taskLoader;
-    private final TaskCreator taskCreator;
+    private final RecursiveResolver resolver;
 
     public TaskDispatcher(SimpleConnectionPool dbPool,
                           ExecutorService taskPool,
-                          Function<Connection, ResolverTaskContext> contextCreator, TaskLoader taskLoader, TaskCreator taskCreator) {
+                          RecursiveResolver resolver) {
         this.dbPool = dbPool;
         this.taskPool = taskPool;
-        this.contextCreator = contextCreator;
-        this.taskLoader = taskLoader;
-        this.taskCreator = taskCreator;
+        this.resolver = resolver;
     }
 
     @Override
@@ -47,8 +44,8 @@ public class TaskDispatcher implements Runnable {
         List<Task> tasks;
         try(Connection c = dbPool.getConnection().get()) {
             c.setAutoCommit(false);
-            tasks = taskLoader.load(c).stream()
-                    .map(taskCreator::create)
+            tasks = loadTasks(c).stream()
+                    .map(this::createTask)
                     .collect(Collectors.toList());;
 
 
@@ -69,8 +66,34 @@ public class TaskDispatcher implements Runnable {
         }
 
         for (Task task : tasks) {
-            taskPool.submit(new TaskRunner(task, contextCreator, dbPool));
+            taskPool.submit(new TaskRunner(task, dbPool, resolver));
             log.info("Dispatched task {}", task.getDefinition().getId());
         }
+    }
+
+    private Task createTask(TaskDefinition d) {
+        switch(d.getAction()) {
+            case "RELOAD_ADBLOCK_CONFIG":
+                return new ReloadAdblockingStateTask(d);
+            case "TRACE_QUERY":
+                return new TraceQueryTask(d);
+            case "REFRESH_BLOCK_LIST":
+                return new RefreshBlockListsTask(d);
+            default:
+                throw new IllegalArgumentException("unsupported task type " + d.getAction());
+        }
+    }
+
+    private List<TaskDefinition> loadTasks(Connection c) throws SQLException {
+        List<TaskDefinition> ret = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement("select * from task where " +
+                "not done and not started")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ret.add(new TaskDefinition(rs));
+                }
+            }
+        }
+        return ret;
     }
 }

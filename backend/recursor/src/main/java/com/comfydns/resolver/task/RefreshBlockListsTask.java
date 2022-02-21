@@ -1,8 +1,6 @@
 package com.comfydns.resolver.task;
 
 import com.comfydns.resolver.resolver.block.BlockList;
-import com.comfydns.util.task.Task;
-import com.comfydns.util.task.TaskDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +75,7 @@ public class RefreshBlockListsTask implements Task {
     }
 
     @Override
-    public void run(ResolverTaskContext ctx) throws SQLException, MalformedURLException {
+    public void run(TaskContext ctx) throws SQLException, MalformedURLException {
         OffsetDateTime now = OffsetDateTime.now();
         Connection c = ctx.getConnection();
 

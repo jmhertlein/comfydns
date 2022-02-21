@@ -1,17 +1,13 @@
 package com.comfydns.resolver;
 
-import com.comfydns.resolver.task.ResolverTaskCreator;
 import com.comfydns.resolver.resolver.ComfyResolverThread;
-import com.comfydns.resolver.task.ResolverTaskContext;
 import com.comfydns.resolver.task.ScheduledRefreshRunnable;
 import com.comfydns.resolver.task.UsageReportTask;
 import com.comfydns.util.config.EnvConfig;
 import com.comfydns.util.config.IdFile;
 import com.comfydns.util.db.CommonDatabaseUtils;
 import com.comfydns.util.db.SimpleConnectionPool;
-import com.comfydns.util.task.TaskDefinition;
-import com.comfydns.util.task.TaskDispatcher;
-import com.comfydns.resolver.util.DatabaseUtils;
+import com.comfydns.resolver.task.TaskDispatcher;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.exporter.HTTPServer;
@@ -19,12 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 
@@ -67,19 +58,7 @@ public class ComfyNameDaemon {
         //TODO: this has gotten out of hand, now there are two of them. (move this into a subclass... ResolverTaskDispatcher?
         TaskDispatcher taskDispatcher = new TaskDispatcher(dbPool,
                 taskPool,
-                c -> new ResolverTaskContext(d.getResolver(), dbPool, c),
-                c -> {
-                    List<TaskDefinition> ret = new ArrayList<>();
-                    try (PreparedStatement ps = c.prepareStatement("select * from task where " +
-                            "not done and not started")) {
-                        try (ResultSet rs = ps.executeQuery()) {
-                            while (rs.next()) {
-                                ret.add(new TaskDefinition(rs));
-                            }
-                        }
-                    }
-                    return ret;
-                }, new ResolverTaskCreator());
+                d.getResolver());
         cron.scheduleWithFixedDelay(taskDispatcher, 10, 1, TimeUnit.SECONDS);
 
         cron.scheduleWithFixedDelay(

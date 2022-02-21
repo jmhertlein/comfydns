@@ -7,8 +7,6 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.trace.*;
-import com.comfydns.util.task.Task;
-import com.comfydns.util.task.TaskDefinition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -28,7 +26,7 @@ public class TraceQueryTask implements Task {
     }
 
     @Override
-    public void run(ResolverTaskContext context) throws Exception {
+    public void run(TaskContext context) throws Exception {
         String qname = def.getArgs().get("qname").getAsString();
         int qtype = def.getArgs().get("qtype").getAsInt();
 
@@ -41,18 +39,18 @@ public class TraceQueryTask implements Task {
         TracingInternalRequest req = new TracingInternalRequest(m);
         req.getMessage().validateHeader();
 
-        if(!(context instanceof ResolverTaskContext)) {
+        if(!(context instanceof TaskContext)) {
             throw new IllegalStateException("TraceQueryTask requires a ResolverTaskContext");
         }
 
-        ResolverTaskContext ctx = (ResolverTaskContext) context;
+        TaskContext ctx = (TaskContext) context;
         req.setOnAnswer(resp -> this.onAnswer(resp, req, ctx));
 
         ctx.getResolver().resolve(req);
         log.info("Submitted trace query.");
     }
 
-    private void onAnswer(Message m, TracingInternalRequest req, ResolverTaskContext ctx) {
+    private void onAnswer(Message m, TracingInternalRequest req, TaskContext ctx) {
         log.info("Trace query returned.");
 
         Tracer tracer = req.getTracer();

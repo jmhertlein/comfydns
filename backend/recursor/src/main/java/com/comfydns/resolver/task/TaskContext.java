@@ -5,12 +5,12 @@ import com.comfydns.util.db.SimpleConnectionPool;
 
 import java.sql.Connection;
 
-public class ResolverTaskContext {
+public class TaskContext {
     private final RecursiveResolver resolver;
     private final Connection c;
     private final SimpleConnectionPool dbPool;
 
-    public ResolverTaskContext(RecursiveResolver resolver, SimpleConnectionPool dbPool, Connection c) {
+    public TaskContext(RecursiveResolver resolver, SimpleConnectionPool dbPool, Connection c) {
         this.resolver = resolver;
         this.dbPool = dbPool;
         this.c = c;
