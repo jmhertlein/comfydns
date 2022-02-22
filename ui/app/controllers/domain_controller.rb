@@ -111,7 +111,7 @@ class DomainController < ApplicationController
       soa_rr.rdata["serial"] = soa_rr.rdata["serial"] + 1
       soa_rr.save!
       
-      CachedNegative.connection.execute("delete from cached_negative where name like ?", [["%."+hostname]])
+      CachedNegative.delete_by('name=:hname or name like :wcard', :hname => hostname, :wcard => "%."+hostname)
     end
 
     redirect_to "/domain/#{zone.id}", notice: "Record added!"
