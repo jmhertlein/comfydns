@@ -15,7 +15,7 @@ class BlockListController < ApplicationController
     @supported_list_types = [["Simple List (Pihole-style)", "newline-list"], ["address= (dnsmasq)", "dnsmasq"]]
     
 
-    Task.where(action: "REFRESH_BLOCK_LIST", server_id: nil, done: false).each do |t|
+    Task.where(action: "REFRESH_BLOCK_LIST", done: false).each do |t|
       @refresh_running[t.args["block_list_id"]] = true
     end
 
@@ -95,14 +95,10 @@ class BlockListController < ApplicationController
     logger.info("Set #{flag} flag from #{old_value} to #{f.value}")
     case flag
     when "adblock"
-      Server.all.each do |s|
-        Task.create!(action: "RELOAD_ADBLOCK_CONFIG", server_id: s.id)
-      end
+      Task.create!(action: "RELOAD_ADBLOCK_CONFIG")
       redirect_to "/block_list/", notice: f.value ? "Ad blocking enabled!" : nil
     when "adblock_client_default_on"
-      Server.all.each do |s|
-        Task.create!(action: "RELOAD_ADBLOCK_CONFIG", server_id: s.id)
-      end
+      Task.create!(action: "RELOAD_ADBLOCK_CONFIG")
       redirect_to "/block_list/", notice: f.value ? "Unconfigured clients now have ads blocked." : "Unconfigured clients now do not have ads blocked."
     end
   end

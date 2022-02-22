@@ -11,7 +11,6 @@ import java.util.UUID;
 public class TaskDefinition {
     private final UUID id;
     private final String action;
-    private final UUID targetServerId;
     private final boolean started, done, failed;
     private final JsonObject args;
 
@@ -19,7 +18,6 @@ public class TaskDefinition {
         Gson gson = new Gson();
         this.id = rs.getObject("id", UUID.class);
         this.action = rs.getString("action");
-        this.targetServerId = rs.getObject("server_id", UUID.class);
         this.started = rs.getBoolean("started");
         this.done = rs.getBoolean("done");
         this.failed = rs.getBoolean("failed");
@@ -30,7 +28,6 @@ public class TaskDefinition {
     public TaskDefinition(UUID id, String action, UUID targetServerId, boolean started, boolean done, boolean failed, JsonObject args) {
         this.id = id;
         this.action = action;
-        this.targetServerId = targetServerId;
         this.started = started;
         this.done = done;
         this.failed = failed;
@@ -43,10 +40,6 @@ public class TaskDefinition {
 
     public String getAction() {
         return action;
-    }
-
-    public Optional<UUID> getTargetServerId() {
-        return Optional.ofNullable(targetServerId);
     }
 
     public boolean isStarted() {

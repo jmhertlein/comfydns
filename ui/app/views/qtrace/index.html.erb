@@ -2,9 +2,7 @@
   <h1>Query Trace</h1>
 </div>
 
-<% if @servers.empty? %>
-  <p>You have no servers configured. Go set one up, then come back here.</p>
-<% else %>
+
 <%= form_with url: "/qtrace", class: "row 
   d-flex 
   flex-sm-row 
@@ -24,17 +22,9 @@
     <%= form.label :qtype, "Query Type" %>
     <%= form.select :qtype, @supported_qtypes, {}, class: "form-select trace-qtype-select", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
   </div>
-  <% if @servers.size > 1 %>
-    <div class="col">
-    <%= form.label :server_id, "Server" %>
-    <%= form.select :server_id, @servers.map{|s| s.id}, {}, class: "form-select", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
-  <% else %>
-    <%= form.hidden_field :server_id, value: @servers[0].id %>
-  <% end %>
   <div class="col flex-grow-0 mt-2 m-sm-0">
     <%= form.submit "Trace", class: "btn btn-primary m-auto m-sm-0 d-block d-sm-inline" %>
   </div>
-<% end %>
 <% end %>
 
 <div class="row justify-content-center">

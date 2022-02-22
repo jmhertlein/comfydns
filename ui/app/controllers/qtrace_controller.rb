@@ -6,8 +6,6 @@ class QtraceController < ApplicationController
       .select{|name, value| DNS::SUPPORTED_RRTYPES.include?(name)}
       .map{|l,r| [l, l]}
 
-    @servers = Server.all
-
     @traces = Trace.all.order(created_at: :desc)
   end
 
@@ -24,10 +22,8 @@ class QtraceController < ApplicationController
       redirect_to "/qtrace/", alert: "Invalid domain name: #{qname}"
       return
     end
-
-    server = Server.find(params[:server_id])
     
-    Task.create!(action: "TRACE_QUERY", server_id: server.id, args: {qname: qname, qtype: qtype})
+    Task.create!(action: "TRACE_QUERY", args: {qname: qname, qtype: qtype})
 
     redirect_to "/qtrace/", notice: "Trace submitted: #{qname} #{raw_qtype} IN."
   end
