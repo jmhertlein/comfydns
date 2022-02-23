@@ -16,6 +16,7 @@ module DNS
   MINFO           14 mailbox or mail list information
   MX              15 mail exchange
   TXT             16 text strings
+  AAAA            28 ipv6 host address
   EOF
 
   RRTYPE_TO_VALUE = Hash.new
@@ -39,6 +40,7 @@ module DNS
     "PTR",
     "MX",
     "TXT",
+    "AAAA",
   ]
 
   RRCLASS_TO_VALUE = {
