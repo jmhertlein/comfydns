@@ -8,6 +8,7 @@ class SinglifyResolver < ActiveRecord::Migration[6.1]
     reversible do |dir|
       Zone.all.each do |zone|
         dir.up do
+          old_soa_entry = Zone.connection.execute("select serial from start_of_authority where ")
           soa_record = RR.create(
             name: zone.name, 
             rrtype: DNS::RRTYPE_TO_VALUE["SOA"],
@@ -17,7 +18,7 @@ class SinglifyResolver < ActiveRecord::Migration[6.1]
             rdata: {
               "mname": "",
               "rname": "",
-              "serial": zone.start_of_authority.serial,
+              "serial": old_soa_entry.serial,
               "refresh": 360,
               "retry": 60,
               "expire": 720,
