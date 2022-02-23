@@ -154,7 +154,7 @@ public class SimpleConnectionPool implements ConnectionEventListener {
         try {
             this.prune();
         } catch(Throwable t) {
-            log.error("DB cxn pruning thread died lol fml.", t);
+            log.error("DB cxn pruning thread died.", t);
             throw t;
         }
     }
@@ -168,7 +168,7 @@ public class SimpleConnectionPool implements ConnectionEventListener {
 
     @Override
     public void connectionErrorOccurred(ConnectionEvent connectionEvent) {
-        log.debug("Something happened to a connection.", connectionEvent.getSQLException());
+        log.warn("Something happened to a connection.", connectionEvent.getSQLException());
         try {
             ((PooledConnection) connectionEvent.getSource()).close();
         } catch(Throwable t) {
@@ -176,6 +176,18 @@ public class SimpleConnectionPool implements ConnectionEventListener {
         }
         usedDBConnections.dec();
         activeDBConnections.dec();
+
+        PooledConnectionHolder cxn = null;
+        try {
+            cxn = new PooledConnectionHolder(ds.getPooledConnection());
+        } catch (SQLException e) {
+            log.warn("Error creating new physical connection to replace a broken one.", e);
+            return;
+        }
+        connectionCount++;
+        activeDBConnections.inc();
+        cxn.pcxn.addConnectionEventListener(this);
+        recycle(cxn.pcxn);
     }
 
     public void startPruning(ScheduledExecutorService svc) {

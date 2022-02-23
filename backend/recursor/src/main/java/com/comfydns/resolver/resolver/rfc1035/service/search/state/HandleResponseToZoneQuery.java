@@ -122,9 +122,13 @@ public class HandleResponseToZoneQuery implements RequestState {
                     break;
                 } else if(m.getHeader().getAA()) {
                     log.debug("[{}] Received authoritative name error.", sCtx.getRequest().getId());
-                    handleNegativeCache(rCtx, sCtx, m);
+                    Optional<RR<?>> soaFound = handleNegativeCache(rCtx, sCtx, m);
                     log.debug("{}Received authoritative name error.", sCtx.getRequestLogPrefix());
-                    return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
+                    if(soaFound.isPresent()) {
+                        return Optional.of(new DoubleCheckSendState(sCtx.buildAuthoritativeNameErrorResponse(soaFound.get())));
+                    } else {
+                        return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
+                    }
                 } else {
                     log.debug("[{}] Received non-authoritative name error.", sCtx.getRequest().getId());
                     sCtx.getSList().removeServer(serverQueried);
@@ -141,9 +145,10 @@ public class HandleResponseToZoneQuery implements RequestState {
             return Optional.of(new SendServerQuery(false));
         }
 
-        if(handleNegativeCache(rCtx, sCtx, m)) {
+        Optional<RR<?>> soaFound = handleNegativeCache(rCtx, sCtx, m);
+        if(soaFound.isPresent()) {
             log.debug("{}Received negative cache instruction (SOA record) + NAME_ERROR", sCtx.getRequestLogPrefix());
-            return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
+            return Optional.of(new DoubleCheckSendState(sCtx.buildAuthoritativeNameErrorResponse(soaFound.get())));
         }
 
 
@@ -193,7 +198,7 @@ public class HandleResponseToZoneQuery implements RequestState {
         return Optional.of(new TryToAnswerWithLocalInformation());
     }
 
-    private boolean handleNegativeCache(ResolverContext rCtx, SearchContext sCtx, Message m) throws CacheAccessException {
+    private Optional<RR<?>> handleNegativeCache(ResolverContext rCtx, SearchContext sCtx, Message m) throws CacheAccessException {
         log.debug("Checking for SOA -> nameerror");
         Optional<RR<?>> soaFound = m.getAuthorityRecords()
                 .stream()
@@ -208,10 +213,10 @@ public class HandleResponseToZoneQuery implements RequestState {
                     ((SOARData) soaFound.get().getRData()).getMinimum(),
                     OffsetDateTime.now()
             );
-            return true;
+            return soaFound;
         }
 
-        return false;
+        return soaFound;
     }
 
     /**

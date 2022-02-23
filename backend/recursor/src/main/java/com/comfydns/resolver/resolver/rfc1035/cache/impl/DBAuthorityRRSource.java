@@ -36,7 +36,8 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
 
     @Override
     public boolean isAuthoritativeFor(String domain) throws CacheAccessException {
-        try (PreparedStatement ps = pool.getConnection().get().prepareStatement(
+        try (Connection c = pool.getConnection().get();
+                PreparedStatement ps = c.prepareStatement(
                 "select name from zone where name=?")){
             ps.setString(1, domain);
             try(ResultSet rs = ps.executeQuery()) {

@@ -13,7 +13,6 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
 import com.comfydns.resolver.resolver.rfc1035.service.request.RequestListener;
-import org.slf4j.Logger;
 
 import java.net.InetAddress;
 import java.util.*;
@@ -173,6 +172,21 @@ public class SearchContext {
         h.setANCount(0);
         m.setHeader(h);
         m.getQuestions().addAll(request.getMessage().getQuestions());
+        return m;
+    }
+
+    public Message buildAuthoritativeNameErrorResponse(RR<?> soaRecord) {
+        Message m = new Message();
+        Header h = new Header(request.getMessage().getHeader());
+        h.setRCode(RCode.NAME_ERROR);
+        h.setQR(true);
+        h.setRA(true);
+        h.setARCount(0);
+        h.setNSCount(1);
+        h.setANCount(0);
+        m.setHeader(h);
+        m.getQuestions().addAll(request.getMessage().getQuestions());
+        m.getAuthorityRecords().add(soaRecord);
         return m;
     }
 
