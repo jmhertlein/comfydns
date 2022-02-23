@@ -21,8 +21,6 @@ RUN bundle install --deployment --without development test
 
 COPY ./backend/pom.xml /build/backend
 COPY ./backend/recursor/pom.xml /build/backend/recursor
-COPY ./backend/runner/pom.xml /build/backend/runner
-COPY ./backend/util/pom.xml /build/backend/util
 WORKDIR /build/backend/util
 RUN mvn dependency:go-offline
 
@@ -42,7 +40,6 @@ COPY ./backend /build/backend
 WORKDIR /build/backend
 RUN mvn clean package
 RUN bash -c "cp /build/backend/recursor/target/comfydns-recursor-*.jar /app/recursor.jar"
-RUN bash -c "cp /build/backend/runner/target/comfydns-runner-*.jar /app/runner.jar"
 
 
 # set up supervisor
