@@ -21,7 +21,7 @@ RUN bundle install --deployment --without development test
 
 COPY ./backend/pom.xml /build/backend
 COPY ./backend/recursor/pom.xml /build/backend/recursor
-WORKDIR /build/backend/util
+WORKDIR /build/backend/
 RUN mvn dependency:go-offline
 
 
