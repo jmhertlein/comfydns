@@ -41,6 +41,10 @@ public class EnvConfig {
     public static List<InetAddress> getAllowZoneTransferTo() throws UnknownHostException {
         String allowed = getOrDefault("CDNS_ALLOW_ZONE_TRANSFER_TO", "");
         List<InetAddress> ret = new ArrayList<>();
+        if(allowed.isBlank()) {
+            return ret;
+        }
+
         for(String rawAddr : allowed.split(",")) {
             InetAddress addr = InetAddress.getByName(rawAddr);
             ret.add(addr);
