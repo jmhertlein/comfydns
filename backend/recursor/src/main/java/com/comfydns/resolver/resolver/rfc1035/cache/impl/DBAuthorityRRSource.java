@@ -88,8 +88,24 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
     }
 
     @Override
-    public List<RR<?>> getZoneTransferPayload(String zoneName) {
-        return null;
+    public List<RR<?>> getZoneTransferPayload(String zoneName) throws CacheAccessException {
+        List<RR<?>> ret = new ArrayList<>();
+        try (Connection c = pool.getConnection().get();
+             PreparedStatement ps = c.prepareStatement(
+                     "select name, rrtype, rrclass, ttl, " +
+                             "rdata from rr where zone_id=(select id from zone where name=?) " +
+                             "and rrtype != ?")) {
+            ps.setString(1, zoneName);
+            ps.setInt(2, KnownRRType.SOA.getIntValue());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ret.add(RR.read(rs));
+                }
+            }
+        } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException | InterruptedException | ExecutionException throwables) {
+            throw new CacheAccessException(throwables);
+        }
+        return ret;
     }
 
     @Override

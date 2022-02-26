@@ -21,8 +21,8 @@ class DomainController < ApplicationController
             ttl: 60,
             zone_id: zone.id,
             rdata: {
-              "mname": "",
-              "rname": "",
+              "mname": "mail.#{zone.name}",
+              "rname": "mail.#{zone.name}",
               "serial": 1,
               "refresh": 360,
               "retry": 60,
