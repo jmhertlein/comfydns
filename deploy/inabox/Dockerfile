@@ -15,9 +15,11 @@ RUN service postgresql start && su postgres -c 'createuser -w -s comfydns' && se
 
 # early resolve of dependencies for better build caching
 COPY ./ui/Gemfile* /app/ui/
+COPY ./ui/bin /app/ui/bin
 WORKDIR /app/ui
 RUN gem install bundler
-RUN bundle install --deployment --without development test
+ENV RAILS_ENV production
+RUN ./bin/bundle install --without development test
 
 COPY ./backend/pom.xml /build/backend
 COPY ./backend/recursor/pom.xml /build/backend/recursor
@@ -29,7 +31,6 @@ RUN mvn dependency:go-offline
 COPY ./ui /app/ui
 WORKDIR /app/ui
 RUN ln /usr/bin/yarnpkg /usr/bin/yarn
-ENV RAILS_ENV production
 ENV RAILS_SERVE_STATIC_FILES true
 ENV SECRET_KEY_BASE placeholder
 RUN bundle exec rake assets:precompile

@@ -18,6 +18,7 @@ else
 fi
 set -x
 
+cd /app/ui
 bin/rails db:create db:migrate
 
 cd /app
