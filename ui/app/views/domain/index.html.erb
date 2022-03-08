@@ -14,7 +14,7 @@
           <td><%= zone.start_of_authority["serial"] %></td>
           <td><%= @zone_host_counts.has_key?(zone.id) ? @zone_host_counts[zone.id] : 0 %></td>
           <td align="center">
-            <a href="/domain/<%= zone.id %>" ><button type="button" class="btn btn-primary domain-view-button">View</button></a>
+            <a href="/domain/<%= zone.id %>" ><button type="button" class="btn btn-primary domain-view-button mb-0">View</button></a>
             <button type="button" class="btn btn-primary delete-zone-form"  data-bs-toggle="modal" data-bs-target="#deleteZoneModal-<%= zone.id %>">Delete</button>
           </td>
         </tr>
