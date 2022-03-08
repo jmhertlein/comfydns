@@ -6,12 +6,21 @@
     first top-level domain.</p>
     <p>You will also need to configure your network to use the DNS server. 
     Log in to your router and set your DNS server as the first entry in the DHCP DNS server list.</p>
+    <p>Consider perusing the <a href="https://docs.comfydns.com/setup.html#setup">documentation!</a></p>
   </div>
 </div>
 <% end %>
 
-<div class="row mb-3">
-  <div class="col">
-    <h3>Nothing to see here now :)</h3>
+<div class="row mb-3 justify-content-center">
+  <div class="col" align="center">
+    <h3>Resolver</h3>
+    <div>Zones Hosted: <%= Zone.count %></div>
+    <div>Cached Records: <%= CachedRR.count %></div>
+  </div>
+  <div class="col" align="center">
+    <div><h3>Ad Blocking</h3></div>
+    <div>Enabled: <%= Flag.adblock_enabled? %></div>
+    <div>Block Lists: <%= BlockList.count %></div>
+    <div>Blocked Names: <%= BlockedName.count %></div>
   </div>
 </div>
