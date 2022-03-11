@@ -30,5 +30,5 @@ require_clean_work_tree () {
 
 require_clean_work_tree
 
-docker build . -t "dockerrepo.hert:5000/comfydns:$(git rev-parse HEAD)" -f ./deploy/inabox/Dockerfile
-docker push "dockerrepo.hert:5000/comfydns:$(git rev-parse HEAD)"
+docker build . -t "comfydns/comfydns:latest" -f ./deploy/inabox/Dockerfile
+docker push "comfydns/comfydns:latest"

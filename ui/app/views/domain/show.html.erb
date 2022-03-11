@@ -4,6 +4,14 @@
   </div>
 </div>
 
+<div class="row justify-content-center" align="center">
+  <% @supported_rrtypes.each do |rrtype| %>
+    <div class="col flex-grow-0">
+      <a class="btn btn-<%= rrtype.eql?(@desired_rrtype) ? "primary" : "secondary" %> rrtype-picker-item" href=<%="/domain/#{@zone.id}?rrtype=#{rrtype}"%>><%= rrtype %></a>
+    </div>
+  <% end %>
+</div>
+
 <%= form_with(url: "/domain/#{@zone.id}", method: :post, local: true, class: "
 row 
 d-flex 
@@ -15,7 +23,7 @@ justify-content-sm-between
 flex-column
 shadow p-3 mb-5 bg-white rounded
 ") do |form| %>
-  <%= form.hidden_field :rrtype, value: "A" %>
+  <%= form.hidden_field :rrtype, value: @desired_rrtype %>
   <%= form.hidden_field :rrclass, value: "IN" %>
   <%= form.hidden_field :ttl, value: "60" %>
   <div class="col">
@@ -27,10 +35,8 @@ shadow p-3 mb-5 bg-white rounded
       </div>
     </div>
   </div>
-  <div class="col">
-    <%= form.label :hostname, "IP Address" %>
-    <%= form.text_field :ip_address, class: "form-control inline-form-control", placeholder: "192.168.1.42", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
-  </div>
+  
+  <%= render :partial => "rdata_fields", :locals => {"rrtype": DNS::RRTYPE_TO_VALUE[@desired_rrtype], "form": form} %>
 
   <div class="col flex-grow-0 mt-2 m-sm-0"><%= form.submit "Add", class: "btn btn-primary m-auto m-sm-0 d-block d-sm-inline" %></div>
 <% end %>
@@ -40,14 +46,16 @@ shadow p-3 mb-5 bg-white rounded
     <table class="table">
       <thead>
       <th>Hostname</th>
-      <th>IP Address</th>
+      <th>Type</th>
+      <th>Record Content</th>
       <th>Action</th>
       </thead>
       <tbody>
       <% @host_records.each do |h| %>
         <tr>
           <td><%= h.name[0..(h.name.length - 1 - @zone.name.length - 1)] %></td>
-          <td><%= h.rdata["address"] %></td>
+          <td><%= DNS::VALUE_TO_RRTYPE[h.rrtype] %></td>
+          <td><%= h.rdata[h.rdata.keys[0]] %></td>
           <td>
             <%= form_with(url: "/domain/#{@zone.id}/#{h.id}", method: :delete) do |form| %>
               <%= form.submit "Delete", class: "btn btn-outline-secondary" %>

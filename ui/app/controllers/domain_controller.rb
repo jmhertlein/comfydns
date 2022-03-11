@@ -1,4 +1,5 @@
 require 'rfc1035'
+require 'ipaddr'
 
 class DomainController < ApplicationController
   def index
@@ -38,8 +39,19 @@ class DomainController < ApplicationController
 
   def show
     @zone = Zone.find(params[:id])
-    @host_records = RR.where(zone_id: @zone.id, rrclass: DNS::RRCLASS_TO_VALUE["IN"], rrtype: DNS::RRTYPE_TO_VALUE["A"])
+    @host_records = RR.where(zone_id: @zone.id, rrclass: DNS::RRCLASS_TO_VALUE["IN"])
+    @host_records = @host_records.reject{|rr| rr.rrtype == DNS::RRTYPE_TO_VALUE["SOA"]}
     @host_records = [] if @host_records.nil?
+
+    if params.include? :rrtype
+      @desired_rrtype = params[:rrtype]
+    else
+      @desired_rrtype = "A"
+    end
+
+    @supported_rrtypes = ["A", "AAAA", "TXT", "CNAME"]
+
+    @desired_rrtype = "A" unless @supported_rrtypes.include? @desired_rrtype
   end
 
   def destroy
@@ -70,13 +82,52 @@ class DomainController < ApplicationController
       return
     end
 
-    unless /\d+\.\d+\.\d+\.\d+/.match? params[:ip_address]
-      redirect_to "/domain/#{params[:id]}", alert: "Invalid IP address: #{params[:ip_address]}"
+    unless /^[a-zA-Z0-9\-_]+$/.match? params[:hostname]
+      redirect_to "/domain/#{params[:id]}", alert: "Invalid host name: #{params[:hostname]}"
       return
     end
 
-    unless /^[a-zA-Z0-9\-_]+$/.match? params[:hostname]
-      redirect_to "/domain/#{params[:id]}", alert: "Invalid host name: #{params[:hostname]}"
+    case params[:rrtype]
+    when "A"
+      is_valid = false
+      begin
+        ip = IPAddr.new(params[:ip_address])
+        is_valid = ip.ipv4?
+      rescue
+      end
+
+      unless is_valid
+        redirect_to "/domain/#{params[:id]}", alert: "Invalid IP address: #{params[:ip_address]}"
+        return
+      end
+      rdata = {"address": ip.to_s}
+    when "AAAA"
+      is_valid = false
+      begin
+        ip = IPAddr.new(params[:ipv6_address])
+        is_valid = ip.ipv6?
+      rescue
+      end
+
+      unless is_valid
+        redirect_to "/domain/#{params[:id]}", alert: "Invalid IP address: #{params[:ipv6_address]}"
+        return
+      end
+      rdata = {"address": ip.to_s}
+    when "CNAME"
+      if params[:domain_name].empty?
+        redirect_to "/domain/#{params[:id]}", alert: "Invalid domain name: #{params[:domain_name]}"
+        return
+      end
+      rdata = {"cname": params[:domain_name]}
+    when "TXT"
+      if params[:text].empty?
+        redirect_to "/domain/#{params[:id]}", alert: "Invalid domain name: #{params[:text]}"
+        return
+      end
+      rdata = {"txt-data": params[:text]}
+    else
+      redirect_to "/domain/#{params[:id]}", alert: "Invalid rrtype: #{params[:rrtype]}"
       return
     end
 
@@ -94,7 +145,7 @@ class DomainController < ApplicationController
         rrclass: DNS::RRCLASS_TO_VALUE[params[:rrclass]],
         ttl: params[:ttl].to_i,
         zone_id: zone.id,
-        rdata: {"address": params[:ip_address]}
+        rdata: rdata
       )
       if params[:rrtype] == "A" && zone.gen_ptrs
         ptr_record = RR.create(
