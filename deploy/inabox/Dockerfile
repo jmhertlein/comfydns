@@ -4,7 +4,7 @@ FROM ubuntu:focal
 ENV TZ America/Chicago
 ENV DEBIAN_FRONTEND noninteractive
 RUN mkdir -p /opt/comfydns/pg && ln -s /opt/comfydns/pg/ /var/lib/postgresql
-RUN apt update && apt install -y ruby ruby-dev build-essential patch zlib1g-dev liblzma-dev libsqlite3-dev sqlite3 nginx nodejs yarnpkg openjdk-11-jdk-headless maven supervisor libpq-dev vim jq postgresql uuid-runtime
+RUN apt update && apt install -y ruby ruby-dev build-essential patch zlib1g-dev liblzma-dev libsqlite3-dev sqlite3 nginx nodejs yarnpkg openjdk-17-jdk-headless maven supervisor libpq-dev vim jq postgresql uuid-runtime
 
 # mk hier 
 RUN mkdir -p /build /app /app/ui /build/backend /build/backend/recursor /build/backend/runner /build/backend/util
