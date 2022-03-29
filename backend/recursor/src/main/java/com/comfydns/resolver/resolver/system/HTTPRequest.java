@@ -38,7 +38,7 @@ public class HTTPRequest extends Request {
     }
 
     @Override
-    public void answer(Message m) {
+    protected void writeToTransport(Message m) {
         FullHttpResponse r = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.OK,
                 Unpooled.copiedBuffer(Base64.getUrlEncoder().encode(m.write()))
@@ -46,15 +46,16 @@ public class HTTPRequest extends Request {
         r.headers().set("Content-Type", "application/dns-message; charset=UTF-8");
         ctx.writeAndFlush(r);
         ctx.close();
-        this.recordAnswer(m, "http");
-        if(m.getHeader().getRCode() == RCode.SERVER_FAILURE) {
-            log.info("[R] [{}]: {} | {}", getRemoteAddress(), m.getHeader().getRCode(), id);
-        }
     }
 
     @Override
     public Optional<InetAddress> getRemoteAddress() {
         return Optional.of(((InetSocketAddress) ctx.channel().remoteAddress()).getAddress());
+    }
+
+    @Override
+    protected String getRequestProtocolMetricsTag() {
+        return "http";
     }
 
     @Override

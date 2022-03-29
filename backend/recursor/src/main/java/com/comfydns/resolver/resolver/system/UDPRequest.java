@@ -34,7 +34,7 @@ public class UDPRequest extends Request {
     }
 
     @Override
-    public void answer(Message m) {
+    protected void writeToTransport(Message m) {
         ByteBuf out = Unpooled.buffer();
         byte[] payload = m.write();
         if(payload.length > ((1 << 16) - 1)) {
@@ -46,16 +46,16 @@ public class UDPRequest extends Request {
 
         DatagramPacket packet = new DatagramPacket(out, replyTo);
         ctx.writeAndFlush(packet);
-        this.recordAnswer(m, "udp");
-        //ctx.close(); // DO NOT REMOVE. CLOSING THIS CLOSES THE ENTIRE DANG UDP SOCKET.
-        if(m.getHeader().getRCode() == RCode.SERVER_FAILURE) {
-            log.info("[R] [{}]: {} | {}", getRemoteAddress(), m.getHeader().getRCode(), id);
-        }
     }
 
     @Override
     public Optional<InetAddress> getRemoteAddress() {
         return Optional.of(replyTo.getAddress());
+    }
+
+    @Override
+    protected String getRequestProtocolMetricsTag() {
+        return "udp";
     }
 
     @Override
