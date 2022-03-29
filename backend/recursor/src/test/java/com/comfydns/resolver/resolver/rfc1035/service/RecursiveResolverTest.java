@@ -88,8 +88,13 @@ public class RecursiveResolverTest {
             }
 
             @Override
-            public void answer(Message m) {
+            protected void writeToTransport(Message m) {
                 fM.complete(m);
+            }
+
+            @Override
+            protected String getRequestProtocolMetricsTag() {
+                return "test";
             }
 
             @Override

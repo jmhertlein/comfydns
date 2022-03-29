@@ -31,7 +31,7 @@ public class TCPRequest extends Request {
     }
 
     @Override
-    public void answer(Message m) {
+    protected void writeToTransport(Message m) {
         ByteBuf out = Unpooled.buffer();
         byte[] payload = m.write();
         byte[] len = new byte[2];
@@ -40,15 +40,16 @@ public class TCPRequest extends Request {
         out.writeBytes(payload);
         ctx.writeAndFlush(out);
         ctx.close();
-        this.recordAnswer(m, "tcp");
-        if(m.getHeader().getRCode() == RCode.SERVER_FAILURE) {
-            log.info("[R] [{}]: {} | {}", getRemoteAddress(), m.getHeader().getRCode(), id);
-        }
     }
 
     @Override
     public Optional<InetAddress> getRemoteAddress() {
         return Optional.of(((InetSocketAddress) ctx.channel().remoteAddress()).getAddress());
+    }
+
+    @Override
+    protected String getRequestProtocolMetricsTag() {
+        return "tcp";
     }
 
     @Override

@@ -13,6 +13,8 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
 import com.comfydns.resolver.resolver.rfc1035.service.request.RequestListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.*;
@@ -20,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class SearchContext {
+    private static final Logger log = LoggerFactory.getLogger(SearchContext.class);
     public static final int STATE_TRANSITION_COUNT_LIMIT = 128;
     public static final int SUB_QUERY_COUNT_LIMIT = 100;
     private final Request request;
@@ -190,21 +193,6 @@ public class SearchContext {
         return m;
     }
 
-    public void sendNameError() {
-        Message m = new Message();
-        Header h = new Header(request.getMessage().getHeader());
-        h.setRCode(RCode.NAME_ERROR);
-        h.setQR(true);
-        h.setRA(true);
-        h.setARCount(0);
-        h.setNSCount(0);
-        h.setANCount(0);
-        m.setHeader(h);
-        m.getQuestions().addAll(request.getMessage().getQuestions());
-        request.forEachListener(l -> l.onResponse(m));
-        request.answer(m);
-    }
-
     public void sendOops(String message) {
         Message m = new Message();
         Header h = new Header(request.getMessage().getHeader());
@@ -317,6 +305,10 @@ public class SearchContext {
     }
 
     public void forEachListener(Consumer<? super RequestListener> action) {
-        request.forEachListener(action);
+        try {
+            request.forEachListener(action);
+        } catch (Throwable t) {
+            log.warn("Exception in listener.", t);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.comfydns.resolver.resolver.rfc1035.service.request;
 
+import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QOnlyType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
@@ -7,6 +8,8 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.service.search.QSet;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -16,6 +19,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public abstract class Request {
+    private static final Logger log = LoggerFactory.getLogger(Request.class);
     protected static final Counter requestsIn = Counter.build()
             .name("requests_in").help("All internet requests received")
             .labelNames("protocol").register();
@@ -26,11 +30,16 @@ public abstract class Request {
             .buckets(0.005, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 10)
             .name("request_duration").help("How long requests take, from receipt to response.")
             .labelNames("source").register();
+    protected static final Counter requestsLost = Counter.build()
+            .name("requests_lost").help("All internet requests lost (request received, but we didn't manage to send a response).")
+            .labelNames("protocol", "rcode", "rrtype").register();
 
     protected final UUID id;
     private final Histogram.Timer requestTimer;
 
     private final List<RequestListener> listeners;
+    
+    private boolean answered;
 
     public Request() {
         id = UUID.randomUUID();
@@ -41,7 +50,38 @@ public abstract class Request {
 
     public abstract Message getMessage();
 
-    public abstract void answer(Message m);
+    private void checkAnswered() {
+        if(this.answered) {
+            throw new IllegalStateException(String.format("Request %s already answered, refusing to allow updating to re-answer.", id));
+        }
+    }
+    
+    protected void setAnswered() {
+        this.checkAnswered();
+        this.answered = true;
+    }
+    
+    protected boolean isAnswered() {
+        return this.answered;
+    }
+
+    public void answer(Message m) {
+        if(m.getHeader().getRCode() == RCode.SERVER_FAILURE) {
+            log.info("[R] [{}]: {} | {}", getRemoteAddress(), m.getHeader().getRCode(), id);
+        }
+
+        this.checkAnswered();
+        this.writeToTransport(m);
+        this.setAnswered();
+        this.recordAnswer(m);
+    }
+
+    /**
+     * Subclasses should implement this method to do exactly one thing: take the message, and stuff it into
+     * whatever the transport underlying the request type is.
+     * @param m
+     */
+    protected abstract void writeToTransport(Message m);
 
     public Optional<InetAddress> getRemoteAddress() {
         return Optional.empty();
@@ -51,7 +91,9 @@ public abstract class Request {
         listeners.add(l);
     }
 
-    protected void recordAnswer(Message m, String requestProtocol) {
+    protected abstract String getRequestProtocolMetricsTag();
+
+    private void recordAnswer(Message m) {
         requestTimer.observeDuration();
         QType qType = m.getQuestions().get(0).getqType();
         String type;
@@ -64,7 +106,7 @@ public abstract class Request {
         } else {
             type = "<unk>";
         }
-        requestsOut.labels(requestProtocol, m.getHeader().getRCode().name().toLowerCase(), type)
+        requestsOut.labels(this.getRequestProtocolMetricsTag(), m.getHeader().getRCode().name().toLowerCase(), type)
                 .inc();
     }
 

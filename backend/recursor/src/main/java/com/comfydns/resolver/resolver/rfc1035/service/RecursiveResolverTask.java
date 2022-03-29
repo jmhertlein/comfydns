@@ -48,15 +48,7 @@ public class RecursiveResolverTask implements Runnable {
             sCtx.sendOops("Sorry, something went wrong.");
         } catch(Throwable t) {
             sCtx.forEachListener(l -> l.onException(t));
-            int idx = sCtx.getQuestionIndex().get();
-            if(idx < sCtx.getRequest().getMessage().getQuestions().size()) {
-                log.debug(String.format("[%s]: Unhandled exception for question: %s", sCtx.getRequest().getId(),
-                        sCtx.getCurrentQuestion()), t);
-            } else {
-                List<Question> questions = sCtx.getRequest().getMessage().getQuestions();
-                log.debug(String.format("[%s]: Unhandled exception for question: %s", sCtx.getRequest().getId(),
-                        questions.get(questions.size()-1)), t);
-            }
+            log.debug(String.format("[%s]: Unhandled exception for request.", sCtx.getRequest().getId()), t);
             sCtx.sendOops("Sorry, something went wrong.");
         }
 

@@ -29,9 +29,13 @@ public class TracingInternalRequest extends Request {
     }
 
     @Override
-    public void answer(Message m) {
+    protected void writeToTransport(Message m) {
         onAnswer.accept(m);
-        this.recordAnswer(m, "trace");
+    }
+
+    @Override
+    protected String getRequestProtocolMetricsTag() {
+        return "trace";
     }
 
     public void setOnAnswer(Consumer<Message> onAnswer) {
