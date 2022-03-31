@@ -18,6 +18,7 @@ public class UDPDNSHandler extends SimpleChannelInboundHandler<DatagramPacket> {
         byte[] content = new byte[msg.content().writerIndex() - msg.content().readerIndex()];
         msg.content().readBytes(content, 0, content.length);
         Message read = Message.read(content);
-        resolver.resolve(new UDPRequest(msg.sender(), read, ctx));
+        UDPRequest req = new UDPRequest(msg.sender(), read, ctx);
+        resolver.resolve(req);
     }
 }

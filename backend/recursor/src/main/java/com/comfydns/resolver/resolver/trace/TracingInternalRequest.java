@@ -14,7 +14,6 @@ public class TracingInternalRequest extends Request {
     public TracingInternalRequest(Message request) {
         this.request = request;
         this.onAnswer = (m) -> {};
-        requestsIn.labels("trace").inc();
         tracer = new Tracer();
         addListener(tracer);
     }

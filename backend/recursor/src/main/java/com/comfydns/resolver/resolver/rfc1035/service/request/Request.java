@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 
 public abstract class Request {
     private static final Logger log = LoggerFactory.getLogger(Request.class);
-    protected static final Counter requestsIn = Counter.build()
+    private static final Counter requestsIn = Counter.build()
             .name("requests_in").help("All internet requests received")
             .labelNames("protocol").register();
     protected static final Counter requestsOut = Counter.build()
@@ -30,22 +30,36 @@ public abstract class Request {
             .buckets(0.005, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 10)
             .name("request_duration").help("How long requests take, from receipt to response.")
             .labelNames("source").register();
-    protected static final Counter requestsLost = Counter.build()
-            .name("requests_lost").help("All internet requests lost (request received, but we didn't manage to send a response).")
-            .labelNames("protocol", "rcode", "rrtype").register();
+//    protected static final Counter requestsLost = Counter.build()
+//            .name("requests_lost").help("All internet requests lost (request received, but we didn't manage to send a response).")
+//            .labelNames("protocol", "rcode", "rrtype").register();
 
     protected final UUID id;
-    private final Histogram.Timer requestTimer;
+    private Histogram.Timer requestTimer;
 
     private final List<RequestListener> listeners;
     
-    private boolean answered;
+    private boolean started, answered;
 
     public Request() {
         id = UUID.randomUUID();
         listeners = new ArrayList<>();
+        answered = false;
+        started = false;
+    }
+
+    private void checkStarted() {
+        if(this.started) {
+            throw new IllegalStateException(String.format("Request %s already started, refusing to allow updating.", id));
+        }
+    }
+
+    public void recordStart() {
+        this.checkStarted();
+        this.started = true;
+        requestsIn.labels(this.getRequestProtocolMetricsTag()).inc();
         requestTimer = requestDurations.labels(isLocal() ? isSubquery() ? "internal" : "trace" : "external")
-        .startTimer();
+                .startTimer();
     }
 
     public abstract Message getMessage();
@@ -66,6 +80,9 @@ public abstract class Request {
     }
 
     public void answer(Message m) {
+        if(!this.started) {
+            throw new IllegalStateException("We tried to answer a request that was never started: " + this.getId());
+        }
         if(m.getHeader().getRCode() == RCode.SERVER_FAILURE) {
             log.info("[R] [{}]: {} | {}", getRemoteAddress(), m.getHeader().getRCode(), id);
         }
