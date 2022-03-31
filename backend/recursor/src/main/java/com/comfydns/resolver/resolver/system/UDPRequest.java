@@ -25,7 +25,6 @@ public class UDPRequest extends Request {
         this.replyTo = replyTo;
         this.m = m;
         this.ctx = ctx;
-        requestsIn.labels("udp").inc();
     }
 
     @Override

@@ -22,7 +22,6 @@ public class TCPRequest extends Request {
     public TCPRequest(Message m, ChannelHandlerContext ctx) {
         this.m = m;
         this.ctx = ctx;
-        requestsIn.labels("tcp").inc();
     }
 
     @Override

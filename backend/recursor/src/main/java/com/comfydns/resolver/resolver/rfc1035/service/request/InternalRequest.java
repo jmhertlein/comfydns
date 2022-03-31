@@ -17,7 +17,6 @@ public class InternalRequest extends Request {
         this.request = request;
         this.onAnswer = onAnswer;
         this.parent = parent;
-        requestsIn.labels("internal").inc();
         subqueryDepth = parent.getSubqueryDepth() + 1;
 
         this.parentQSet = parentQSet;

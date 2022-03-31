@@ -81,6 +81,7 @@ public class RecursiveResolver {
      * @param r
      */
     public void resolve(Request r) {
+        r.recordStart();
         if(!r.isSubquery()) {
             Optional<InetAddress> rAddr = r.getRemoteAddress();
             for (Question q : r.getMessage().getQuestions()) {

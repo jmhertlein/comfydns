@@ -29,7 +29,6 @@ public class HTTPRequest extends Request {
     public HTTPRequest(Message m, ChannelHandlerContext ctx) {
         this.m = m;
         this.ctx = ctx;
-        requestsIn.labels("http").inc();
     }
 
     @Override

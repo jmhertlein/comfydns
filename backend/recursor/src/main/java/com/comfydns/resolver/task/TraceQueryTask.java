@@ -39,14 +39,9 @@ public class TraceQueryTask implements Task {
         TracingInternalRequest req = new TracingInternalRequest(m);
         req.getMessage().validateHeader();
 
-        if(!(context instanceof TaskContext)) {
-            throw new IllegalStateException("TraceQueryTask requires a ResolverTaskContext");
-        }
+        req.setOnAnswer(resp -> this.onAnswer(resp, req, context));
 
-        TaskContext ctx = (TaskContext) context;
-        req.setOnAnswer(resp -> this.onAnswer(resp, req, ctx));
-
-        ctx.getResolver().resolve(req);
+        context.getResolver().resolve(req);
         log.info("Submitted trace query.");
     }
 
