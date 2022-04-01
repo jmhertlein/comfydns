@@ -42,11 +42,11 @@ public class TraceQueryTask implements Task {
         req.setOnAnswer(resp -> this.onAnswer(resp, req, context));
 
         context.getResolver().resolve(req);
-        log.info("Submitted trace query.");
+        log.debug("Submitted trace query.");
     }
 
     private void onAnswer(Message m, TracingInternalRequest req, TaskContext ctx) {
-        log.info("Trace query returned.");
+        log.debug("Trace query returned.");
 
         Tracer tracer = req.getTracer();
 
