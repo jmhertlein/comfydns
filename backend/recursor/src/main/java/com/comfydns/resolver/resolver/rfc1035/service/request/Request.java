@@ -1,5 +1,6 @@
 package com.comfydns.resolver.resolver.rfc1035.service.request;
 
+import com.comfydns.resolver.resolver.logging.EventLogger;
 import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QOnlyType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
@@ -56,6 +57,7 @@ public abstract class Request {
 
     public void recordStart() {
         this.checkStarted();
+        EventLogger.logRequestStart(this);
         this.started = true;
         requestsIn.labels(this.getRequestProtocolMetricsTag()).inc();
         requestTimer = requestDurations.labels(isLocal() ? isSubquery() ? "internal" : "trace" : "external")
@@ -111,6 +113,7 @@ public abstract class Request {
     protected abstract String getRequestProtocolMetricsTag();
 
     private void recordAnswer(Message m) {
+        EventLogger.logRequestEnd(this, m.getHeader().getRCode());
         requestTimer.observeDuration();
         QType qType = m.getQuestions().get(0).getqType();
         String type;
