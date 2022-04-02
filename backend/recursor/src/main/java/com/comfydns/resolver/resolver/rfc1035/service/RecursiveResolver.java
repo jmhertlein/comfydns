@@ -81,13 +81,6 @@ public class RecursiveResolver {
      * @param r
      */
     public void resolve(Request r) {
-        r.recordStart();
-        if(!r.isSubquery()) {
-            Optional<InetAddress> rAddr = r.getRemoteAddress();
-            for (Question q : r.getMessage().getQuestions()) {
-                log.info("[Q] [{}]: {} | {}", rAddr.map(InetAddress::getHostAddress).orElse("N/A"), q, r.getId());
-            }
-        }
         RecursiveResolverTask t = new RecursiveResolverTask(
                 new SearchContext(r, cache, r.getParentQSet()),
                 new ResolverContext(this, cache, stateMachinePool, primary, fallback, authorityZones, negativeCache, domainBlocker)
