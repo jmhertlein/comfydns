@@ -21,13 +21,6 @@ RUN gem install bundler
 ENV RAILS_ENV production
 RUN ./bin/bundle install --without development test
 
-COPY ./backend/pom.xml /build/backend
-COPY ./backend/recursor/pom.xml /build/backend/recursor
-COPY ./backend/log-processor/pom.xml /build/backend/log-processor
-WORKDIR /build/backend/
-RUN mvn dependency:go-offline
-
-
 # ui is slower, do it first
 COPY ./ui /app/ui
 WORKDIR /app/ui
