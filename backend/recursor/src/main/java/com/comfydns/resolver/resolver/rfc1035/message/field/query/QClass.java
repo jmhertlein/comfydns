@@ -30,4 +30,10 @@ public interface QClass {
 
         return RRClass.match(content, pos);
     }
+
+    public static QClass match(int value) {
+        byte[] tmp = new byte[2];
+        PrettyByte.writeNBitUnsignedInt(value, 16, tmp, 0, 0);
+        return match(tmp, 0);
+    }
 }

@@ -3,6 +3,7 @@ package com.comfydns.resolver.resolver.logging;
 import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
+import com.comfydns.resolver.util.JsonArrayCollector;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -28,12 +29,7 @@ public class EventLogger {
                 .getQuestions()
                 .stream()
                 .map(Question::toJson)
-                .collect(Collector.of(JsonArray::new, JsonArray::add, (l, r) -> {
-                    JsonArray arr2 = new JsonArray();
-                    arr2.addAll(l);
-                    arr2.addAll(r);
-                    return arr2;
-                }));
+                .collect(new JsonArrayCollector());
         logForm.add("questions", arr);
         log.info("[EVENT]: {}", gson.toJson(logForm));
     }
