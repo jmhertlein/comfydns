@@ -4,7 +4,6 @@ import com.comfydns.resolver.resolver.logging.EventLogLineType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -16,9 +15,6 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,8 +24,14 @@ public class ComfyLogProcessor {
 
     public static void main(String ... args) throws IOException {
         OptionParser parser = new OptionParser();
-        OptionSpec<String> file = parser.accepts("file").withRequiredArg().ofType(String.class);
+        OptionSpec<String> file = parser.accepts("file").withRequiredArg().ofType(String.class).required();
+        OptionSpec<Void> help = parser.accepts("help").forHelp();
         OptionSet options = parser.parse(args);
+
+        if(options.has(help)) {
+            parser.printHelpOn(System.out);
+            return;
+        }
 
         try(
             InputStream is = getInputStream(options.valueOf(file));
