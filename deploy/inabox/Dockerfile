@@ -7,7 +7,7 @@ RUN mkdir -p /opt/comfydns/pg && ln -s /opt/comfydns/pg/ /var/lib/postgresql
 RUN apt update && apt install -y ruby ruby-dev build-essential patch zlib1g-dev liblzma-dev libsqlite3-dev sqlite3 nginx nodejs yarnpkg openjdk-11-jdk-headless maven supervisor libpq-dev vim jq postgresql uuid-runtime
 
 # mk hier 
-RUN mkdir -p /build /app /app/ui /build/backend /build/backend/recursor /build/backend/runner /build/backend/util
+RUN mkdir -p /build /app /app/ui /build/backend /build/backend/recursor /build/backend/log-processor /build/backend/util
 
 # setup db
 COPY ./deploy/inabox/pg_hba.conf /etc/postgresql/12/main/pg_hba.conf
@@ -23,6 +23,7 @@ RUN ./bin/bundle install --without development test
 
 COPY ./backend/pom.xml /build/backend
 COPY ./backend/recursor/pom.xml /build/backend/recursor
+COPY ./backend/log-processor/pom.xml /build/backend/log-processor
 WORKDIR /build/backend/
 RUN mvn dependency:go-offline
 
