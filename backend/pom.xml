@@ -13,6 +13,7 @@
 
     <modules>
         <module>recursor</module>
+        <module>log-processor</module>
     </modules>
 
     <dependencies>
