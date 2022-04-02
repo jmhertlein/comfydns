@@ -28,7 +28,12 @@ public class JsonArrayCollector implements Collector<JsonElement, JsonArray, Jso
 
     @Override
     public BinaryOperator<JsonArray> combiner() {
-        return (left, right) -> {left.addAll(right); return left;};
+        return (left, right) -> {
+            JsonArray ret = new JsonArray();
+            ret.addAll(left);
+            ret.addAll(right);
+            return ret;
+        };
     }
 
     @Override

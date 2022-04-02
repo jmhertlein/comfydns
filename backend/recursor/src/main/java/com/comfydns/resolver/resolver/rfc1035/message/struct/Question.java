@@ -21,6 +21,12 @@ public class Question implements Writeable {
         this.qClass = qClass;
     }
 
+    public Question(JsonObject o) {
+        this.qName = o.get("qname").getAsString();
+        this.qType = QType.match(o.get("qtype").getAsInt());
+        this.qClass = QClass.match(o.get("qclass").getAsInt());
+    }
+
     public String getQName() {
         return qName;
     }
