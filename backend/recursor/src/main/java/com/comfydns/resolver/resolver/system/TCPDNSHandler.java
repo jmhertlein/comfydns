@@ -10,6 +10,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.comfydns.resolver.resolver.system.UDPDNSHandler.earlyNettyErrors;
+
 public class TCPDNSHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger log = LoggerFactory.getLogger(TCPDNSHandler.class);
     private final ByteBuf acculmulated;
@@ -48,6 +50,7 @@ public class TCPDNSHandler extends SimpleChannelInboundHandler<ByteBuf> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.debug("Exception caught for client " + ctx.channel().remoteAddress(), cause);
+        earlyNettyErrors.labels("tcp").inc();
         ctx.close();
     }
 
