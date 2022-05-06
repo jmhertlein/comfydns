@@ -5,9 +5,12 @@ import com.comfydns.resolver.resolver.rfc1035.cache.RR2Tuple;
 import com.comfydns.resolver.resolver.rfc1035.message.LabelCache;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
+import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
+import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.text.html.Option;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -30,20 +33,24 @@ public class InMemoryNegativeCache implements NegativeCache {
     }
 
     @Override
-    public boolean cachedNegative(String qName, QType qType, QClass qClass, OffsetDateTime now) {
+    public Optional<RR<SOARData>> cachedNegative(String qName, QType qType, QClass qClass, OffsetDateTime now) {
         lock.readLock().lock();
         try {
             Map<RR2Tuple, NegativeRecord> rr2TupleNegativeRecordMap = cache.get(qName);
             if(rr2TupleNegativeRecordMap == null) {
-                return false;
+                return Optional.empty();
             }
             RR2Tuple key = new RR2Tuple(qClass.getValue(), qType.getValue());
             NegativeRecord negativeRecord = rr2TupleNegativeRecordMap.get(key);
             if(negativeRecord == null) {
-                return false;
+                return Optional.empty();
             }
 
-            return !negativeRecord.isExpired(now);
+            if(negativeRecord.isExpired(now)) {
+                return Optional.empty();
+            } else {
+                return Optional.of(negativeRecord.soaRecord);
+            }
 
         } finally {
             lock.readLock().unlock();
@@ -51,12 +58,12 @@ public class InMemoryNegativeCache implements NegativeCache {
     }
 
     @Override
-    public void cacheNegative(String qName, QType qType, QClass qClass, long ttl, OffsetDateTime now) {
+    public void cacheNegative(String qName, QType qType, QClass qClass, RR<SOARData> soaRR, OffsetDateTime now) {
         lock.writeLock().lock();
         try {
             Map<RR2Tuple, NegativeRecord> rr2TupleNegativeRecordMap = cache.computeIfAbsent(qName, k -> new HashMap<>());
             RR2Tuple key = new RR2Tuple(qClass.getValue(), qType.getValue());
-            rr2TupleNegativeRecordMap.put(key, new NegativeRecord(qName, key, ttl, now));
+            rr2TupleNegativeRecordMap.put(key, new NegativeRecord(qName, key, soaRR, now));
             cachedNegativeRecordsTotal.inc();
         } finally {
             lock.writeLock().unlock();
@@ -84,18 +91,18 @@ public class InMemoryNegativeCache implements NegativeCache {
     private static class NegativeRecord {
         private final String qName;
         private final RR2Tuple classType;
-        public final long ttl;
+        private final RR<SOARData> soaRecord;
         public final OffsetDateTime cachedAt;
 
-        private NegativeRecord(String qName, RR2Tuple classType, long ttl, OffsetDateTime cachedAt) {
+        private NegativeRecord(String qName, RR2Tuple classType, RR<SOARData> soaRecord, OffsetDateTime cachedAt) {
             this.qName = qName;
             this.classType = classType;
-            this.ttl = ttl;
+            this.soaRecord = soaRecord;
             this.cachedAt = cachedAt;
         }
 
         public boolean isExpired(OffsetDateTime now) {
-            return cachedAt.until(now, ChronoUnit.SECONDS) >= ttl;
+            return cachedAt.until(now, ChronoUnit.SECONDS) >= soaRecord.getRData().getMinimum();
         }
     }
 

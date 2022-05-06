@@ -210,7 +210,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             rCtx.getNegativeCache().cacheNegative(
                     sCtx.getSName(),
                     q.getqType(), q.getqClass(),
-                    ((SOARData) soaFound.get().getRData()).getMinimum(),
+                    soaFound.get().cast(SOARData.class),
                     OffsetDateTime.now()
             );
             return soaFound;

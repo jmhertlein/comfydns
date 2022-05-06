@@ -3,9 +3,11 @@ package com.comfydns.resolver.resolver.rfc1035.service.search;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.OverlayCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.RRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.TemporaryDNSCache;
+import com.comfydns.resolver.resolver.rfc1035.message.InvalidHeaderException;
 import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
+import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.TXTRData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
@@ -310,5 +312,17 @@ public class SearchContext {
         } catch (Throwable t) {
             log.warn("Exception in listener.", t);
         }
+    }
+
+    public Message buildNameErrorResponse(RR<SOARData> soarDataRR) {
+        Message m = buildNameErrorResponse();
+        m.getHeader().setNSCount(1);
+        m.getAuthorityRecords().add(soarDataRR);
+        try {
+            m.validateHeader();
+        } catch (InvalidHeaderException e) {
+            throw new RuntimeException("You messed up the header.", e);
+        }
+        return m;
     }
 }

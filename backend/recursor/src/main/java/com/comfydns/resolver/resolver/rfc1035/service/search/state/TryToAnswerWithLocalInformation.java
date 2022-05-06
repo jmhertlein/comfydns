@@ -4,6 +4,7 @@ import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
 import com.comfydns.resolver.resolver.rfc1035.cache.RRSource;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.CNameRData;
+import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
@@ -41,11 +42,12 @@ public class TryToAnswerWithLocalInformation implements RequestState {
     public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, StateTransitionCountLimitExceededException {
         Question q = sCtx.getCurrentQuestion();
 
-        if(rCtx.getNegativeCache().cachedNegative(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now())) {
+        Optional<RR<SOARData>> cachedNegative = rCtx.getNegativeCache().cachedNegative(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
+        if(cachedNegative.isPresent()) {
             cachedNegativesUsed.inc();
             log.debug("{}Cached negative used.", sCtx.getRequestLogPrefix());
             sCtx.forEachListener(l -> l.onNegativeCacheUse(sCtx.getSName(), q.getqType(), q.getqClass()));
-            return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
+            return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse(cachedNegative.get())));
         }
 
         List<RRSource> sources = new ArrayList<>();

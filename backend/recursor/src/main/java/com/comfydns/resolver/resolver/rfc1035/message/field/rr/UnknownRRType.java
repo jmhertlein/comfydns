@@ -44,6 +44,11 @@ public class UnknownRRType implements RRType {
     }
 
     @Override
+    public Class<? extends RData> getRDataClass() {
+        return BlobRData.class;
+    }
+
+    @Override
     public String toString() {
         return PrettyByte.binString(value[0]) + " " + PrettyByte.binString(value[1]);
     }

@@ -35,6 +35,8 @@ public class RR<T extends RData> implements Writeable {
         this.ttl = ttl;
         this.rData = rData;
         this.classAndType = new RR2Tuple(rrClass.getValue(), rrType.getValue());
+
+        assert rrType.getRDataClass().equals(rData.getClass());
     }
 
     private RR(Question q, RRType rrType, RRClass rrClass, int ttl, T rData) {
@@ -44,6 +46,8 @@ public class RR<T extends RData> implements Writeable {
         this.ttl = ttl;
         this.rData = rData;
         this.classAndType = new RR2Tuple(rrClass.getValue(), rrType.getValue());
+
+        assert rrType.getRDataClass().equals(rData.getClass());
     }
 
     public RR<T> adjustTTL(OffsetDateTime cachedAt, OffsetDateTime now) {
@@ -207,5 +211,14 @@ public class RR<T extends RData> implements Writeable {
     @Override
     public int hashCode() {
         return Objects.hash(name, rrType, rrClass, rData);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <RDT extends RData> RR<RDT> cast(Class<RDT> rDataClass) {
+        if(rDataClass.equals(this.rrType.getRDataClass()) && rDataClass.equals(this.getRData().getClass())) {
+            return (RR<RDT>) this;
+        } else {
+            throw new RuntimeException("We almost poisoned the heap.");
+        }
     }
 }

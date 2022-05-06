@@ -93,7 +93,7 @@ public class InMemoryAuthorityRRSource implements AuthorityRRSource {
                     soa.getTtl(),
                     new SOARData(
                             rData.getMName() == null ? "unset.example.com" : rData.getMName(),
-                            rData.getrName() == null ? "unset@example.com" : rData.getrName(),
+                            rData.getRName() == null ? "unset@example.com" : rData.getRName(),
                             rData.getSerial(),
                             rData.getRefresh(),
                             rData.getRetry(),

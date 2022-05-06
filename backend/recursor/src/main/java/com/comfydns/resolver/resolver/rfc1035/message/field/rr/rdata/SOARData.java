@@ -63,7 +63,7 @@ public class SOARData implements RData {
         return mName;
     }
 
-    public String getrName() {
+    public String getRName() {
         return rName;
     }
 

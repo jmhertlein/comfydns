@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_02_20_155829) do
+ActiveRecord::Schema.define(version: 2022_04_16_000146) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -51,13 +51,22 @@ ActiveRecord::Schema.define(version: 2022_02_20_155829) do
   end
 
   create_table "cached_negative", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "name"
+    t.string "qname"
     t.integer "qtype"
     t.integer "qclass"
-    t.integer "ttl"
+    t.integer "r_ttl"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "expires_at", precision: 6, null: false
-    t.index ["name"], name: "cached_negative_name_idx"
+    t.text "r_name"
+    t.integer "r_class"
+    t.text "r_mname"
+    t.text "r_rname"
+    t.bigint "r_serial"
+    t.bigint "r_refresh"
+    t.bigint "r_retry"
+    t.bigint "r_expire"
+    t.bigint "r_minimum"
+    t.index ["qname"], name: "cached_negative_name_idx"
   end
 
   create_table "cached_rr", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

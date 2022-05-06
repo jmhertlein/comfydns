@@ -5,6 +5,8 @@ import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBNegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.UnknownRRType;
+import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
+import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.util.db.SimpleConnectionPool;
 import org.junit.jupiter.api.*;
 import org.postgresql.ds.PGConnectionPoolDataSource;
@@ -44,20 +46,27 @@ public class DBNegativeCacheIntegrationTest {
         }
     }
 
+    private static RR<SOARData> mkSOA(String nsdname) {
+        return new RR<>(nsdname, KnownRRType.SOA, KnownRRClass.IN, 60,
+                new SOARData("ns1." + nsdname, "admin@josh.cafe", 1, 60, 60, 60, 60));
+    }
+
     @Test
     public void testCache() throws UnknownHostException, CacheAccessException {
         OffsetDateTime now = OffsetDateTime.now();
         DBNegativeCache c = new DBNegativeCache(pool);
-        c.cacheNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, 60, now);
+        c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN,
+                mkSOA("josh.cafe"), now);
     }
 
     @Test
     public void testCacheQuery() throws CacheAccessException, UnknownHostException {
         DBNegativeCache c = new DBNegativeCache(pool);
         OffsetDateTime now = OffsetDateTime.now();
-        c.cacheNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, 60, now);
+        c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN,
+                mkSOA("josh.cafe"), now);
         now = now.plusSeconds(1);
-        Assertions.assertTrue(c.cachedNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, now));
+        Assertions.assertTrue(c.cachedNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN, now).isPresent());
     }
 
     @Test
@@ -65,41 +74,43 @@ public class DBNegativeCacheIntegrationTest {
         UnknownRRType httpsType = new UnknownRRType(PrettyByte.b(0, 65));
         DBNegativeCache c = new DBNegativeCache(pool);
         OffsetDateTime now = OffsetDateTime.now();
-        c.cacheNegative("josh.cafe", httpsType, KnownRRClass.IN, 60, now);
+        c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", httpsType, KnownRRClass.IN,
+                mkSOA("josh.cafe"), now);
         now = now.plusSeconds(1);
 
-        Assertions.assertTrue(c.cachedNegative("josh.cafe", httpsType, KnownRRClass.IN, now));
+        Assertions.assertTrue(c.cachedNegative("sirnotappearinginthisfilm.josh.cafe", httpsType, KnownRRClass.IN, now).isPresent());
     }
 
     @Test
     public void testExpunge() throws UnknownHostException, CacheAccessException {
         DBNegativeCache c = new DBNegativeCache(pool);
         OffsetDateTime now = OffsetDateTime.now();
-        c.cacheNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, 60, now);
+        c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN,
+                mkSOA("josh.cafe"), now);
         now = now.plusSeconds(1);
-        c.bustCacheFor(List.of("josh.cafe"));
-        Assertions.assertFalse(c.cachedNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, now));
+        c.bustCacheFor(List.of("sirnotappearinginthisfilm.josh.cafe"));
+        Assertions.assertFalse(c.cachedNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN, now).isPresent());
     }
 
     @Test
     public void testExpiration() throws CacheAccessException {
         DBNegativeCache c = new DBNegativeCache(pool);
         OffsetDateTime now = OffsetDateTime.now();
-        c.cacheNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, 60, now);
+        c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN, mkSOA("josh.cafe"), now);
         now = now.plusSeconds(61);
-        Assertions.assertFalse(c.cachedNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, now));
+        Assertions.assertFalse(c.cachedNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN, now).isPresent());
     }
 
     @Test
     public void testPrune() throws CacheAccessException, UnknownHostException, SQLException, ExecutionException, InterruptedException {
         OffsetDateTime now = OffsetDateTime.now();
         DBNegativeCache c = new DBNegativeCache(pool);
-        c.cacheNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, 60, now);
+        c.cacheNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, mkSOA("josh.cafe"), now);
         now = now.plusSeconds(61);
         c.prune(now);
 
         try(Connection cxn = pool.getConnection().get(); Statement s = cxn.createStatement()) {
-            try(ResultSet rs = s.executeQuery("select count(*) as row_ct from cached_negative where name='josh.cafe' and qtype=1 and" +
+            try(ResultSet rs = s.executeQuery("select count(*) as row_ct from cached_negative where qname='josh.cafe' and qtype=1 and" +
                     " qclass=1")) {
                 if(rs.next()) {
                     Assertions.assertEquals(0, rs.getInt("row_ct"));

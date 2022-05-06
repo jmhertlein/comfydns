@@ -25,4 +25,5 @@ public interface RRType extends QType {
         return match(tmp, 0);
     }
 
+    Class<? extends RData> getRDataClass();
 }
