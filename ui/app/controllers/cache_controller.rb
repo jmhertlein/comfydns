@@ -20,13 +20,13 @@ class CacheController < ApplicationController
       where[:rrtype] = DNS::RRTYPE_TO_VALUE[@qtype] unless @qtype.eql? "STAR"
       @found_rrs = CachedRR.where(where)
 
-      where = {name: @name}
+      where = {qname: @name}
       if @qtype.eql? "STAR"
         @found_negatives = CachedNegative.where(where)
       else  
-        where[:qtype] = DNS::RRTYPE_TO_VALUE[@qtype] unless 
+        where[:qtype] = DNS::RRTYPE_TO_VALUE[@qtype]
         @found_negatives = CachedNegative.where(where)
-        @found_negatives += CachedNegative.where(name: @name, qtype: 255)
+        @found_negatives += CachedNegative.where(qname: @name, qtype: 255)
       end
     end
   end
