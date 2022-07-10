@@ -73,7 +73,7 @@
       <td><%= neg.qname %></td>
       <td><%= neg.qtype %></td>
       <td><%= neg.qclass %></td>
-      <td><%= neg.ttl %></td>
+      <td><%= neg.r_ttl %></td>
       <td><%= neg.expires_at %></td><td>
         <%= form_with(url: "/cache/negative/#{neg.id}", method: :delete) do |form| %>
           <%= form.hidden_field :search_name, value: @name %>
