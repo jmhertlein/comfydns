@@ -90,7 +90,7 @@ public class AsyncNonTruncatingTransport implements NonTruncatingTransport {
             byte[] content = new byte[msgLen];
             msg.getBytes(0, content);
             in.add(content);
-            if(msgLen == -1 && bytesRead() >= 2) {
+            if(bytesRead() >= 2) {
                 byte[] len = new byte[2];
                 int pos = 0;
                 collectTwoOctets:

@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class HandleResponseToZoneQuery implements RequestState {
     private static final Logger log = LoggerFactory.getLogger(HandleResponseToZoneQuery.class);
@@ -156,7 +157,24 @@ public class HandleResponseToZoneQuery implements RequestState {
         List<RR<?>> rrs = new ArrayList<>();
         final List<RR<?>> aRecords = new ArrayList<>(), nsRecords = new ArrayList<>();
 
-        m.forEach(rr -> {
+        // TODO: here, should I only accept records from AN section if the name == my qname?
+
+
+        List<RR<?>> anRecords = new ArrayList<>();
+        m.getAnswerRecords().stream().forEach(rr -> {
+            if(rr.getName().equalsIgnoreCase(sCtx.getSName())) {
+                anRecords.add(rr);
+            } else {
+                sCtx.forEachListener(l -> l.remark("Ignoring an RR because name != sname: " + rr));
+            }
+        });
+
+
+        Stream.concat(
+                Stream.concat(anRecords.stream(), m.getAuthorityRecords().stream()),
+                        m.getAdditionalRecords().stream()
+        )
+        .forEach(rr -> {
             if(sCtx.getCurrentQuestion().getqClass() == KnownRRClass.IN) {
                 if (rr.getRrType() == KnownRRType.A) {
                     aRecords.add(rr);

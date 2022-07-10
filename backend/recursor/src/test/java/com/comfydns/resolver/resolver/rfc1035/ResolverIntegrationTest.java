@@ -12,6 +12,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.UnknownRRType;
+import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.ARData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.net.*;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -403,5 +405,17 @@ REFRESH: 1958748768, RETRY: 1071239168, EXPIRE: 921600, MINIMUM: 230400
     @Test
     public void testEmptyQName() throws ExecutionException, InterruptedException {
         assertHasFormatError(testQuery(new Question("", KnownRRType.A, KnownRRClass.IN)));
+    }
+
+    @Test
+    public void testAssetsJishoOrg() throws ExecutionException, InterruptedException, UnknownHostException {
+        Message resp = testQuery(new Question("assets.jisho.org", KnownRRType.A, KnownRRClass.IN));
+
+        Optional<RR<?>> first = resp.getAnswerRecords().stream().filter(rr -> rr.getRrType().equals(KnownRRType.A))
+                .findFirst();
+        Assertions.assertTrue(first.isPresent());
+        RR<?> aRR = first.get();
+        Assertions.assertNotEquals(aRR.cast(ARData.class).getRData().getAddress(),
+                Inet4Address.getByName("192.64.147.142"));
     }
 }
