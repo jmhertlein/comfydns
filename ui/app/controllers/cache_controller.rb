@@ -46,7 +46,7 @@ class CacheController < ApplicationController
     elsif cache_type.eql? "negative"
       r = CachedNegative.find(id)
       r.delete
-      redirect_to "/cache?#{p.to_param}", notice: "Deleted cached negative for #{r.name}."
+      redirect_to "/cache?#{p.to_param}", notice: "Deleted cached negative for #{r.qname}."
     else
       head 400
     end
