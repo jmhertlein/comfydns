@@ -1,0 +1,4 @@
+zone "PH_ZONE_NAME_NO_LEADING_DOT" {
+    type slave;
+    masters  { PH_MASTER_IP; };
+};
