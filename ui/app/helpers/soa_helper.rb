@@ -1,0 +1,2 @@
+module SoaHelper
+end

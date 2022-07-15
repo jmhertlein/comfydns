@@ -1,0 +1,33 @@
+<div class="row" align="center">
+  <div class="col">
+    <h2 class="">Start of Authority Record for <%= @zone.name %></h2>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col show-soa-table">
+    <table class="table">
+      <thead>
+      <th>Field</th>
+      <th>Value</th>
+      </thead>
+      <tbody>
+        <tr><td>Name</td><td><%= @soa.name %></td></tr>
+        <tr><td>TTL</td><td><%= @soa.ttl %></td></tr>
+        <tr><td>MName</td><td><%= @soa.rdata["mname"] %></td></tr>
+        <tr><td>RName</td><td><%= @soa.rdata["rname"] %></td></tr>
+        <tr><td>Serial</td><td><%= @soa.rdata["serial"] %></td></tr>
+        <tr><td>Refresh</td><td><%= @soa.rdata["refresh"] %></td></tr>
+        <tr><td>Retry</td><td><%= @soa.rdata["retry"] %></td></tr>
+        <tr><td>Expire</td><td><%= @soa.rdata["expire"] %></td></tr>
+        <tr><td>Minimum</td><td><%= @soa.rdata["minimum"] %></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col" align="center">
+    <a href="/soa/<%= @zone.id %>/edit" class="btn btn-primary">Edit</a>
+  </div>
+</div>

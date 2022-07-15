@@ -1,0 +1,83 @@
+<div class="row" align="center">
+  <div class="col">
+    <h2 class="">Edit Start of Authority Record for <%= @zone.name %></h2>
+  </div>
+</div>
+
+<hr />
+
+<div class="row" align="center">
+  <div class="col">
+    <h4 class="">Uneditable Fields</h2>
+  </div>
+</div>
+<div class="row justify-content-center">
+  <div class="col flex-grow-0">
+    <table class="table">
+      <thead>
+      <th>Field</th>
+      <th>Value</th>
+      </thead>
+      <tbody>
+        <tr><td>Name</td><td><%= @soa.name %></td></tr>
+        <tr><td>Serial</td><td><%= @soa.rdata["serial"] %></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr />
+
+<div class="row" align="center">
+  <div class="col">
+    <h4 class="">Editable Fields</h2>
+  </div>
+</div>
+<%= form_with url: "/soa/#{@zone.id}", method: :post do |form| %>
+  <div class="row justify-content-center mt-2">
+    <div class="col flex-grow-0 mt-2">
+      <%= form.label :ttl, "TTL" %>
+      <%= form.text_field :ttl, value: @soa.ttl, title: "Time-to-Live for the SOA record itself.", pattern: "[0-9]+", class: "form-control", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
+    </div>
+  </div>
+  <div class="row justify-content-center mt-2">
+    <div class="col flex-grow-0 mt-2">
+      <%= form.label :mname, "MName" %>
+      <%= form.text_field :mname, value: @soa.rdata["mname"], title: "[unit: seconds] The <domain-name> of the name server that was the original or primary source of data for this zone.", class: "form-control", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>  
+    </div>
+    <div class="col flex-grow-0 mt-2">
+      <%= form.label :rname, "RName" %>
+      <%= form.text_field :rname, value: @soa.rdata["rname"], title: "A <domain-name> which specifies the mailbox of the person responsible for this zone.", class: "form-control", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>  
+    </div>
+  </div>
+  <div class="row justify-content-center mt-2">
+    <div class="col flex-grow-0 mt-2">
+      <%= form.label :refresh, "Refresh" %>
+      <%= form.text_field :refresh, value: @soa.rdata["refresh"], pattern: "[0-9]+", title: "[unit: seconds] A 32 bit time interval before the zone should be refreshed.", class: "form-control", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
+    </div>
+    <div class="col flex-grow-0 mt-2">
+      <%= form.label :retry, "Retry" %>
+      <%= form.text_field :retry, value: @soa.rdata["retry"], pattern: "[0-9]+", title: "[unit: seconds] A 32 bit time interval that should elapse before a failed refresh should be retried.", class: "form-control", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
+    </div>
+    <div class="col flex-grow-0 mt-2">
+      <%= form.label :expire, "Expire" %>
+      <%= form.text_field :expire, value: @soa.rdata["expire"], pattern: "[0-9]+", title: "[unit: seconds] A 32 bit time value that specifies the upper limit on the time interval that can elapse before the zone is no longer authoritative.", class: "form-control", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>  
+    </div>
+    <div class="col flex-grow-0 mt-2">
+      <%= form.label :minimum, "Minimum" %>
+      <%= form.text_field :minimum, value: @soa.rdata["minimum"], pattern: "[0-9]+", title: "[unit: seconds] The unsigned 32 bit minimum TTL field that should be exported with any RR from this zone.", class: "form-control", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>  
+    </div> 
+  </div>
+  <div class="row justify-content-center mt-3 mb-4">
+    <div class="col flex-grow-0">    
+      <%= form.submit "Update SOA", class: "btn btn-primary" %>
+    </div>
+    <div class="col flex-grow-0">
+      <a href="/soa/<%= @zone.id %>" class="btn btn-secondary">Back</a>
+    </div>
+  </div>
+<% end %>
+
+<div class="row">
+
+</div>

@@ -1,10 +1,16 @@
 Rails.application.routes.draw do
+  get 'soa/show'
+  get 'soa/edit'
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   get "/", to: 'index#index'
   
   resources :domain
   post "/domain/:id", to: "domain#create_record"
   delete "/domain/:zid/:rrid", to: "domain#destroy_record"
+
+  get "/soa/:zid", to: "soa#show"
+  get "/soa/:zid/edit", to: "soa#edit"
+  post "/soa/:zid", to: "soa#update"
 
   get "/cache", to: "cache#index"
   delete "/cache/:cache_type/:id", to: "cache#destroy"
