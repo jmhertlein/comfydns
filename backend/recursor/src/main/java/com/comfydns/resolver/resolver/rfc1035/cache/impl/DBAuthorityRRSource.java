@@ -51,7 +51,8 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
     @Override
     public Set<String> getAuthoritativeForDomains() throws CacheAccessException {
         Set<String> domains = new HashSet<>();
-        try (PreparedStatement ps = pool.getConnection().get().prepareStatement(
+        try (Connection cxn = pool.getConnection().get();
+                PreparedStatement ps = cxn.prepareStatement(
                 "select name from zone"); ResultSet rs = ps.executeQuery()){
             while(rs.next()) {
                 domains.add(rs.getString("name"));
@@ -67,7 +68,8 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
     @SuppressWarnings("unchecked")
     public List<RR<SOARData>> getSOAs() throws CacheAccessException {
         List<RR<SOARData>> rrs = new ArrayList<>();
-        try (PreparedStatement ps = pool.getConnection().get().prepareStatement(
+        try (Connection cxn = pool.getConnection().get();
+                PreparedStatement ps = cxn.prepareStatement(
                 "select * from rr where rrtype=?")){
             ps.setInt(1, KnownRRType.SOA.getIntValue());
             try(ResultSet rs = ps.executeQuery()) {
