@@ -3,6 +3,12 @@ zone "PH_ZONE_NAME_NO_LEADING_DOT" {
     masters  { PH_MASTER_IP; };
 };
 
+acl my_net { 
+    PH_RECURSION_FOR_SUBNET;
+};
+
 options {
     recursion yes;
+
+    allow-recursion { my_net; };
 };

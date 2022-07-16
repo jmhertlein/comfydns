@@ -9,4 +9,5 @@ docker run -it --name comfydns-axfr \
 -p 127.0.0.1:53:53/udp \
 -e CDNS_IP=192.168.1.103 \
 -e ZONE_NAME=hert \
+-e ALLOW_RECURSION_FOR_SUBNET=127.0.0.1/32 \
 comfydns-axfr:dev
