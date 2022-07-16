@@ -35,5 +35,14 @@
             pattern: ".+",
             autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
     </div>
+<% when DNS::RRTYPE_TO_VALUE["NS"] %>
+    <div class="col">
+        <%= form.label :nsdname, "NS Domain Name" %>
+        <%= form.text_field :nsdname, 
+            class: "form-control inline-form-control", 
+            placeholder: "myns.mydomain", 
+            pattern: ".+",
+            autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
+    </div>
 <% end %>
 

@@ -26,15 +26,17 @@ shadow p-3 mb-5 bg-white rounded
   <%= form.hidden_field :rrtype, value: @desired_rrtype %>
   <%= form.hidden_field :rrclass, value: "IN" %>
   <%= form.hidden_field :ttl, value: "60" %>
-  <div class="col">
-    <%= form.label :hostname, "Hostname" %>
-    <div class="input-group">
-      <%= form.text_field :hostname, class: "form-control inline-form-control", pattern: "[^.]+", placeholder: "myhost (no dots)", title: "Format: no dots", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
-      <div class="input-group-append">
-        <div class="input-group-text"><%= ".#{@zone.name}" %></div>
+  <% unless @desired_rrtype.eql? "NS" %>
+    <div class="col">
+      <%= form.label :hostname, "Hostname" %>
+      <div class="input-group">
+        <%= form.text_field :hostname, class: "form-control inline-form-control", pattern: "[^.]+", placeholder: "myhost (no dots)", title: "Format: no dots", autocomplete: "off", autocorrect: "off", autocapitalize: "off", spellcheck: "off" %>
+        <div class="input-group-append">
+          <div class="input-group-text"><%= ".#{@zone.name}" %></div>
+        </div>
       </div>
     </div>
-  </div>
+  <% end %>
   
   <%= render :partial => "rdata_fields", :locals => {"rrtype": DNS::RRTYPE_TO_VALUE[@desired_rrtype], "form": form} %>
 
@@ -53,7 +55,11 @@ shadow p-3 mb-5 bg-white rounded
       <tbody>
       <% @host_records.each do |h| %>
         <tr>
-          <td><%= h.name[0..(h.name.length - 1 - @zone.name.length - 1)] %></td>
+          <% if h.rrtype == DNS::RRTYPE_TO_VALUE["NS"] %>
+            <td><%= h.name %></td>  
+          <% else %>
+            <td><%= h.name[0..(h.name.length - 1 - @zone.name.length - 1)] %></td>
+          <% end %>
           <td><%= DNS::VALUE_TO_RRTYPE[h.rrtype] %></td>
           <td><%= h.rdata[h.rdata.keys[0]] %></td>
           <td>

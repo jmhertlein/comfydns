@@ -49,7 +49,7 @@ class DomainController < ApplicationController
       @desired_rrtype = "A"
     end
 
-    @supported_rrtypes = ["A", "AAAA", "TXT", "CNAME"]
+    @supported_rrtypes = ["A", "AAAA", "TXT", "CNAME", "NS"]
 
     @desired_rrtype = "A" unless @supported_rrtypes.include? @desired_rrtype
   end
@@ -82,7 +82,7 @@ class DomainController < ApplicationController
       return
     end
 
-    unless /^[a-zA-Z0-9\-_]+$/.match? params[:hostname]
+    unless params[:rrtype].eql?("NS") || /^[a-zA-Z0-9\-_]+$/.match?(params[:hostname])
       redirect_to "/domain/#{params[:id]}", alert: "Invalid host name: #{params[:hostname]}"
       return
     end
@@ -126,16 +126,26 @@ class DomainController < ApplicationController
         return
       end
       rdata = {"txt-data": params[:text]}
+    when "NS"
+      if params[:nsdname].empty?
+        redirect_to "/domain/#{params[:id]}", alert: "Invalid domain name: #{params[:nsdname]}"
+        return
+      end
+      rdata = {"nsdname": params[:nsdname]}
     else
       redirect_to "/domain/#{params[:id]}", alert: "Invalid rrtype: #{params[:rrtype]}"
       return
     end
 
     hostname = nil
-    if params[:hostname].end_with? ".#{zone.name}"
-      hostname = params[:hostname]
+    if params[:rrtype] == "NS"
+      hostname = zone.name
     else
-      hostname = "#{params[:hostname]}.#{zone.name}"
+      if params[:hostname].end_with? ".#{zone.name}"
+        hostname = params[:hostname]
+      else
+        hostname = "#{params[:hostname]}.#{zone.name}"
+      end
     end
 
     RR.transaction do
