@@ -149,6 +149,23 @@ class DomainController < ApplicationController
     end
 
     RR.transaction do
+      counts = RR.where(name: hostname, rrclass: DNS::RRCLASS_TO_VALUE[params[:rrclass]])
+      .group(:rrtype)
+      .count
+
+      puts counts
+      
+
+      if params[:rrtype] == "CNAME"
+        unless counts.empty?
+          redirect_to "/domain/#{params[:id]}", alert: "Conflicting records: Delete all other records for #{hostname} before adding a CNAME."
+          return
+        end
+      elsif counts.include?(DNS::RRTYPE_TO_VALUE["CNAME"]) && (counts[DNS::RRTYPE_TO_VALUE["CNAME"]] > 0)
+          redirect_to "/domain/#{params[:id]}", alert: "Conflicting records: Cannot add any records for #{hostname} because it already has a CNAME record."
+          return
+      end
+
       record = RR.create(
         name: hostname, 
         rrtype: DNS::RRTYPE_TO_VALUE[params[:rrtype]],
