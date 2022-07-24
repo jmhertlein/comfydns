@@ -13,14 +13,10 @@ RUN mkdir -p /build /app /app/website
 COPY ./deploy/website/pg_hba.conf /etc/postgresql/12/main/pg_hba.conf
 RUN service postgresql start && su postgres -c 'createuser -w -s comfydns' && service postgresql stop
 
-# early resolve of dependencies for better build caching
-COPY ./website/Gemfile* /app/website/
+COPY ./website /app/website
 WORKDIR /app/website
 RUN gem install bundler
 RUN bundle install --deployment --without development test
-
-COPY ./website /app/website
-WORKDIR /app/website
 RUN ln /usr/bin/yarnpkg /usr/bin/yarn
 ENV RAILS_ENV production
 ENV SECRET_KEY_BASE placeholder
