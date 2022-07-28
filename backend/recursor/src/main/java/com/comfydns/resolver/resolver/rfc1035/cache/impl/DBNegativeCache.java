@@ -42,7 +42,7 @@ public class DBNegativeCache implements NegativeCache {
         try (Histogram.Timer t = CacheMetrics.negativeCacheReadTimeSeconds.startTimer();
              Connection cxn = pool.getConnection().get();
              PreparedStatement ps = cxn.prepareStatement(
-                     "select r_name, r_class, r_ttl - floor(extract(epoch from (?-created_at))) as r_ttl, " +
+                     "select r_rcode, r_name, r_class, r_ttl - floor(extract(epoch from (?-created_at))) as r_ttl, " +
                              "r_mname, r_rname, r_serial, r_refresh, r_retry, r_expire, r_minimum " +
                              "from cached_negative " +
                              "where ? < expires_at and qname=? and qtype=? and qclass=?")) {
