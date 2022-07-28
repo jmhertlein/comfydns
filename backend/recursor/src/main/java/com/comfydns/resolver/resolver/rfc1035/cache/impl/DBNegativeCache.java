@@ -1,8 +1,10 @@
 package com.comfydns.resolver.resolver.rfc1035.cache.impl;
 
 import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
+import com.comfydns.resolver.resolver.rfc1035.cache.CachedNegative;
 import com.comfydns.resolver.resolver.rfc1035.cache.NegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.message.LabelCache;
+import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
@@ -36,7 +38,7 @@ public class DBNegativeCache implements NegativeCache {
     }
 
     @Override
-    public Optional<RR<SOARData>> cachedNegative(String qName, QType qType, QClass qClass, OffsetDateTime now) throws CacheAccessException {
+    public Optional<CachedNegative> cachedNegative(String qName, QType qType, QClass qClass, OffsetDateTime now) throws CacheAccessException {
         try (Histogram.Timer t = CacheMetrics.negativeCacheReadTimeSeconds.startTimer();
              Connection cxn = pool.getConnection().get();
              PreparedStatement ps = cxn.prepareStatement(
@@ -51,7 +53,7 @@ public class DBNegativeCache implements NegativeCache {
             ps.setInt(5, qClass.getIntValue());
             try (ResultSet rs = ps.executeQuery()) {
                 if(rs.next()) {
-                    return Optional.of(readFromRS(rs));
+                    return Optional.of(new CachedNegative(readFromRS(rs), RCode.match(rs.getInt("r_rcode")).get()));
                 } else {
                     return Optional.empty();
                 }
@@ -62,24 +64,25 @@ public class DBNegativeCache implements NegativeCache {
     }
 
     @Override
-    public void cacheNegative(String qName, QType qType, QClass qClass, RR<SOARData> soaRR, OffsetDateTime now) throws CacheAccessException {
+    public void cacheNegative(String qName, QType qType, QClass qClass, RCode rCode, RR<SOARData> soaRR, OffsetDateTime now) throws CacheAccessException {
         try(Histogram.Timer t = CacheMetrics.negativeCacheWriteTimeSeconds.startTimer();
             Connection cxn = pool.getConnection().get();
             PreparedStatement ps = cxn.prepareStatement("insert into cached_negative " +
                     "(id, " +
                     "qname, qtype, qclass," +
-                    "r_name, r_class, r_ttl, r_mname, r_rname, r_serial, r_refresh, r_retry, r_expire, r_minimum," +
+                    "r_rcode, r_name, r_class, r_ttl, r_mname, r_rname, r_serial, r_refresh, r_retry, r_expire, r_minimum," +
                     "created_at, expires_at) " +
                     "values (DEFAULT, " +
                     "?, ?, ?," +
-                    "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " +
+                    "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " +
                     "?, ?)")) {
             ps.setString(1, qName);
             ps.setInt(2, qType.getIntValue());
             ps.setInt(3, qClass.getIntValue());
+            ps.setInt(4, rCode.getCode());
             writeIntoPS(soaRR, ps);
-            ps.setObject(14, now);
-            ps.setObject(15, now.plusSeconds(soaRR.getRData().getMinimum()));
+            ps.setObject(15, now);
+            ps.setObject(16, now.plusSeconds(soaRR.getRData().getMinimum()));
             ps.executeUpdate();
             cachedNegativeRecordsTotal.inc();
         } catch (SQLException | InterruptedException | ExecutionException throwables) {
@@ -135,7 +138,7 @@ public class DBNegativeCache implements NegativeCache {
     }
 
     private static void writeIntoPS(RR<SOARData> rr, PreparedStatement ps) throws SQLException {
-        int n = 3;
+        int n = 4;
         ps.setString(n+1, rr.getName());
         ps.setInt(n+2, rr.getRrClass().getIntValue());
         ps.setInt(n+3, rr.getTtl());

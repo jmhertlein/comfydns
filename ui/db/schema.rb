@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_04_16_000146) do
+ActiveRecord::Schema.define(version: 2022_07_28_015504) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -66,6 +66,7 @@ ActiveRecord::Schema.define(version: 2022_04_16_000146) do
     t.bigint "r_retry"
     t.bigint "r_expire"
     t.bigint "r_minimum"
+    t.integer "r_rcode", null: false
     t.index ["qname"], name: "cached_negative_name_idx"
   end
 

@@ -28,9 +28,7 @@ import org.junit.jupiter.api.*;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -122,12 +120,12 @@ public class ResolverIntegrationTest {
 
     @Test
     public void testGithubDotComAAAA() throws ExecutionException, InterruptedException {
-        assertNameError(testQuery(new Question("github.com", KnownRRType.AAAA, KnownRRClass.IN)));
+        assertNoData(testQuery(new Question("github.com", KnownRRType.AAAA, KnownRRClass.IN)));
     }
 
     @Test
     public void testBingA() throws ExecutionException, InterruptedException {
-        assertNameError(testQuery(new Question("bing", KnownRRType.A, KnownRRClass.IN)));
+        assertNoData(testQuery(new Question("bing", KnownRRType.A, KnownRRClass.IN)));
     }
 
     @Test
@@ -137,7 +135,7 @@ public class ResolverIntegrationTest {
 
     @Test
     public void testArchNTPSearch() throws ExecutionException, InterruptedException {
-        assertNameError(testQuery(new Question("0.arch.pool.ntp.org", KnownRRType.AAAA, KnownRRClass.IN)));
+        assertNoData(testQuery(new Question("0.arch.pool.ntp.org", KnownRRType.AAAA, KnownRRClass.IN)));
     }
 
     @Test
@@ -151,7 +149,7 @@ public class ResolverIntegrationTest {
     // TODO: test idk if this should be name_error or no_error
     @Test
     public void testRipeHackathon() throws ExecutionException, InterruptedException {
-        assertNameError(testQuery(new Question("ripe-hackathon6-ns.nlnetlabs.nl", KnownRRType.A, KnownRRClass.IN)));
+        assertNoData(testQuery(new Question("ripe-hackathon6-ns.nlnetlabs.nl", KnownRRType.A, KnownRRClass.IN)));
     }
 
     /*
@@ -215,54 +213,74 @@ public class ResolverIntegrationTest {
         Assertions.assertEquals(RCode.NAME_ERROR, m.getHeader().getRCode());
     }
 
+    private static void assertNoData(Message m) {
+        Assertions.assertEquals(RCode.NO_ERROR, m.getHeader().getRCode());
+        Assertions.assertEquals(0, m.getHeader().getANCount());
+        Assertions.assertEquals(0, m.getAuthorityRecords().stream()
+                .filter(rr -> rr.getRrType() != KnownRRType.SOA)
+                .count()
+        );
+    }
+
     private static void assertNotServerFailure(Message m) {
         Assertions.assertNotEquals(RCode.SERVER_FAILURE, m.getHeader().getRCode());
     }
 
     private static Message testQuery(Question test) throws ExecutionException, InterruptedException {
+        return testQueries(test).get(0);
+    }
+
+    private static List<Message> testQueries(Question ... tests) throws ExecutionException, InterruptedException {
         ExecutorService stateMachinePool = Executors.newCachedThreadPool();
         try {
-            CompletableFuture<Message> fM = new CompletableFuture<>();
-            Request req = new Request() {
-                @Override
-                public Message getMessage() {
-                    Message ret = new Message();
-                    Header h = new Header();
-                    h.setQDCount(1);
-                    h.setRD(true);
-                    ret.getQuestions().add(test);
-                    ret.setHeader(h);
-                    return ret;
-                }
-
-                @Override
-                protected void writeToTransport(Message m) {
-                    fM.complete(m);
-                }
-
-                @Override
-                protected String getRequestProtocolMetricsTag() {
-                    return "test";
-                }
-
-                @Override
-                public boolean transportIsTruncating() {
-                    return false;
-                }
-            };
-
             RecursiveResolver r = new RecursiveResolver(
                     stateMachinePool, new InMemoryDNSCache(),
                     new InMemoryAuthorityRRSource(),
                     new InMemoryNegativeCache(), new AsyncTruncatingTransport(),
                     new AsyncNonTruncatingTransport(),
                     new HashSet<>());
-            r.resolve(req);
-            Message message = fM.get();
-            // call write just to exercise that code path
-            message.write();
-            System.out.println(message);
-            return message;
+
+            List<Message> ret = new ArrayList<>();
+            for(Question test : tests) {
+                CompletableFuture<Message> fM = new CompletableFuture<>();
+                Request req = new Request() {
+                    @Override
+                    public Message getMessage() {
+                        Message ret = new Message();
+                        Header h = new Header();
+                        h.setQDCount(1);
+                        h.setRD(true);
+                        ret.getQuestions().add(test);
+                        ret.setHeader(h);
+                        return ret;
+                    }
+
+                    @Override
+                    protected void writeToTransport(Message m) {
+                        fM.complete(m);
+                    }
+
+                    @Override
+                    protected String getRequestProtocolMetricsTag() {
+                        return "test";
+                    }
+
+                    @Override
+                    public boolean transportIsTruncating() {
+                        return false;
+                    }
+                };
+
+
+                r.resolve(req);
+                Message message = fM.get();
+                // call write just to exercise that code path
+                message.write();
+                System.out.println(message);
+                ret.add(message);
+            }
+
+            return ret;
         } finally {
             stateMachinePool.shutdown();
         }
@@ -417,5 +435,19 @@ REFRESH: 1958748768, RETRY: 1071239168, EXPIRE: 921600, MINIMUM: 230400
         RR<?> aRR = first.get();
         Assertions.assertNotEquals(aRR.cast(ARData.class).getRData().getAddress(),
                 Inet4Address.getByName("192.64.147.142"));
+    }
+
+    @Test
+    public void testENT() throws ExecutionException, InterruptedException {
+        Question question = new Question("test.comfydns.com", KnownRRType.A, KnownRRClass.IN);
+        Message resp1, resp2;
+        List<Message> resps = testQueries(question, question);
+        resp1 = resps.get(0);
+        resp2 = resps.get(1);
+
+        Assertions.assertEquals(RCode.NO_ERROR, resp1.getHeader().getRCode());
+        Assertions.assertEquals(0, resp1.getHeader().getANCount());
+        Assertions.assertEquals(RCode.NO_ERROR, resp2.getHeader().getRCode());
+        Assertions.assertEquals(0, resp2.getHeader().getANCount());
     }
 }

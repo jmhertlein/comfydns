@@ -4,9 +4,12 @@ import com.comfydns.resolver.resolver.rfc1035.message.InvalidHeaderException;
 import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
 import com.comfydns.resolver.resolver.rfc1035.message.LabelCache;
 import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException;
+import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
+import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -192,5 +195,19 @@ public class Message {
     public Stream<RR<?>> stream() {
         return Stream.concat(Stream.concat(answerRecords.stream(), authorityRecords.stream()),
                 additionalRecords.stream());
+    }
+
+    public long countNSRecordsInAuthoritySection() {
+        return authorityRecords.stream()
+                .filter(rr -> rr.getRrType() == KnownRRType.NS)
+                .count();
+    }
+
+    public Optional<RR<SOARData>> hasSOAInAuthoritySection(String sName) {
+        return authorityRecords.stream()
+                .filter(rr -> rr.getRrType() == KnownRRType.SOA)
+                .map(rr -> rr.cast(SOARData.class))
+                .filter(soa -> sName.endsWith(soa.getName()))
+                .findFirst();
     }
 }

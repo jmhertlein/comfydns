@@ -2,6 +2,7 @@ package com.comfydns.resolver.resolver.rfc1035.cache;
 
 import com.comfydns.resolver.resolver.butil.PrettyByte;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBNegativeCache;
+import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.UnknownRRType;
@@ -56,7 +57,7 @@ public class DBNegativeCacheIntegrationTest {
         OffsetDateTime now = OffsetDateTime.now();
         DBNegativeCache c = new DBNegativeCache(pool);
         c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN,
-                mkSOA("josh.cafe"), now);
+                RCode.NAME_ERROR, mkSOA("josh.cafe"), now);
     }
 
     @Test
@@ -64,7 +65,7 @@ public class DBNegativeCacheIntegrationTest {
         DBNegativeCache c = new DBNegativeCache(pool);
         OffsetDateTime now = OffsetDateTime.now();
         c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN,
-                mkSOA("josh.cafe"), now);
+                RCode.NAME_ERROR, mkSOA("josh.cafe"), now);
         now = now.plusSeconds(1);
         Assertions.assertTrue(c.cachedNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN, now).isPresent());
     }
@@ -75,7 +76,7 @@ public class DBNegativeCacheIntegrationTest {
         DBNegativeCache c = new DBNegativeCache(pool);
         OffsetDateTime now = OffsetDateTime.now();
         c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", httpsType, KnownRRClass.IN,
-                mkSOA("josh.cafe"), now);
+                RCode.NAME_ERROR, mkSOA("josh.cafe"), now);
         now = now.plusSeconds(1);
 
         Assertions.assertTrue(c.cachedNegative("sirnotappearinginthisfilm.josh.cafe", httpsType, KnownRRClass.IN, now).isPresent());
@@ -86,7 +87,7 @@ public class DBNegativeCacheIntegrationTest {
         DBNegativeCache c = new DBNegativeCache(pool);
         OffsetDateTime now = OffsetDateTime.now();
         c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN,
-                mkSOA("josh.cafe"), now);
+                RCode.NAME_ERROR, mkSOA("josh.cafe"), now);
         now = now.plusSeconds(1);
         c.bustCacheFor(List.of("sirnotappearinginthisfilm.josh.cafe"));
         Assertions.assertFalse(c.cachedNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN, now).isPresent());
@@ -96,7 +97,7 @@ public class DBNegativeCacheIntegrationTest {
     public void testExpiration() throws CacheAccessException {
         DBNegativeCache c = new DBNegativeCache(pool);
         OffsetDateTime now = OffsetDateTime.now();
-        c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN, mkSOA("josh.cafe"), now);
+        c.cacheNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN, RCode.NAME_ERROR, mkSOA("josh.cafe"), now);
         now = now.plusSeconds(61);
         Assertions.assertFalse(c.cachedNegative("sirnotappearinginthisfilm.josh.cafe", KnownRRType.A, KnownRRClass.IN, now).isPresent());
     }
@@ -105,7 +106,7 @@ public class DBNegativeCacheIntegrationTest {
     public void testPrune() throws CacheAccessException, UnknownHostException, SQLException, ExecutionException, InterruptedException {
         OffsetDateTime now = OffsetDateTime.now();
         DBNegativeCache c = new DBNegativeCache(pool);
-        c.cacheNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, mkSOA("josh.cafe"), now);
+        c.cacheNegative("josh.cafe", KnownRRType.A, KnownRRClass.IN, RCode.NAME_ERROR, mkSOA("josh.cafe"), now);
         now = now.plusSeconds(61);
         c.prune(now);
 

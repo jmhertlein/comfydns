@@ -180,21 +180,6 @@ public class SearchContext {
         return m;
     }
 
-    public Message buildAuthoritativeNameErrorResponse(RR<?> soaRecord) {
-        Message m = new Message();
-        Header h = new Header(request.getMessage().getHeader());
-        h.setRCode(RCode.NAME_ERROR);
-        h.setQR(true);
-        h.setRA(true);
-        h.setARCount(0);
-        h.setNSCount(1);
-        h.setANCount(0);
-        m.setHeader(h);
-        m.getQuestions().addAll(request.getMessage().getQuestions());
-        m.getAuthorityRecords().add(soaRecord);
-        return m;
-    }
-
     public void sendOops(String message) {
         Message m = new Message();
         Header h = new Header(request.getMessage().getHeader());
@@ -324,5 +309,24 @@ public class SearchContext {
             throw new RuntimeException("You messed up the header.", e);
         }
         return m;
+    }
+
+    public Message buildNoDataResponse(RR<SOARData> soarDataRR) {
+        Message m = buildResponse();
+
+        m.getHeader().setNSCount(1);
+        m.getAuthorityRecords().add(soarDataRR);
+
+        try {
+            m.validateHeader();
+        } catch (InvalidHeaderException e) {
+            throw new RuntimeException("You messed up the header.", e);
+        }
+
+        return m;
+    }
+
+    public Message buildNoDataResponse() {
+        return buildResponse();
     }
 }

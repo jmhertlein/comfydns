@@ -8,6 +8,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.NSRData;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
+import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
@@ -123,10 +124,10 @@ public class HandleResponseToZoneQuery implements RequestState {
                     break;
                 } else if(m.getHeader().getAA()) {
                     log.debug("[{}] Received authoritative name error.", sCtx.getRequest().getId());
-                    Optional<RR<?>> soaFound = handleNegativeCache(rCtx, sCtx, m);
+                    Optional<RR<SOARData>> soaFound = handleNegativeCache(rCtx, sCtx, m);
                     log.debug("{}Received authoritative name error.", sCtx.getRequestLogPrefix());
                     if(soaFound.isPresent()) {
-                        return Optional.of(new DoubleCheckSendState(sCtx.buildAuthoritativeNameErrorResponse(soaFound.get())));
+                        return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse(soaFound.get())));
                     } else {
                         return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
                     }
@@ -140,70 +141,29 @@ public class HandleResponseToZoneQuery implements RequestState {
 
         }
 
-        if(m.getHeader().getANCount() == 0 && m.getHeader().getNSCount() == 0) {
-            log.debug("Server gave us an empty response, what the heck.");
-            sCtx.getSList().removeServer(serverQueried);
+        Header h = m.getHeader();
+
+        if(h.getANCount() == 0 && m.countNSRecordsInAuthoritySection() == 0) {
+            Optional<RR<SOARData>> soaFound = m.hasSOAInAuthoritySection(sCtx.getSName());
+            if(soaFound.isPresent()) {
+                handleNegativeCache(rCtx, sCtx, m);
+                log.debug("{}Received negative cache instruction (SOA record) + NAME_ERROR", sCtx.getRequestLogPrefix());
+                return Optional.of(new DoubleCheckSendState(sCtx.buildNoDataResponse(soaFound.get())));
+            } else {
+                return Optional.of(new DoubleCheckSendState(sCtx.buildNoDataResponse()));
+            }
+        }
+
+        List<RR<?>> rrs;
+        try {
+            rrs = extractRRsToCache(sCtx, m);
+        } catch (NSDnamesInTheirOwnZoneWithoutGlueRecordsException e) {
+            sCtx.forEachListener(l -> l.remark("Server " + serverQueried + " had NS records that needed glue records but had no glue records. Filtering results and treating request as failed."));
+            serverQueried.incrementFailureCount();
+            sCtx.getQSet().remove(serverQueried.getIp(), m.getQuestions().get(0));
             return Optional.of(new SendServerQuery(false));
         }
 
-        Optional<RR<?>> soaFound = handleNegativeCache(rCtx, sCtx, m);
-        if(soaFound.isPresent()) {
-            log.debug("{}Received negative cache instruction (SOA record) + NAME_ERROR", sCtx.getRequestLogPrefix());
-            return Optional.of(new DoubleCheckSendState(sCtx.buildAuthoritativeNameErrorResponse(soaFound.get())));
-        }
-
-
-        log.debug("[{}]: Processing RRs in response.", sCtx.getRequest().getId());
-        List<RR<?>> rrs = new ArrayList<>();
-        final List<RR<?>> aRecords = new ArrayList<>(), nsRecords = new ArrayList<>();
-
-        // TODO: here, should I only accept records from AN section if the name == my qname?
-
-
-        List<RR<?>> anRecords = new ArrayList<>();
-        m.getAnswerRecords().stream().forEach(rr -> {
-            if(rr.getName().equalsIgnoreCase(sCtx.getSName())) {
-                anRecords.add(rr);
-            } else {
-                sCtx.forEachListener(l -> l.remark("Ignoring an RR because name != sname: " + rr));
-            }
-        });
-
-
-        Stream.concat(
-                Stream.concat(anRecords.stream(), m.getAuthorityRecords().stream()),
-                        m.getAdditionalRecords().stream()
-        )
-        .forEach(rr -> {
-            if(sCtx.getCurrentQuestion().getqClass() == KnownRRClass.IN) {
-                if (rr.getRrType() == KnownRRType.A) {
-                    aRecords.add(rr);
-                } else if(rr.getRrType() == KnownRRType.NS) {
-                    nsRecords.add(rr);
-                } else {
-                    rrs.add(rr);
-                }
-            } else {
-                rrs.add(rr);
-            }
-        });
-
-        List<RR<?>> clampedNSRecords = clampNSDNameTTLsIfTheyreInTheirOwnZone(aRecords, nsRecords);
-
-        rrs.addAll(clampedNSRecords);
-        rrs.addAll(aRecords);
-
-        Set<RR<NSRData>> badRecords = filterNSDNamesInTheirOwnZoneWithoutARecords(aRecords, clampedNSRecords);
-        if(m.getHeader().getANCount() > 0) {
-            rrs.removeAll(badRecords);
-        } else {
-            if(!badRecords.isEmpty()) {
-                sCtx.forEachListener(l -> l.remark("Server " + serverQueried + " had NS records that needed glue records but had no glue records. Filtering results and treating request as failed."));
-                serverQueried.incrementFailureCount();
-                sCtx.getQSet().remove(serverQueried.getIp(), m.getQuestions().get(0));
-                return Optional.of(new SendServerQuery(false));
-            }
-        }
 
         for (RR<?> rr : rrs) {
             if(rr.getTtl() == 0) {
@@ -216,22 +176,19 @@ public class HandleResponseToZoneQuery implements RequestState {
         return Optional.of(new TryToAnswerWithLocalInformation());
     }
 
-    private Optional<RR<?>> handleNegativeCache(ResolverContext rCtx, SearchContext sCtx, Message m) throws CacheAccessException {
+    private Optional<RR<SOARData>> handleNegativeCache(ResolverContext rCtx, SearchContext sCtx, Message m) throws CacheAccessException {
         log.debug("Checking for SOA -> nameerror");
-        Optional<RR<?>> soaFound = m.getAuthorityRecords()
-                .stream()
-                .filter(rr -> rr.getRrType() == KnownRRType.SOA)
-                .filter(soa -> sCtx.getSName().endsWith(soa.getName())).findFirst();
+        Optional<RR<SOARData>> soaFound = m.hasSOAInAuthoritySection(sCtx.getSName());
 
         if(soaFound.isPresent()) {
             Question q = sCtx.getCurrentQuestion();
             rCtx.getNegativeCache().cacheNegative(
                     sCtx.getSName(),
                     q.getqType(), q.getqClass(),
-                    soaFound.get().cast(SOARData.class),
+                    m.getHeader().getRCode(),
+                    soaFound.get(),
                     OffsetDateTime.now()
             );
-            return soaFound;
         }
 
         return soaFound;
@@ -297,8 +254,86 @@ public class HandleResponseToZoneQuery implements RequestState {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     *
+     * @param sCtx
+     * @param m
+     * @return
+     * @throws NSDnamesInTheirOwnZoneWithoutGlueRecordsException if, while exploring the RRs in the response, we discover that we would end up with an inconsistent cache because glue records should've been provided (we'd end up in a loop trying to resolve the nsdnames)
+     */
+    private static List<RR<?>> extractRRsToCache(SearchContext sCtx, Message m) throws NSDnamesInTheirOwnZoneWithoutGlueRecordsException {
+        log.debug("[{}]: Processing RRs in response.", sCtx.getRequest().getId());
+        List<RR<?>> rrs = new ArrayList<>();
+        final List<RR<?>> aRecords = new ArrayList<>(), nsRecords = new ArrayList<>();
+
+        List<RR<?>> anRecords = new ArrayList<>();
+        m.getAnswerRecords().stream().forEach(rr -> {
+            if(rr.getName().equalsIgnoreCase(sCtx.getSName())) {
+                anRecords.add(rr);
+            } else {
+                sCtx.forEachListener(l -> l.remark("Ignoring an RR because name != sname: " + rr));
+            }
+        });
+
+
+        Stream.concat(
+                        Stream.concat(anRecords.stream(), m.getAuthorityRecords().stream()),
+                        m.getAdditionalRecords().stream()
+                )
+                .forEach(rr -> {
+                    if(sCtx.getCurrentQuestion().getqClass() == KnownRRClass.IN) {
+                        if (rr.getRrType() == KnownRRType.A) {
+                            aRecords.add(rr);
+                        } else if(rr.getRrType() == KnownRRType.NS) {
+                            nsRecords.add(rr);
+                        } else {
+                            rrs.add(rr);
+                        }
+                    } else {
+                        rrs.add(rr);
+                    }
+                });
+
+        List<RR<?>> clampedNSRecords = clampNSDNameTTLsIfTheyreInTheirOwnZone(aRecords, nsRecords);
+
+        rrs.addAll(clampedNSRecords);
+        rrs.addAll(aRecords);
+
+        Set<RR<NSRData>> badRecords = filterNSDNamesInTheirOwnZoneWithoutARecords(aRecords, clampedNSRecords);
+        if(m.getHeader().getANCount() > 0) {
+            rrs.removeAll(badRecords);
+        } else {
+            if(!badRecords.isEmpty()) {
+                throw new NSDnamesInTheirOwnZoneWithoutGlueRecordsException();
+            }
+        }
+
+        return rrs;
+    }
+
     @Override
     public RequestStateName getName() {
         return RequestStateName.HANDLE_RESPONSE_TO_ZONE_QUERY;
+    }
+
+    private static class NSDnamesInTheirOwnZoneWithoutGlueRecordsException extends Exception {
+        public NSDnamesInTheirOwnZoneWithoutGlueRecordsException() {
+        }
+
+        public NSDnamesInTheirOwnZoneWithoutGlueRecordsException(String message) {
+            super(message);
+        }
+
+        public NSDnamesInTheirOwnZoneWithoutGlueRecordsException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public NSDnamesInTheirOwnZoneWithoutGlueRecordsException(Throwable cause) {
+            super(cause);
+        }
+
+        public NSDnamesInTheirOwnZoneWithoutGlueRecordsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+            super(message, cause, enableSuppression, writableStackTrace);
+        }
     }
 }
