@@ -32,19 +32,22 @@ public class HandleResponseToZoneQuery implements RequestState {
 
     private final SList.SListServer serverQueried;
     private final Message sent;
+    private final boolean usedQNameMinimization;
     private final byte[] response;
     private final Throwable error;
 
-    public HandleResponseToZoneQuery(SList.SListServer serverQueried, Message sent, byte[] response) {
+    public HandleResponseToZoneQuery(SList.SListServer serverQueried, Message sent, boolean usedQNameMinimization, byte[] response) {
         this.serverQueried = serverQueried;
         this.sent = sent;
+        this.usedQNameMinimization = usedQNameMinimization;
         this.response = response;
         this.error = null;
     }
 
-    public HandleResponseToZoneQuery(SList.SListServer serverQueried, Message sent, Throwable error) {
+    public HandleResponseToZoneQuery(SList.SListServer serverQueried, Message sent, boolean usedQNameMinimization, Throwable error) {
         this.serverQueried = serverQueried;
         this.sent = sent;
+        this.usedQNameMinimization = usedQNameMinimization;
         this.error = error;
         this.response = null;
     }
@@ -64,7 +67,7 @@ public class HandleResponseToZoneQuery implements RequestState {
                         sCtx.getCurrentQuestion()
                 );
             }
-            return Optional.of(new SendServerQuery(false));
+            return Optional.of(new SendServerQuery(false, this.usedQNameMinimization));
         }
 
         if(response == null) {
@@ -80,7 +83,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             serverQueried.incrementFailureCount();
             sCtx.getQSet().remove(serverQueried.getIp(), sent.getQuestions().get(0));
             sCtx.forEachListener(l -> l.onUpstreamQueryResult(serverQueried, Optional.empty(), Optional.of(e)));
-            return Optional.of(new SendServerQuery(false));
+            return Optional.of(new SendServerQuery(false, this.usedQNameMinimization));
         } catch (UnsupportedRRTypeException e) {
             throw new OptionalFeatureNotImplementedException("Encountered an unsupported RRType while reading zone response",
                     e);
@@ -97,7 +100,7 @@ public class HandleResponseToZoneQuery implements RequestState {
         if(m.getHeader().getTC()) {
             log.debug("Response had TC=1, retrying via tcp.");
             sCtx.removeFromQSet(serverQueried.getIp(), m.getQuestions().get(0));
-            return Optional.of(new SendServerQuery(true, sent.getHeader().getId()));
+            return Optional.of(new SendServerQuery(true, usedQNameMinimization, sent.getHeader().getId()));
         }
 
 
@@ -108,12 +111,12 @@ public class HandleResponseToZoneQuery implements RequestState {
             case SERVER_FAILURE:
                 serverQueried.incrementFailureCount();
                 log.debug("[{}]: We got a SERVER_FAILURE back from {}: {}", sCtx.getRequest().getId(), serverQueried.getHostname(), m.toString());
-                return Optional.of(new SendServerQuery(false));
+                return Optional.of(new SendServerQuery(false, usedQNameMinimization));
             case REFUSED:
             case NOT_IMPLEMENTED:
             case FORMAT_ERROR:
                 sCtx.getSList().removeServer(serverQueried);
-                return Optional.of(new SendServerQuery(false));
+                return Optional.of(new SendServerQuery(false, usedQNameMinimization));
             case NAME_ERROR:
                 if(m.getHeader().getANCount() > 0 && m.getAnswerRecords().stream().anyMatch(r -> r.getRrType() == KnownRRType.CNAME)) {
                     /*
@@ -134,7 +137,7 @@ public class HandleResponseToZoneQuery implements RequestState {
                 } else {
                     log.debug("[{}] Received non-authoritative name error.", sCtx.getRequest().getId());
                     sCtx.getSList().removeServer(serverQueried);
-                    return Optional.of(new SendServerQuery(false));
+                    return Optional.of(new SendServerQuery(false, usedQNameMinimization));
                 }
             default:
                 throw new RuntimeException("Unhandled RCODE:" + rCode);
@@ -144,6 +147,12 @@ public class HandleResponseToZoneQuery implements RequestState {
         Header h = m.getHeader();
 
         if(h.getANCount() == 0 && m.countNSRecordsInAuthoritySection() == 0) {
+            if(usedQNameMinimization) {
+                sCtx.forEachListener(l -> l.remark("Tried to use qname minimization, but hit an ENT. Retrying with full question."));
+                sCtx.getQSet().remove(serverQueried.getIp(), m.getQuestions().get(0));
+                return Optional.of(new SendServerQuery(false, false));
+            }
+
             Optional<RR<SOARData>> soaFound = m.hasSOAInAuthoritySection(sCtx.getSName());
             if(soaFound.isPresent()) {
                 handleNegativeCache(rCtx, sCtx, m);
@@ -161,7 +170,7 @@ public class HandleResponseToZoneQuery implements RequestState {
             sCtx.forEachListener(l -> l.remark("Server " + serverQueried + " had NS records that needed glue records but had no glue records. Filtering results and treating request as failed."));
             serverQueried.incrementFailureCount();
             sCtx.getQSet().remove(serverQueried.getIp(), m.getQuestions().get(0));
-            return Optional.of(new SendServerQuery(false));
+            return Optional.of(new SendServerQuery(false, usedQNameMinimization));
         }
 
 
@@ -265,12 +274,14 @@ public class HandleResponseToZoneQuery implements RequestState {
         log.debug("[{}]: Processing RRs in response.", sCtx.getRequest().getId());
         List<RR<?>> rrs = new ArrayList<>();
         final List<RR<?>> aRecords = new ArrayList<>(), nsRecords = new ArrayList<>();
+        Question q = m.getQuestions().get(0);
 
         List<RR<?>> anRecords = new ArrayList<>();
         m.getAnswerRecords().stream().forEach(rr -> {
-            if(rr.getName().equalsIgnoreCase(sCtx.getSName())) {
+            if (rr.getName().equalsIgnoreCase(q.getQName())) {
                 anRecords.add(rr);
             } else {
+                log.debug("Ignoring an RR because name != qname(" + sCtx.getSName() + "): " + rr);
                 sCtx.forEachListener(l -> l.remark("Ignoring an RR because name != sname: " + rr));
             }
         });

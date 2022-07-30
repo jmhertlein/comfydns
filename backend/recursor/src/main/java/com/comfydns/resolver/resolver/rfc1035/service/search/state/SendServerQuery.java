@@ -8,6 +8,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
+import com.comfydns.resolver.resolver.rfc7816.QNameMinimizer;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,15 +32,18 @@ public class SendServerQuery implements RequestState {
             .name("external_requests_sent").help("Requests sent to other DNS servers.").register();
 
     private final boolean useNonTruncating;
+    private final boolean useQNameMinimization;
     private final Integer useId;
 
-    public SendServerQuery(boolean useNonTruncating) {
+    public SendServerQuery(boolean useNonTruncating, boolean useQNameMinimization) {
         this.useNonTruncating = useNonTruncating;
+        this.useQNameMinimization = useQNameMinimization;
         this.useId = null;
     }
 
-    public SendServerQuery(boolean useNonTruncating, Integer useId) {
+    public SendServerQuery(boolean useNonTruncating, boolean useQNameMinimization, Integer useId) {
         this.useNonTruncating = useNonTruncating;
+        this.useQNameMinimization = useQNameMinimization;
         this.useId = useId;
     }
 
@@ -79,12 +83,21 @@ public class SendServerQuery implements RequestState {
         h.setIdRandomly();
         h.setOpCode(OpCode.QUERY);
         m.setHeader(h);
-        m.getQuestions().add(new Question(sCtx.getSName(), q.getqType(), q.getqClass()));
+        if(useQNameMinimization) {
+            m.getQuestions().add(QNameMinimizer.buildMinimizedQNameQuery(sCtx));
+        } else {
+            m.getQuestions().add(new Question(sCtx.getSName(), q.getqType(), q.getqClass()));
+        }
 
         if(sCtx.isInQset(bestServer.getIp(), m.getQuestions().get(0))) {
-            log.debug("[{}]: Refusing to ask the same question twice: {}",
-                    sCtx.getRequest().getId(), m.getQuestions().get(0));
-            throw new NameResolutionException("Refusing to ask the same question twice.");
+            if(useQNameMinimization) {
+                log.debug("We were about to ask the same question twice - retrying without qname minimization.");
+                return Optional.of(new SendServerQuery(useNonTruncating, false));
+            } else {
+                log.debug("[{}]: Refusing to ask the same question twice: {}",
+                        sCtx.getRequest().getId(), m.getQuestions().get(0));
+                throw new NameResolutionException("Refusing to ask the same question twice.");
+            }
         }
 
         Consumer<byte[]> onSuccess = payload -> {
@@ -93,7 +106,7 @@ public class SendServerQuery implements RequestState {
                 t = new RecursiveResolverTask(
                         sCtx,
                         rCtx,
-                        new HandleResponseToZoneQuery(bestServer, m, payload));
+                        new HandleResponseToZoneQuery(bestServer, m, this.useQNameMinimization, payload));
             } catch (StateTransitionCountLimitExceededException e) {
                 t = new RecursiveResolverTask(sCtx, rCtx);
                 t.setImmediateDeathState();
@@ -104,7 +117,7 @@ public class SendServerQuery implements RequestState {
         Consumer<Throwable> onError = e -> {
             RecursiveResolverTask t;
             try {
-                t = new RecursiveResolverTask(sCtx, rCtx, new HandleResponseToZoneQuery(bestServer, m, e));
+                t = new RecursiveResolverTask(sCtx, rCtx, new HandleResponseToZoneQuery(bestServer, m, this.useQNameMinimization, e));
             } catch (StateTransitionCountLimitExceededException e2) {
                 t = new RecursiveResolverTask(sCtx, rCtx);
                 t.setImmediateDeathState();

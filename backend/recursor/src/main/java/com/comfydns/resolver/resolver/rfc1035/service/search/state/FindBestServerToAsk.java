@@ -75,7 +75,7 @@ public class FindBestServerToAsk implements RequestState {
             }
         }
 
-        return Optional.of(new SendServerQuery(false));
+        return Optional.of(new SendServerQuery(false, true));
     }
 
     @Override

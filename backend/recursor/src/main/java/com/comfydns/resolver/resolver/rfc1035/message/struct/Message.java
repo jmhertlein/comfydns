@@ -146,7 +146,7 @@ public class Message {
         StringBuilder b = new StringBuilder();
         b.append(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
         b.append(header.toString()).append("\n");
-        b.append("===========================================================\n");
+        b.append("=======================QUESTIONS====================================\n");
         for (Question q : questions) {
             b.append(q).append("\n");
         }
