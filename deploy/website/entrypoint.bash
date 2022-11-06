@@ -15,7 +15,7 @@ set -x
 
 bundle exec rails db:create db:migrate
 
-test -e /app/website/nginxmnt && rm -r /app/website/nginxmnt/*
+test -e /app/website/nginxmnt && rm -rf /app/website/nginxmnt/*
 mkdir -p /app/website/nginxmnt
 cp -r /app/website/public/* /app/website/nginxmnt
 
