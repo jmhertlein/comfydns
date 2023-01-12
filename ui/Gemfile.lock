@@ -239,6 +239,7 @@ DEPENDENCIES
   devise
   jbuilder (~> 2.7)
   listen (~> 3.2)
+  mini_portile2 (~> 2.8)
   pg (>= 0.18, < 2.0)
   puma (~> 4.1)
   rails (~> 6.1.4, >= 6.1.4)

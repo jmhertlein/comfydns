@@ -13,17 +13,12 @@ RUN mkdir -p /build /app /app/ui /build/backend /build/backend/recursor /build/b
 COPY ./deploy/inabox/pg_hba.conf /etc/postgresql/12/main/pg_hba.conf
 RUN service postgresql start && su postgres -c 'createuser -w -s comfydns' && service postgresql stop
 
-# early resolve of dependencies for better build caching
-COPY ./ui/Gemfile* /app/ui/
-COPY ./ui/bin /app/ui/bin
+# ui is slower, do it first
+COPY ./ui /app/ui
 WORKDIR /app/ui
 RUN gem install bundler
 ENV RAILS_ENV production
 RUN ./bin/bundle install --without development test
-
-# ui is slower, do it first
-COPY ./ui /app/ui
-WORKDIR /app/ui
 RUN ln /usr/bin/yarnpkg /usr/bin/yarn
 ENV RAILS_SERVE_STATIC_FILES true
 ENV SECRET_KEY_BASE placeholder
