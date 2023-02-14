@@ -13,4 +13,4 @@ else
     echo "$SECRET_KEY_BASE" > /opt/comfydns/rails_secret.txt
 fi
 
-bin/rails db
+bin/bundle exec rails db

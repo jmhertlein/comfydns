@@ -10,7 +10,7 @@ RUN apt update && apt install -y rbenv ruby ruby-dev build-essential patch zlib1
 RUN mkdir -p /build /app /app/website 
 
 # setup db
-COPY ./deploy/website/pg_hba.conf /etc/postgresql/12/main/pg_hba.conf
+COPY ./deploy/website/pg_hba.conf /etc/postgresql/14/main/pg_hba.conf
 RUN service postgresql start && su postgres -c 'createuser -w -s comfydns' && service postgresql stop
 
 COPY ./website /app/website
