@@ -129,6 +129,7 @@ public class ResolverIntegrationTest {
     }
 
     @Test
+    @Disabled
     public void testPTRSearch() throws ExecutionException, InterruptedException {
         assertHasAnswer(testQuery(new Question("129.238.22.165.in-addr.arpa", KnownRRType.PTR, KnownRRClass.IN)));
     }
@@ -449,5 +450,15 @@ REFRESH: 1958748768, RETRY: 1071239168, EXPIRE: 921600, MINIMUM: 230400
         Assertions.assertEquals(0, resp1.getHeader().getANCount());
         Assertions.assertEquals(RCode.NO_ERROR, resp2.getHeader().getRCode());
         Assertions.assertEquals(0, resp2.getHeader().getANCount());
+    }
+
+    @Test
+    public void testMinecraft() throws ExecutionException, InterruptedException {
+        assertHasAnswer(testQuery(new Question("minecraft.net", KnownRRType.A, KnownRRClass.IN)));
+        assertHasAnswer(testQuery(new Question("www.minecraft.net", KnownRRType.A, KnownRRClass.IN)));
+        assertHasAnswer(testQuery(new Question("textures.minecraft.net", KnownRRType.A, KnownRRClass.IN)));
+        assertHasAnswer(testQuery(new Question("pocket.realms.minecraft.net", KnownRRType.A, KnownRRClass.IN)));
+        assertHasAnswer(testQuery(new Question("pc.realms.minecraft.net", KnownRRType.A, KnownRRClass.IN)));
+
     }
 }

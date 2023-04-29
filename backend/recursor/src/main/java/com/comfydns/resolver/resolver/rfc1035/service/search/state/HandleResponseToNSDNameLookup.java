@@ -45,9 +45,9 @@ public class HandleResponseToNSDNameLookup implements RequestState {
         m.forEach(records::add);
         for (RR<?> rr : records) {
             if(rr.getTtl() == 0) {
-                sCtx.getRequestCache().cache(rr, OffsetDateTime.now());
+                sCtx.getRequestCache().cache(rr, OffsetDateTime.now(), sCtx);
             } else {
-                rCtx.getGlobalCache().cache(rr, OffsetDateTime.now());
+                rCtx.getGlobalCache().cache(rr, OffsetDateTime.now(), sCtx);
             }
             if(KnownRRType.A.queryMatches(rr.getRrType().getValue())) {
                 serversWithAnswerRecords.add(rr.getName());

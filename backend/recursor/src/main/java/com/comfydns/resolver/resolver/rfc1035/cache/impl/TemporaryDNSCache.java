@@ -7,6 +7,7 @@ import com.comfydns.resolver.resolver.rfc1035.cache.RRContainer;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
+import com.comfydns.resolver.resolver.rfc1035.service.search.SearchContext;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -37,7 +38,7 @@ public class TemporaryDNSCache implements RRContainer {
     }
 
     @Override
-    public void cache(RR<?> record, OffsetDateTime now) throws CacheAccessException {
+    public void cache(RR<?> record, OffsetDateTime now, SearchContext sCtx) throws CacheAccessException {
         Map<RR2Tuple, List<CachedRR<?>>> records = cache.computeIfAbsent(record.getName(), k -> new HashMap<>());
         List<CachedRR<?>> cachedRRS = records.computeIfAbsent(record.getClassAndType(),
                 k -> new ArrayList<>());

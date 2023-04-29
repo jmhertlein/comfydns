@@ -10,6 +10,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.query.QOnlyType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
+import com.comfydns.resolver.resolver.rfc1035.service.search.SearchContext;
 import com.comfydns.util.db.SimpleConnectionPool;
 import com.google.gson.Gson;
 import io.prometheus.client.Gauge;
@@ -97,10 +98,12 @@ public class DBDNSCache implements RRCache {
     }
 
     @Override
-    public void cache(RR<?> record, OffsetDateTime now) throws CacheAccessException {
-        Histogram.Timer t = CacheMetrics.cacheWriteTimeSeconds.startTimer();
-        try(Connection c = pool.getConnection().get();
-            PreparedStatement ps = c.prepareStatement("insert into cached_rr (id, name, rrtype, rrclass, ttl, rdata, created_at, expires_at) values (DEFAULT, ?, ?, ?, ?, ?::jsonb, ?, ?) on conflict on constraint cached_rr_name_rrtype_rrclass_rdata_key do update set ttl=excluded.ttl, created_at=excluded.created_at, expires_at=excluded.expires_at")) {
+    public void cache(RR<?> record, OffsetDateTime now, SearchContext sCtx) throws CacheAccessException {
+        try(
+            Histogram.Timer ignored = CacheMetrics.cacheWriteTimeSeconds.startTimer();
+            Connection c = pool.getConnection().get();
+            PreparedStatement ps = c.prepareStatement("insert into cached_rr (id, name, rrtype, rrclass, ttl, rdata, created_at, expires_at, original_qname, original_query_id) values (DEFAULT, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?) on conflict on constraint cached_rr_name_rrtype_rrclass_rdata_key do update set ttl=excluded.ttl, created_at=excluded.created_at, expires_at=excluded.expires_at, original_qname=excluded.original_qname, original_query_id=excluded.original_query_id")
+        ) {
             ps.setString(1, record.getName());
             ps.setInt(2, record.getRrType().getIntValue());
             ps.setInt(3, record.getRrClass().getIntValue());
@@ -108,13 +111,13 @@ public class DBDNSCache implements RRCache {
             ps.setString(5, gson.get().toJson(record.getRData().writeJson()));
             ps.setObject(6, now);
             ps.setObject(7, now.plusSeconds(record.getTtl()));
+            ps.setString(8, sCtx == null ? null : sCtx.getCurrentQuestion().getQName());
+            ps.setObject(9, sCtx == null ? null : sCtx.getRequest().getId());
             int rows = ps.executeUpdate();
             log.debug("Inserted {} rows", rows);
             CacheMetrics.recordCache(record);
         } catch (SQLException | InterruptedException | ExecutionException throwables) {
             throw new CacheAccessException(throwables);
-        } finally {
-            t.observeDuration();
         }
     }
 

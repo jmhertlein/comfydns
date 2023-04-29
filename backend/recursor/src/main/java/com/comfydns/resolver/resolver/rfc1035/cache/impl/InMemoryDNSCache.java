@@ -7,6 +7,7 @@ import com.comfydns.resolver.resolver.rfc1035.cache.RRCache;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
+import com.comfydns.resolver.resolver.rfc1035.service.search.SearchContext;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 
@@ -74,7 +75,7 @@ public class InMemoryDNSCache implements RRCache {
     }
 
     @Override
-    public void cache(RR<?> record, OffsetDateTime now) throws CacheAccessException {
+    public void cache(RR<?> record, OffsetDateTime now, SearchContext sCtx) throws CacheAccessException {
         Histogram.Timer t = CacheMetrics.cacheWriteTimeSeconds.startTimer();
         this.lock.writeLock().lock();
         try {

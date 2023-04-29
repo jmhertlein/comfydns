@@ -13,6 +13,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.BlobRData;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.WKSRData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
+import com.comfydns.resolver.resolver.rfc1035.service.search.SearchContext;
 import com.comfydns.util.db.SimpleConnectionPool;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.*;
@@ -56,8 +57,7 @@ public class DBIntegrationTest {
     public void testCache() throws UnknownHostException, CacheAccessException {
         DBDNSCache c = new DBDNSCache(pool);
         OffsetDateTime now = OffsetDateTime.now();
-        c.cache(new RR<>("josh.cafe", KnownRRType.A, KnownRRClass.IN, 60, new ARData((Inet4Address) Inet4Address.getByName("192.168.1.2"))),
-                now);
+        c.cache(new RR<>("josh.cafe", KnownRRType.A, KnownRRClass.IN, 60, new ARData((Inet4Address) Inet4Address.getByName("192.168.1.2"))), now);
     }
 
     @Test

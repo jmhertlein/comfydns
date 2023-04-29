@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_07_28_015504) do
+ActiveRecord::Schema.define(version: 2023_04_29_154544) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -78,6 +78,8 @@ ActiveRecord::Schema.define(version: 2022_07_28_015504) do
     t.jsonb "rdata"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "expires_at", precision: 6, null: false
+    t.string "original_qname"
+    t.uuid "original_query_id"
     t.index ["name", "rrtype", "rrclass", "rdata"], name: "cached_rr_name_rrtype_rrclass_rdata_key", unique: true
     t.index ["name"], name: "cached_rr_name_idx"
   end
