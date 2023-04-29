@@ -34,6 +34,8 @@
     <th>Original TTL</th>
     <th>Expires At</th>
     <th>Data</th>
+    <th>Original QName</th>
+    <th>Original Query ID</th>
     <th>Action</th>
   </thead>
   <tbody>
@@ -45,6 +47,9 @@
       <td><%= rr.ttl %></td>
       <td><%= rr.expires_at %></td>
       <td><%= rr.rdata %></td>
+      <td><%= rr.original_qname %></td>
+      <td><%= rr.original_query_id %></td>
+      
       <td>
         <%= form_with(url: "/cache/positive/#{rr.id}", method: :delete) do |form| %>
           <%= form.hidden_field :search_name, value: @name %>
