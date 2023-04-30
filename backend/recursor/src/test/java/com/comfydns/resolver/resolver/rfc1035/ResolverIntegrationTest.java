@@ -2,6 +2,8 @@ package com.comfydns.resolver.resolver.rfc1035;
 
 import com.comfydns.resolver.resolver.butil.PrettyByte;
 import com.comfydns.resolver.resolver.internet.DNSRootZone;
+import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
+import com.comfydns.resolver.resolver.rfc1035.cache.RRCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryAuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryNegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryDNSCache;
@@ -13,6 +15,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.UnknownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.ARData;
+import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.NSRData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
@@ -22,17 +25,20 @@ import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.AsyncNonTruncatingTransport;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.AsyncTruncatingTransport;
 import com.comfydns.resolver.resolver.trace.*;
+import com.comfydns.resolver.util.DName;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
 import java.net.*;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class ResolverIntegrationTest {
     @BeforeAll
@@ -231,11 +237,19 @@ public class ResolverIntegrationTest {
         return testQueries(test).get(0);
     }
 
+    private static Message testQuery(Question test, RRCache cache) throws ExecutionException, InterruptedException {
+        return testQueries(cache, test).get(0);
+    }
+
     private static List<Message> testQueries(Question ... tests) throws ExecutionException, InterruptedException {
+        return testQueries(new InMemoryDNSCache(), tests);
+    }
+
+    private static List<Message> testQueries(RRCache cache, Question ... tests) throws ExecutionException, InterruptedException {
         ExecutorService stateMachinePool = Executors.newCachedThreadPool();
         try {
             RecursiveResolver r = new RecursiveResolver(
-                    stateMachinePool, new InMemoryDNSCache(),
+                    stateMachinePool, cache,
                     new InMemoryAuthorityRRSource(),
                     new InMemoryNegativeCache(), new AsyncTruncatingTransport(),
                     new AsyncNonTruncatingTransport(),
@@ -453,12 +467,34 @@ REFRESH: 1958748768, RETRY: 1071239168, EXPIRE: 921600, MINIMUM: 230400
     }
 
     @Test
-    public void testMinecraft() throws ExecutionException, InterruptedException {
-        assertHasAnswer(testQuery(new Question("minecraft.net", KnownRRType.A, KnownRRClass.IN)));
-        assertHasAnswer(testQuery(new Question("www.minecraft.net", KnownRRType.A, KnownRRClass.IN)));
-        assertHasAnswer(testQuery(new Question("textures.minecraft.net", KnownRRType.A, KnownRRClass.IN)));
-        assertHasAnswer(testQuery(new Question("pocket.realms.minecraft.net", KnownRRType.A, KnownRRClass.IN)));
-        assertHasAnswer(testQuery(new Question("pc.realms.minecraft.net", KnownRRType.A, KnownRRClass.IN)));
+    public void testMinecraft() throws ExecutionException, InterruptedException, CacheAccessException {
+
+        RRCache cache = new InMemoryDNSCache();
+        // example query
+        // https://gist.github.com/jmhertlein/a92d2df5d5fccc8a6a07992455b32761
+
+        // when you query for p.r.m.c, you get initially told to ask azure DNS servers for m.n, but then
+        // the azure servers tell you to ask AWS for r.m.n, and then while asking them,
+        // you get a CNAME *and* NS records, where the NS records are telling you to ask AWS dns for
+        // m.n, which does not server A records for www.m.n and m.n. So it breaks your cache.
+        assertHasAnswer(testQuery(
+                new Question("pocket.realms.minecraft.net", KnownRRType.A, KnownRRClass.IN),
+                cache
+        ));
+
+        List<RR<?>> results = cache.search("minecraft.net", KnownRRType.NS, KnownRRClass.IN, OffsetDateTime.now());
+        Set<String> uniqueDNameDomains = results.stream().map(rr -> rr.cast(NSRData.class))
+                .map(rr -> rr.getRData().getNsDName())
+                .map(dname -> {
+                    String[] split = dname.split("\\.");
+                    return split[split.length-2];
+                })
+                .collect(Collectors.toSet());
+
+        // alternate idea: only accept nsdname records for 1-dot names from the gtld servers
+
+        Assertions.assertEquals(1, uniqueDNameDomains.size());
+        Assertions.assertEquals("azure-dns", uniqueDNameDomains.stream().findFirst().get());
 
     }
 }

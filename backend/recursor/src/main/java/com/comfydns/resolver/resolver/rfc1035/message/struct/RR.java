@@ -190,6 +190,10 @@ public class RR<T extends RData> implements Writeable {
         return new RR<>(name, rrType, rrClass, ttl, rDataObject);
     }
 
+    public RR<T> zeroTTL() {
+        return new RR<>(name, rrType, rrClass, 0, rData);
+    }
+
     public static class ReadRR<T extends RData> {
         public final RR<T> read;
         public final int length;

@@ -275,24 +275,33 @@ public class HandleResponseToZoneQuery implements RequestState {
             }
         });
 
+        boolean hasCname = anRecords.stream().anyMatch(rr -> rr.getRrType().equals(KnownRRType.CNAME));
 
-        Stream.concat(
-                        Stream.concat(anRecords.stream(), m.getAuthorityRecords().stream()),
-                        m.getAdditionalRecords().stream()
-                )
-                .forEach(rr -> {
-                    if(sCtx.getCurrentQuestion().getqClass() == KnownRRClass.IN) {
-                        if (rr.getRrType() == KnownRRType.A) {
-                            aRecords.add(rr);
-                        } else if(rr.getRrType() == KnownRRType.NS) {
-                            nsRecords.add(rr);
-                        } else {
-                            rrs.add(rr);
-                        }
+        Stream<RR<?>> nonAnRecords = Stream.concat(m.getAuthorityRecords().stream(), m.getAdditionalRecords().stream());
+
+        if(hasCname) {
+            // if we get a cname, zero the ttl for any other records to instruct us not to cache them
+            // beyond use in the current query.
+            // this is a heuristic to help fix minecraft.net, see
+            // ResolverIntegrationTest::testMinecraft() for more information.
+
+            nonAnRecords = nonAnRecords.map(RR::zeroTTL);
+        }
+
+        Stream.concat(anRecords.stream(), nonAnRecords)
+            .forEach(rr -> {
+                if(sCtx.getCurrentQuestion().getqClass() == KnownRRClass.IN) {
+                    if (rr.getRrType() == KnownRRType.A) {
+                        aRecords.add(rr);
+                    } else if(rr.getRrType() == KnownRRType.NS) {
+                        nsRecords.add(rr);
                     } else {
                         rrs.add(rr);
                     }
-                });
+                } else {
+                    rrs.add(rr);
+                }
+            });
 
         List<RR<?>> clampedNSRecords = clampNSDNameTTLsIfTheyreInTheirOwnZone(aRecords, nsRecords);
 
