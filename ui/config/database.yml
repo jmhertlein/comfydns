@@ -10,14 +10,14 @@ default: &default
 
 development:
   <<: *default
-  database: plextools_dev
+  database: comfydns_dev
 
 test:
   <<: *default
-  database: plextools_test
+  database: comfydns_test
 
 production:
   <<: *default
-  database: <%= ENV.fetch("CDNS_DB_NAME", "plextools") %>
+  database: <%= ENV.fetch("CDNS_DB_NAME", "comfydns") %>
   password: <%= ENV.fetch("CDNS_DB_PW", "") %>
 
