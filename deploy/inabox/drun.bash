@@ -1,8 +1,8 @@
 #!/bin/bash
 
-set -e
+set -ex
 
-yes | docker container prune 
+docker container prune --force
 docker build . -t comfydns:dev -f ./deploy/inabox/Dockerfile
 docker run -it --name comfydns \
 -v comfydns-data:/opt/comfydns/ \

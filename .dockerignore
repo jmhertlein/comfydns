@@ -1,0 +1,16 @@
+.git
+.gitignore
+.idea/
+*.iml
+/ui/vendor
+/website/vendor
+/ui/node_modules
+/website/node_modules
+
+/ui/public/assets
+/ui/public/packs
+/website/public/assets
+/website/public/packs
+
+/backend/recursor/target
+/log-processor/recursor/target
