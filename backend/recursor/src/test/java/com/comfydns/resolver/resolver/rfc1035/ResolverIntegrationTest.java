@@ -16,6 +16,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.UnknownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.ARData;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.NSRData;
+import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.TXTRData;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
@@ -495,6 +496,18 @@ REFRESH: 1958748768, RETRY: 1071239168, EXPIRE: 921600, MINIMUM: 230400
 
         Assertions.assertEquals(1, uniqueDNameDomains.size());
         Assertions.assertEquals("azure-dns", uniqueDNameDomains.stream().findFirst().get());
+    }
 
+    @Test
+    public void testIcloudMailQueries() throws ExecutionException, InterruptedException {
+        assertHasAnswer(testQuery(new Question("200608._domainkey.email.schwab.com", KnownRRType.TXT, KnownRRClass.IN)));
+        // k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDGoQCNwAQdJBy23MrShs1EuHqK/dtDC33QrTqgWd9CJmtM3CK2ZiTYugkhcxnkEtGbzg+IJqcDRNkZHyoRezTf6QbinBB2dbyANEuwKI5DVRBFowQOj9zvM3IvxAEboMlb0szUjAoML94HOkKuGuCkdZ1gbVEi3GcVwrIQphal1QIDAQAB
+    }
+
+    @Test
+    public void testTXT() throws ExecutionException, InterruptedException {
+        Message result = testQuery(new Question("txt.test.comfydns.com", KnownRRType.TXT, KnownRRClass.IN));
+        assertHasAnswer(result);
+        Assertions.assertEquals("hello, world!_-", result.getAnswerRecords().get(0).cast(TXTRData.class).getRData().getText());
     }
 }

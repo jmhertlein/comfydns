@@ -1,5 +1,6 @@
 package com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata;
 
+import com.comfydns.resolver.resolver.butil.PrettyByte;
 import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
 import com.comfydns.resolver.resolver.rfc1035.message.LabelCache;
 import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException;
@@ -14,10 +15,12 @@ public class TXTRData implements RData {
     private final String text;
 
     public TXTRData(String text) {
-        if(text.length() > 255) {
-            throw new IllegalArgumentException("Illegal length of text. Must be < 255 8-bit characters.");
-        }
         this.text = text;
+        for(char c : text.toCharArray()) {
+            if(c > 255) {
+                throw new IllegalArgumentException("Non-ascii character is illegal: " + c);
+            }
+        }
     }
 
     public TXTRData(JsonObject o) {
@@ -41,16 +44,32 @@ public class TXTRData implements RData {
     }
 
     @Override
-    public byte[] write(LabelCache c, int index) {
-        byte[] ret = new byte[text.length()+1];
-        ret[0] = (byte) text.length();
-        int pos = 1;
-        for(char ch : text.toCharArray()) {
-            if(ch > 255) {
-                throw new IllegalArgumentException("Non-ascii character is illegal: " + ch);
+    public byte[] write(LabelCache ignore, int index) {
+        int charStrings = text.length()/255;
+        if(text.length() % 255 > 0) {
+            charStrings++;
+        }
+
+        int outputLen = text.length() + charStrings;
+        byte[] ret = new byte[outputLen];
+
+        int pos = 0;
+        String remaining = text;
+        while(pos < ret.length) {
+            String curSlice;
+            if(remaining.length() > 255) {
+                curSlice = remaining.substring(0, 255);
+                remaining = curSlice.substring(255);
+            } else {
+                curSlice = remaining;
             }
-            ret[pos] = (byte) ch;
+
+            ret[pos] = (byte) curSlice.length();
             pos++;
+            for(char c : curSlice.toCharArray()) {
+                ret[pos] = (byte) c;
+                pos++;
+            }
         }
 
         return ret;
@@ -74,10 +93,16 @@ public class TXTRData implements RData {
         return text;
     }
 
-    public static RData read(byte[] content, int pos, int rdlength) throws InvalidMessageException, UnsupportedRRTypeException {
+    public static TXTRData read(byte[] content, final int pos, int rdlength) throws InvalidMessageException, UnsupportedRRTypeException {
         StringBuilder b = new StringBuilder();
-        for(int i = pos; i < pos + rdlength; i++) {
-            b.appendCodePoint(content[i]);
+        int cur = pos;
+        while(cur < (pos+rdlength)) {
+            int len = Byte.toUnsignedInt(content[cur]);
+            cur++;
+            for(int i = cur; i < cur + len && i < pos+rdlength; i++) {
+                b.append((char) content[i]);
+            }
+            cur += len;
         }
 
         return new TXTRData(b.toString());
