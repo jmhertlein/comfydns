@@ -17,7 +17,7 @@ FROM ruby:3.2-slim
 ENV TZ America/Chicago
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt update && apt install -y openjdk-11-jre-headless curl sudo gnupg
+RUN apt update && apt install -y openjdk-17-jre-headless curl sudo gnupg
 
 # postgres
 RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
