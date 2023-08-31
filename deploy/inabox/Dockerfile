@@ -20,7 +20,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt update && apt install -y openjdk-17-jre-headless curl sudo gnupg
 
 # postgres
-RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt bullseye-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
     sh -c 'curl "https://www.postgresql.org/media/keys/ACCC4CF8.asc" | apt-key add -' && \
     apt update && apt install -y postgresql-12 && rm -rf /var/lib/postgresql
 RUN mkdir -p /opt/comfydns/pg && mkdir -p /opt/comfydns/pgetc && ln -s /opt/comfydns/pg/ /var/lib/postgresql
