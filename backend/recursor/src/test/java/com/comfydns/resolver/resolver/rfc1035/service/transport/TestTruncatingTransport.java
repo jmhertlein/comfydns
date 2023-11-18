@@ -3,6 +3,7 @@ package com.comfydns.resolver.resolver.rfc1035.service.transport;
 import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
 import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.async.TruncatingTransport;
 
 import java.net.InetAddress;
 import java.util.Map;

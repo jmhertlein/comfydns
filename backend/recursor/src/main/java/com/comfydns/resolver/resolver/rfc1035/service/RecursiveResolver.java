@@ -8,17 +8,15 @@ import com.comfydns.resolver.resolver.rfc1035.cache.RRCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryAuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryDNSCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.InMemoryNegativeCache;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
 import com.comfydns.resolver.resolver.rfc1035.service.search.ResolverContext;
 import com.comfydns.resolver.resolver.rfc1035.service.search.SearchContext;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.NonTruncatingTransport;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.TruncatingTransport;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.async.NonTruncatingTransport;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.async.TruncatingTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 

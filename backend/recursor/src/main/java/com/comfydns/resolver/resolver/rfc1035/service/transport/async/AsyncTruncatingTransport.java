@@ -1,5 +1,6 @@
-package com.comfydns.resolver.resolver.rfc1035.service.transport;
+package com.comfydns.resolver.resolver.rfc1035.service.transport.async;
 
+import com.comfydns.resolver.resolver.rfc1035.service.transport.TimeoutException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

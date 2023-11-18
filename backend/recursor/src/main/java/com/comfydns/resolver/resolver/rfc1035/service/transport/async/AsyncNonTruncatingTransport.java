@@ -1,4 +1,4 @@
-package com.comfydns.resolver.resolver.rfc1035.service.transport;
+package com.comfydns.resolver.resolver.rfc1035.service.transport.async;
 
 import com.comfydns.resolver.resolver.butil.PrettyByte;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;

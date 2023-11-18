@@ -4,8 +4,8 @@ import com.comfydns.resolver.resolver.block.DomainBlocker;
 import com.comfydns.resolver.resolver.rfc1035.cache.AuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.NegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.NonTruncatingTransport;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.TruncatingTransport;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.async.NonTruncatingTransport;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.async.TruncatingTransport;
 import com.comfydns.resolver.resolver.rfc1035.cache.RRCache;
 
 import java.util.concurrent.ExecutorService;
