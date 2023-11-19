@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class FindBestServerToAsk implements RequestState {
     private final Logger log = LoggerFactory.getLogger(FindBestServerToAsk.class);
     @Override
-    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, StateTransitionCountLimitExceededException {
+    public RequestState run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, StateTransitionCountLimitExceededException {
         Question q = sCtx.getCurrentQuestion();
         List<String> domains = LabelCache.genSuffixes(sCtx.getSName());
         List<RR<?>> search = null;
@@ -36,7 +36,7 @@ public class FindBestServerToAsk implements RequestState {
              */
             if(rCtx.getAuthorityZones().isAuthoritativeFor(d)) {
                 log.debug("{}We're authoritative for {}, returning NAME_ERROR for {}", sCtx.getRequestLogPrefix(), d, sCtx.getSName());
-                return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
+                return new ResponseReadyState(sCtx.buildNameErrorResponse());
             }
 
             search = sCtx.getOverlay().search(d, KnownRRType.NS, q.getqClass(), OffsetDateTime.now());
@@ -73,7 +73,7 @@ public class FindBestServerToAsk implements RequestState {
             }
         }
 
-        return Optional.of(new SendServerQuery(false));
+        return new SendServerQuery(false);
     }
 
     @Override

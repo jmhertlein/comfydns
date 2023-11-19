@@ -4,6 +4,8 @@ import com.comfydns.resolver.resolver.block.DomainBlocker;
 import com.comfydns.resolver.resolver.rfc1035.cache.AuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.NegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.NonTruncatingSyncTransport;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.TruncatingSyncTransport;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.async.NonTruncatingTransport;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.async.TruncatingTransport;
 import com.comfydns.resolver.resolver.rfc1035.cache.RRCache;
@@ -14,8 +16,8 @@ public class ResolverContext {
     private final RecursiveResolver recursiveResolver;
     private final RRCache globalCache;
     private final ExecutorService pool;
-    private final TruncatingTransport primary;
-    private final NonTruncatingTransport fallback;
+    private final TruncatingSyncTransport primary;
+    private final NonTruncatingSyncTransport fallback;
     private final AuthorityRRSource authorityZones;
     private final NegativeCache negativeCache;
     private final DomainBlocker domainBlocker;
@@ -23,8 +25,8 @@ public class ResolverContext {
     public ResolverContext(RecursiveResolver recursiveResolver,
                            RRCache globalCache,
                            ExecutorService pool,
-                           TruncatingTransport primary,
-                           NonTruncatingTransport fallback,
+                           TruncatingSyncTransport primary,
+                           NonTruncatingSyncTransport fallback,
                            AuthorityRRSource authorityZones, NegativeCache negativeCache,
                            DomainBlocker domainBlocker) {
         this.recursiveResolver = recursiveResolver;
@@ -49,11 +51,11 @@ public class ResolverContext {
         return pool;
     }
 
-    public TruncatingTransport getPrimary() {
+    public TruncatingSyncTransport getPrimary() {
         return primary;
     }
 
-    public NonTruncatingTransport getFallback() {
+    public NonTruncatingSyncTransport getFallback() {
         return fallback;
     }
 

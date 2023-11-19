@@ -13,7 +13,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
+import com.comfydns.resolver.resolver.rfc1035.service.request.LiveRequest;
 import com.comfydns.resolver.resolver.rfc1035.service.request.RequestListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,7 @@ public class SearchContext {
     private static final Logger log = LoggerFactory.getLogger(SearchContext.class);
     public static final int STATE_TRANSITION_COUNT_LIMIT = 128;
     public static final int SUB_QUERY_COUNT_LIMIT = 100;
-    private final Request request;
+    private final LiveRequest request;
     private final AtomicInteger questionIndex;
     private final List<RR<?>> answer, authority, additional;
     private Boolean answerAuthoritative;
@@ -44,7 +44,7 @@ public class SearchContext {
 
     private final String requestLogPrefix;
 
-    public SearchContext(Request req, RRSource globalCache, QSet parentQSet) {
+    public SearchContext(LiveRequest req, RRSource globalCache, QSet parentQSet) {
         this.request = req;
         this.questionIndex = new AtomicInteger(0);
         this.answer = new ArrayList<>();
@@ -103,7 +103,7 @@ public class SearchContext {
         return sList;
     }
 
-    public Request getRequest() {
+    public LiveRequest getRequest() {
         return request;
     }
 
@@ -180,7 +180,7 @@ public class SearchContext {
         return m;
     }
 
-    public void sendOops(String message) {
+    public Message prepareOops(String message) {
         Message m = new Message();
         Header h = new Header(request.getMessage().getHeader());
         h.setRCode(RCode.SERVER_FAILURE);
@@ -201,7 +201,7 @@ public class SearchContext {
                 )
         );
         request.forEachListener(l -> l.onResponse(m));
-        request.answer(m);
+        return m;
     }
 
     public void setsName(String sName) {
@@ -212,7 +212,7 @@ public class SearchContext {
         return sName;
     }
 
-    public void sendNotImplemented() {
+    public Message prepareNotImplemented() {
         Message m = new Message();
         Header h = new Header(request.getMessage().getHeader());
         h.setRCode(RCode.NOT_IMPLEMENTED);
@@ -221,7 +221,7 @@ public class SearchContext {
         m.setHeader(h);
         m.getQuestions().addAll(request.getMessage().getQuestions());
         request.forEachListener(l -> l.onResponse(m));
-        request.answer(m);
+        return m;
     }
 
     public QSet getQSet() {
@@ -236,7 +236,7 @@ public class SearchContext {
         return requestLogPrefix;
     }
 
-    public void sendRefusedResponse(String reason) {
+    public Message prepareRefusedResponse(String reason) {
         Message m = new Message();
         Header h = new Header(request.getMessage().getHeader());
         h.setRCode(RCode.REFUSED);
@@ -255,10 +255,10 @@ public class SearchContext {
                 )
         );
         request.forEachListener(l -> l.onResponse(m));
-        request.answer(m);
+        return m;
     }
 
-    public void sendFormatErrorResponse(String reason) {
+    public Message prepareFormatErrorResponse(String reason) {
         Message m = new Message();
         Header h = new Header(request.getMessage().getHeader());
         h.setRCode(RCode.FORMAT_ERROR);
@@ -277,7 +277,7 @@ public class SearchContext {
                 )
         );
         request.forEachListener(l -> l.onResponse(m));
-        request.answer(m);
+        return m;
     }
 
     public void incrementStateTransitionCount() throws StateTransitionCountLimitExceededException {

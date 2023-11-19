@@ -16,19 +16,17 @@ import java.util.stream.Collectors;
 public class ZoneTransferState implements RequestState {
     private static final Logger log = LoggerFactory.getLogger(ZoneTransferState.class);
     @Override
-    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
+    public RequestState run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
         log.info("AXFR starting.");
         if(!rCtx.getRecursiveResolver().getAllowZoneTransferToAddresses()
             .contains(sCtx.getRequest().getRemoteAddress().get())) {
-            sCtx.sendRefusedResponse("Zone transfer refused.");
             log.info("Zone transfer refused from {}", sCtx.getRequest().getRemoteAddress().orElse(InetAddress.getLoopbackAddress()));
-            return Optional.empty();
+            return new ResponseReadyState(sCtx.prepareRefusedResponse("Zone transfer refused."));
         }
 
         if(sCtx.getRequest().transportIsTruncating()) {
-            sCtx.sendRefusedResponse("Please only do AXFR's over TCP.");
             log.info("Refused to AXFR over UDP.");
-            return Optional.empty();
+            return new ResponseReadyState(sCtx.prepareRefusedResponse("Please only do AXFR's over TCP."));
         }
 
         List<RR<SOARData>> soas = rCtx.getAuthorityZones().getSOAs().stream().filter(soa -> soa.getName().equals(sCtx.getSName()))
@@ -47,7 +45,7 @@ public class ZoneTransferState implements RequestState {
         Message resp = sCtx.buildResponse();
         log.info("ZONE TRANSFER RESPONSE:\n{}", resp);
         log.info("{}Zone transfer complete.", sCtx.getRequestLogPrefix());
-        return Optional.of(new SendResponseState(resp));
+        return new ResponseReadyState(resp);
     }
 
     @Override

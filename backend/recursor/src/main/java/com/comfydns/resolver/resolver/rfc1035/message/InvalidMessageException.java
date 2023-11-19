@@ -1,5 +1,9 @@
 package com.comfydns.resolver.resolver.rfc1035.message;
 
+/**
+ * Indicates a message was so malformed that no useful information
+ * could be extracted from it.
+ */
 public class InvalidMessageException extends Exception {
     public InvalidMessageException() {
     }

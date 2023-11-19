@@ -7,6 +7,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
+import com.comfydns.resolver.resolver.rfc1035.message.struct.MessageReadingException;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import okhttp3.*;
 
@@ -14,7 +15,7 @@ import java.io.IOException;
 import java.util.Base64;
 
 public class DOHClient {
-    public static void main(String ... args) throws IOException, InvalidMessageException, UnsupportedRRTypeException {
+    public static void main(String ... args) throws IOException, InvalidMessageException, UnsupportedRRTypeException, MessageReadingException {
         OkHttpClient client = new OkHttpClient();
         Message m = new Message();
         m.setHeader(new Header());

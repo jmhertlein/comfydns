@@ -6,16 +6,13 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.request.InternalRequest;
-import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
+import com.comfydns.resolver.resolver.rfc1035.service.request.LiveRequest;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SendNSDNameLookup implements RequestState {
@@ -28,7 +25,7 @@ public class SendNSDNameLookup implements RequestState {
     }
 
     @Override
-    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException {
+    public RequestState run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException {
         sCtx.incrementSubQueriesMade();
         if(sCtx.getSubQueriesMade() > SearchContext.SUB_QUERY_COUNT_LIMIT) {
             log.debug("[{}] Reached max subquery count while trying to answer {}",
@@ -44,7 +41,7 @@ public class SendNSDNameLookup implements RequestState {
         m.getHeader().setIdRandomly();
 
         // first check to see if we're going to loop...
-        Request tmp = sCtx.getRequest();
+        LiveRequest tmp = sCtx.getRequest();
         while(tmp.isSubquery()) {
             tmp = ((InternalRequest) tmp).getParent();
             for(Question q : questions) {
@@ -58,18 +55,7 @@ public class SendNSDNameLookup implements RequestState {
         log.debug("[{}]: Trying to answer |{}|, sending internal request: \n{}",
                 sCtx.getRequest().getId(), sCtx.getCurrentQuestion(), m);
 
-        Consumer<Message> onAnswer = message -> {
-            RecursiveResolverTask t;
-            try {
-                t = new RecursiveResolverTask(sCtx, rCtx, new HandleResponseToNSDNameLookup(message, servers));
-            } catch (StateTransitionCountLimitExceededException e) {
-                t = new RecursiveResolverTask(sCtx, rCtx);
-                t.setImmediateDeathState();
-            }
-            rCtx.getPool().submit(t);
-        };
-
-        InternalRequest req = new InternalRequest(m, onAnswer, sCtx.getRequest(), sCtx.getQSet());
+        InternalRequest req = new InternalRequest(m, sCtx.getRequest(), sCtx.getQSet());
         if(req.getSubqueryDepth() > MAX_SUBQUERY_DEPTH) {
             log.debug("[{}] Query hit max subquery depth while trying to answer: {}",
                     sCtx.getRequest().getId(), sCtx.getCurrentQuestion());
@@ -77,8 +63,8 @@ public class SendNSDNameLookup implements RequestState {
         }
 
         sCtx.forEachListener(l -> l.onSubquerySent(m));
-        rCtx.getRecursiveResolver().resolve(req);
-        return Optional.empty();
+        Message response = rCtx.getRecursiveResolver().resolve(() -> req);
+        return new HandleResponseToNSDNameLookup(response, servers);
     }
 
     @Override

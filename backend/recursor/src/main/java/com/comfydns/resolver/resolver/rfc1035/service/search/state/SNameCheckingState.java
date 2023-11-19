@@ -17,18 +17,17 @@ public class SNameCheckingState implements RequestState {
                     .register();
 
     @Override
-    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
+    public RequestState run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
         Optional<InetAddress> remoteAddress = sCtx.getRequest().getRemoteAddress();
         if(remoteAddress.isPresent() && rCtx.getDomainBlocker().blockForClient(remoteAddress.get())) {
             if(rCtx.getDomainBlocker().isBlocked(sCtx.getSName())) {
                 log.debug("{}Blocked question for {} from {}", sCtx.getRequestLogPrefix(), sCtx.getCurrentQuestion(), sCtx.getRequest().getRemoteAddress());
                 blockedDomainsUsed.inc();
-                DoubleCheckResultState.doubleCheckResults.labels("skipped").inc();
-                return Optional.of(new SendResponseState(sCtx.buildNameErrorResponse()));
+                return new ResponseReadyState(sCtx.buildNameErrorResponse());
             }
         }
 
-        return Optional.of(new TryToAnswerWithLocalInformation());
+        return new TryToAnswerWithLocalInformation();
     }
 
     @Override

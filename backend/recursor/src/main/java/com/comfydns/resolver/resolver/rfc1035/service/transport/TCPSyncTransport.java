@@ -11,13 +11,15 @@ public class TCPSyncTransport implements NonTruncatingSyncTransport {
 
     @Override
     public byte[] send(byte[] payload, InetAddress dest) throws Exception {
-        try (Socket socket = new Socket(dest, DNS_TCP_PORT);
-        InputStream is = socket.getInputStream()) {
+        try (
+                Socket socket = new Socket(dest, DNS_TCP_PORT);
+                InputStream is = socket.getInputStream()
+        ) {
+            socket.setSoTimeout(1000);
             byte[] lenBytes = is.readNBytes(2);
             int msgLen = (int) PrettyByte.readNBitUnsignedInt(16, lenBytes, 0, 0);
-            byte[] body = is.readNBytes(msgLen);
 
-            return body;
+            return is.readNBytes(msgLen);
         }
     }
 }

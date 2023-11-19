@@ -40,7 +40,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             .register();
 
     @Override
-    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, StateTransitionCountLimitExceededException {
+    public RequestState run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, StateTransitionCountLimitExceededException {
         Question q = sCtx.getCurrentQuestion();
 
         Optional<CachedNegative> cachedNegative = rCtx.getNegativeCache().cachedNegative(sCtx.getSName(), q.getqType(), q.getqClass(), OffsetDateTime.now());
@@ -50,7 +50,7 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             sCtx.forEachListener(l -> l.onNegativeCacheUse(sCtx.getSName(), q.getqType(), q.getqClass()));
             Message ret = sCtx.buildNameErrorResponse(cachedNegative.get().getSoaRR());
             ret.getHeader().setRCode(cachedNegative.get().getRCode());
-            return Optional.of(new DoubleCheckSendState(ret));
+            return new ResponseReadyState(ret);
         }
 
         List<RRSource> sources = new ArrayList<>();
@@ -67,9 +67,9 @@ public class TryToAnswerWithLocalInformation implements RequestState {
                 if(sCtx.allQuestionsAnswered()) {
                     completedRequestStateTransitionCount.labels("no_error").observe(sCtx.getStateTransitionCount());
                     completedRequestSubQueryCount.labels("no_error").observe(sCtx.getSubQueriesMade());
-                    return Optional.of(new DoubleCheckSendState(sCtx.buildResponse()));
+                    return new ResponseReadyState(sCtx.buildResponse());
                 } else {
-                    return Optional.of(new SNameCheckingState());
+                    return new SNameCheckingState();
                 }
             }
 
@@ -81,16 +81,15 @@ public class TryToAnswerWithLocalInformation implements RequestState {
                 sCtx.setsName(((CNameRData) cnameSearch.get(0).getRData()).getDomainName());
                 sCtx.forEachListener(l -> l.onAnswerAdded(cnameSearch.get(0)));
                 sCtx.forEachListener(l -> l.onSNameChange(oldSName, sCtx.getSName()));
-                return Optional.of(new SNameCheckingState());
+                return new SNameCheckingState();
             }
         }
 
         if(sCtx.getRequest().getMessage().getHeader().getRD()) {
-            return Optional.of(new FindBestServerToAsk());
+            return new FindBestServerToAsk();
         } else {
             log.debug("{}No local answer found and client did not request recursion.", sCtx.getRequestLogPrefix());
-            DoubleCheckResultState.doubleCheckResults.labels("skipped").inc();
-            return Optional.of(new SendResponseState(sCtx.buildNameErrorResponse()));
+            return new ResponseReadyState(sCtx.buildNameErrorResponse());
         }
     }
 

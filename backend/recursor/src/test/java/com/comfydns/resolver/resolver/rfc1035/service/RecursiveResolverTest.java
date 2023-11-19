@@ -12,7 +12,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
+import com.comfydns.resolver.resolver.rfc1035.service.request.LiveRequest;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.TestTruncatingTransport;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -75,7 +75,7 @@ public class RecursiveResolverTest {
         responses.put(InetAddress.getByName("192.168.1.24"), ns1GoogleDomainsResponse);
 
         CompletableFuture<Message> fM = new CompletableFuture<>();
-        Request req = new Request() {
+        LiveRequest req = new LiveRequest() {
             @Override
             public Message getMessage() {
                 Message ret = new Message();

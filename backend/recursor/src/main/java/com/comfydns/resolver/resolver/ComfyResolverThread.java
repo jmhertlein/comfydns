@@ -10,15 +10,12 @@ import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBAuthorityRRSource;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBDNSCache;
 import com.comfydns.resolver.resolver.rfc1035.cache.impl.DBNegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.async.AsyncNonTruncatingTransport;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.async.AsyncTruncatingTransport;
-import com.comfydns.resolver.resolver.system.HTTPServer;
-import com.comfydns.resolver.resolver.system.TCPServer;
-import com.comfydns.resolver.resolver.system.UDPServer;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.TCPSyncTransport;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.UDPSyncTransport;
+import com.comfydns.resolver.resolver.system.JavaNetUDPServer;
 import com.comfydns.util.config.EnvConfig;
 import com.comfydns.util.db.Flag;
 import com.comfydns.util.db.SimpleConnectionPool;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.prometheus.client.hotspot.GarbageCollectorExports;
 import io.prometheus.client.hotspot.MemoryPoolsExports;
 import org.slf4j.Logger;
@@ -40,26 +37,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ComfyResolverThread implements Runnable {
     final Logger log = LoggerFactory.getLogger(this.getClass());
-    private final NioEventLoopGroup bossGroup;
-    private final NioEventLoopGroup workerGroup;
-
+    private final ExecutorService appsPool, workerPool;
     private final ScheduledExecutorService cron;
     private final SimpleConnectionPool dbPool;
     private final AtomicBoolean ready;
-    private final ExecutorService stateMachinePool;
     private final RecursiveResolver resolver;
 
     public ComfyResolverThread(
-            NioEventLoopGroup workerGroup, NioEventLoopGroup bossGroup,
+            ExecutorService appsPool, ExecutorService workerPool,
             ScheduledExecutorService cron,
-            ExecutorService stateMachinePool,
             SimpleConnectionPool dbPool) throws SQLException, ExecutionException, InterruptedException {
-        this.bossGroup = bossGroup;
-        this.workerGroup = workerGroup;
+        this.appsPool = appsPool;
+        this.workerPool = workerPool;
         this.cron = cron;
         this.dbPool = dbPool;
         this.ready = new AtomicBoolean(false);
-        this.stateMachinePool = stateMachinePool;
 
         new MemoryPoolsExports().register();
         new GarbageCollectorExports().register();
@@ -109,12 +101,11 @@ public class ComfyResolverThread implements Runnable {
         }
 
         resolver = new RecursiveResolver(
-                stateMachinePool,
                 cache,
                 authorityRecords,
                 negativeCache,
-                new AsyncTruncatingTransport(workerGroup),
-                new AsyncNonTruncatingTransport(workerGroup),
+                new UDPSyncTransport(),
+                new TCPSyncTransport(),
                 allowZoneTransferToAddresses);
 
         resolver.setDomainBlocker(domainBlocker);
@@ -143,39 +134,25 @@ public class ComfyResolverThread implements Runnable {
             }
         }
 
-        try {
-            TCPServer tcp = new TCPServer(resolver, bossGroup, workerGroup);
-            UDPServer udp = new UDPServer(resolver, bossGroup);
-            HTTPServer http;
-            if(EnvConfig.getDOHEnabled()) {
-                log.info("Started DOH HTTP server.");
-                http = new HTTPServer(resolver, bossGroup, workerGroup);
-            } else {
-                log.debug("Not starting DOH HTTP server.");
-                http = null;
-            }
-            ready.set(true);
-            log.info("Resolver ready.");
-            tcp.waitFor();
-            udp.waitFor();
-            if(EnvConfig.getDOHEnabled()) {
-                http.waitFor();
-            }
-        } catch (InterruptedException e) {
-            log.error("Interrupted.", e);
-        } finally {
-            try { bossGroup.shutdownGracefully().sync(); } catch (InterruptedException ignore) {}
-            try { workerGroup.shutdownGracefully().sync(); } catch (InterruptedException ignore) {}
-            this.cron.shutdown();
-        }
-    }
+        appsPool.submit(new JavaNetUDPServer(resolver, workerPool));
+//            TCPServer tcp = new TCPServer(resolver, bossGroup, workerGroup);
+//            UDPServer udp = new UDPServer(resolver, bossGroup);
+//            HTTPServer http;
+//            if(EnvConfig.getDOHEnabled()) {
+//                log.info("Started DOH HTTP server.");
+//                http = new HTTPServer(resolver, bossGroup, workerGroup);
+//            } else {
+//                log.debug("Not starting DOH HTTP server.");
+//                http = null;
+//            }
+        ready.set(true);
+        log.info("Resolver ready.");
+//            tcp.waitFor();
+//            udp.waitFor();
+//            if(EnvConfig.getDOHEnabled()) {
+//                http.waitFor();
+//            }
 
-
-    public void stop() {
-        log.warn("stop() called. This probably shouldn't happen in prod.");
-
-
-        this.cron.shutdown();
     }
 
     public boolean isReady() {

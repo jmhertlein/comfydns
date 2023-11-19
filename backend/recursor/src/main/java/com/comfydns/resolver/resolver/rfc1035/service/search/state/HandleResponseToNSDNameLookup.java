@@ -26,7 +26,7 @@ public class HandleResponseToNSDNameLookup implements RequestState {
     }
 
     @Override
-    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
+    public RequestState run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
         sCtx.forEachListener(l -> l.onSubqueryResult(m));
         if(m.getHeader().getRCode() != RCode.NO_ERROR) {
             log.debug("A IN record search for " + serversInQuestion.stream().map(SList.SListServer::getHostname).collect(Collectors.joining(",")) +
@@ -65,7 +65,7 @@ public class HandleResponseToNSDNameLookup implements RequestState {
             }
         }
 
-        return Optional.of(new FindBestServerToAsk());
+        return new FindBestServerToAsk();
     }
 
     @Override

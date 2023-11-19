@@ -6,7 +6,6 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolverTask;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
@@ -14,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -44,11 +42,11 @@ public class SendServerQuery implements RequestState {
     }
 
     @Override
-    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
+    public RequestState run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException {
         Optional<SList.SListServer> best = sCtx.getSList().getBestServer();
         if(best.isEmpty()) {
             log.debug("{}While looking to send a query for zone {}, we couldn't find any healthy servers to service the request. Question was: {}", sCtx.getRequestLogPrefix(), sCtx.getSList().getZone(), sCtx.getCurrentQuestion());
-            return Optional.of(new DoubleCheckSendState(sCtx.buildNameErrorResponse()));
+            return new ResponseReadyState(sCtx.buildNameErrorResponse());
         }
         SList.SListServer bestServer = best.get();
         if(bestServer.getIp() == null) {
@@ -67,7 +65,7 @@ public class SendServerQuery implements RequestState {
                 rCtx.getGlobalCache().expunge(removals);
                 throw new NameResolutionException("We almost went into infinite recursion. Try again later.");
             }
-            return Optional.of(new SendNSDNameLookup(sCtx.getSList().getServers()));
+            return new SendNSDNameLookup(sCtx.getSList().getServers());
         }
 
         Question q = sCtx.getCurrentQuestion();
@@ -87,44 +85,25 @@ public class SendServerQuery implements RequestState {
             throw new NameResolutionException("Refusing to ask the same question twice.");
         }
 
-        Consumer<byte[]> onSuccess = payload -> {
-            RecursiveResolverTask t;
-            try {
-                t = new RecursiveResolverTask(
-                        sCtx,
-                        rCtx,
-                        new HandleResponseToZoneQuery(bestServer, m, payload));
-            } catch (StateTransitionCountLimitExceededException e) {
-                t = new RecursiveResolverTask(sCtx, rCtx);
-                t.setImmediateDeathState();
-            }
-            rCtx.getPool().submit(t);
-        };
-
-        Consumer<Throwable> onError = e -> {
-            RecursiveResolverTask t;
-            try {
-                t = new RecursiveResolverTask(sCtx, rCtx, new HandleResponseToZoneQuery(bestServer, m, e));
-            } catch (StateTransitionCountLimitExceededException e2) {
-                t = new RecursiveResolverTask(sCtx, rCtx);
-                t.setImmediateDeathState();
-            }
-            rCtx.getPool().submit(t);
-        };
-
         log.debug("[{}]: QUERY: {} ({})", sCtx.getRequest().getId(), bestServer.getHostname(), bestServer.getIp());
         sCtx.addToQSet(bestServer.getIp(), m.getQuestions().get(0));
         sCtx.forEachListener(l -> l.onUpstreamQuerySent(m, bestServer));
         externalQueriesSent.inc();
-        if(useNonTruncating) {
-            if(useId != null) {
-                m.getHeader().setId(useId);
+
+        byte[] payload;
+        try {
+            if (useNonTruncating) {
+                if (useId != null) {
+                    m.getHeader().setId(useId);
+                }
+                payload = rCtx.getFallback().send(m.write(), bestServer.getIp());
+            } else {
+                payload = rCtx.getPrimary().send(m.write(), bestServer.getIp());
             }
-            rCtx.getFallback().send(m.write(), bestServer.getIp(), onSuccess, onError);
-        } else {
-            rCtx.getPrimary().send(m.write(), bestServer.getIp(), onSuccess, onError);
+        } catch(Exception e) {
+            return new HandleResponseToZoneQuery(bestServer, m, e);
         }
-        return Optional.empty();
+        return new HandleResponseToZoneQuery(bestServer, m, payload);
     }
 
     @Override

@@ -22,7 +22,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
-import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
+import com.comfydns.resolver.resolver.rfc1035.service.request.LiveRequest;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.async.AsyncNonTruncatingTransport;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.async.AsyncTruncatingTransport;
 import com.comfydns.resolver.resolver.trace.*;
@@ -258,7 +258,7 @@ public class ResolverIntegrationTest {
             List<Message> ret = new ArrayList<>();
             for(Question test : tests) {
                 CompletableFuture<Message> fM = new CompletableFuture<>();
-                Request req = new Request() {
+                LiveRequest req = new LiveRequest() {
                     @Override
                     public Message getMessage() {
                         Message ret = new Message();

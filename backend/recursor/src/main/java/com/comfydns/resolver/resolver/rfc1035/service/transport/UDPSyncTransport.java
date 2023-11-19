@@ -1,5 +1,6 @@
 package com.comfydns.resolver.resolver.rfc1035.service.transport;
 
+import com.comfydns.resolver.resolver.rfc1035.DNS;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,15 +18,14 @@ public class UDPSyncTransport implements TruncatingSyncTransport {
 
     private static final Logger log = LoggerFactory.getLogger(UDPSyncTransport.class);
     private static final int DNS_UDP_PORT = 53;
-    private static final int DNS_MAX_UDP_DATAGRAM_LENGTH = 512;
 
     @Override
     public byte[] send(byte[] payload, InetAddress dest) throws Exception {
         try(DatagramSocket socket = new DatagramSocket()) {
             socket.send(new DatagramPacket(payload, payload.length, dest, DNS_UDP_PORT));
             socket.setSoTimeout(1000);
-            DatagramPacket p = new DatagramPacket(new byte[DNS_MAX_UDP_DATAGRAM_LENGTH],
-                    DNS_MAX_UDP_DATAGRAM_LENGTH);
+            DatagramPacket p = new DatagramPacket(new byte[DNS.MAX_UDP_DATAGRAM_LENGTH],
+                    DNS.MAX_UDP_DATAGRAM_LENGTH);
             try {
                 socket.receive(p);
             } catch(SocketTimeoutException ste) {

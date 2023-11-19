@@ -5,17 +5,15 @@ import com.comfydns.resolver.resolver.rfc1035.service.search.QSet;
 
 import java.util.function.Consumer;
 
-public class InternalRequest extends Request {
+public class InternalRequest extends LiveRequest {
     private final Message request;
-    private final Consumer<Message> onAnswer;
-    private final Request parent;
+    private final LiveRequest parent;
     private final int subqueryDepth;
     private final QSet parentQSet;
 
-    public InternalRequest(Message request, Consumer<Message> onAnswer, Request parent,
+    public InternalRequest(Message request, LiveRequest parent,
                            QSet parentQSet) {
         this.request = request;
-        this.onAnswer = onAnswer;
         this.parent = parent;
         subqueryDepth = parent.getSubqueryDepth() + 1;
 
@@ -25,11 +23,6 @@ public class InternalRequest extends Request {
     @Override
     public Message getMessage() {
         return request;
-    }
-
-    @Override
-    protected void writeToTransport(Message m) {
-        onAnswer.accept(m);
     }
 
     @Override
@@ -52,7 +45,7 @@ public class InternalRequest extends Request {
         return parentQSet;
     }
 
-    public Request getParent() {
+    public LiveRequest getParent() {
         return parent;
     }
 

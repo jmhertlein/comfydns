@@ -1,12 +1,11 @@
 package com.comfydns.resolver.resolver.trace;
 
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
-import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
-import com.comfydns.resolver.resolver.rfc1035.service.search.QSet;
+import com.comfydns.resolver.resolver.rfc1035.service.request.LiveRequest;
 
 import java.util.function.Consumer;
 
-public class TracingInternalRequest extends Request {
+public class TracingInternalRequest extends LiveRequest {
     private final Message request;
     private Consumer<Message> onAnswer;
     private final Tracer tracer;

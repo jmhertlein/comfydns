@@ -4,6 +4,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.InvalidHeaderException;
 import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
 import com.comfydns.resolver.resolver.rfc1035.message.LabelCache;
 import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException;
+import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.SOARData;
 
@@ -93,7 +94,7 @@ public class Message {
         return ret;
     }
 
-    public static Message read(byte[] bytes) throws InvalidMessageException, UnsupportedRRTypeException {
+    public static Message read(byte[] bytes) throws InvalidMessageException, MessageReadingException {
         if(bytes.length < Header.FIXED_LENGTH_OCTETS) {
             throw new InvalidMessageException("Message too short to have valid header. Must be " + Header.FIXED_LENGTH_OCTETS + " octets but only found " + bytes.length);
         }
@@ -113,22 +114,26 @@ public class Message {
         }
 
         List<RR<?>> answers = new ArrayList<>(), authorities = new ArrayList<>(), additional = new ArrayList<>();
-        for(int i = 0; i < h.getANCount(); i++) {
-            RR.ReadRR<?> readRR = RR.read(bytes, pos);
-            answers.add(readRR.read);
-            pos += readRR.length;
-        }
+        try {
+            for (int i = 0; i < h.getANCount(); i++) {
+                RR.ReadRR<?> readRR = RR.read(bytes, pos);
+                answers.add(readRR.read);
+                pos += readRR.length;
+            }
 
-        for(int i = 0; i < h.getNSCount(); i++) {
-            RR.ReadRR<?> readRR = RR.read(bytes, pos);
-            authorities.add(readRR.read);
-            pos += readRR.length;
-        }
+            for (int i = 0; i < h.getNSCount(); i++) {
+                RR.ReadRR<?> readRR = RR.read(bytes, pos);
+                authorities.add(readRR.read);
+                pos += readRR.length;
+            }
 
-        for(int i = 0; i < h.getARCount(); i++) {
-            RR.ReadRR<?> readRR = RR.read(bytes, pos);
-            additional.add(readRR.read);
-            pos += readRR.length;
+            for (int i = 0; i < h.getARCount(); i++) {
+                RR.ReadRR<?> readRR = RR.read(bytes, pos);
+                additional.add(readRR.read);
+                pos += readRR.length;
+            }
+        } catch (UnsupportedRRTypeException e) {
+            throw new MessageReadingException(e, h, questions, RCode.NOT_IMPLEMENTED);
         }
 
         Message m = new Message();
@@ -209,5 +214,15 @@ public class Message {
                 .map(rr -> rr.cast(SOARData.class))
                 .filter(soa -> sName.endsWith(soa.getName()))
                 .findFirst();
+    }
+
+    public static Message invalidMessageResponse() {
+        Message m = new Message();
+        Header h = new Header();
+        m.setHeader(h);
+        h.setIdRandomly();
+        h.setQR(true);
+        h.setRCode(RCode.FORMAT_ERROR);
+        return m;
     }
 }

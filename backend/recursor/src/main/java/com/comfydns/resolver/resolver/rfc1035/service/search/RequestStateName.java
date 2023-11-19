@@ -14,5 +14,6 @@ public enum RequestStateName {
     DOUBLE_CHECK_RESULT_STATE,
     SEND_RESPONSE_STATE,
     ZONE_TRANSFER_STATE,
+    RESPONSE_READY_STATE,
     ;
 }

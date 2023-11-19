@@ -6,7 +6,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.query.QOnlyType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
-import com.comfydns.resolver.resolver.rfc1035.service.request.Request;
+import com.comfydns.resolver.resolver.rfc1035.service.request.LiveRequest;
 import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
@@ -21,9 +21,9 @@ public class InitialCheckingState implements RequestState {
             .name("dns_questions").help("DNS Questions received.")
             .labelNames("rrtype", "source").register();
     @Override
-    public Optional<RequestState> run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
-        Request r = sCtx.getRequest();
-        r.recordStart();
+    public RequestState run(ResolverContext rCtx, SearchContext sCtx) throws CacheAccessException, NameResolutionException, StateTransitionCountLimitExceededException, OptionalFeatureNotImplementedException {
+        LiveRequest r = sCtx.getRequest();
+        r.initialize();
         if(!r.isSubquery()) {
             Optional<InetAddress> rAddr = r.getRemoteAddress();
             for (Question q : r.getMessage().getQuestions()) {
@@ -46,14 +46,13 @@ public class InitialCheckingState implements RequestState {
                 throw new OptionalFeatureNotImplementedException("Multi-question where one question is AXFR is not supported.");
             }
 
-            return Optional.of(new ZoneTransferState());
+            return new ZoneTransferState();
         }
 
         if(sCtx.getRequest().getMessage().getQuestions().stream().anyMatch(q -> q.getQName().isBlank())) {
-            sCtx.sendFormatErrorResponse("QNAME must not be empty.");
-            return Optional.empty();
+            return new ResponseReadyState(sCtx.prepareFormatErrorResponse("QNAME must not be empty."));
         }
-        return Optional.of(new SNameCheckingState());
+        return new SNameCheckingState();
     }
 
     @Override

@@ -2,13 +2,12 @@ package com.comfydns.resolver;
 
 import com.comfydns.resolver.resolver.ComfyResolverThread;
 import com.comfydns.resolver.task.ScheduledRefreshRunnable;
+import com.comfydns.resolver.task.TaskDispatcher;
 import com.comfydns.resolver.task.UsageReportTask;
 import com.comfydns.util.config.EnvConfig;
 import com.comfydns.util.config.IdFile;
 import com.comfydns.util.db.CommonDatabaseUtils;
 import com.comfydns.util.db.SimpleConnectionPool;
-import com.comfydns.resolver.task.TaskDispatcher;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.exporter.HTTPServer;
 import org.slf4j.Logger;
@@ -26,10 +25,6 @@ public class ComfyNameDaemon {
         IdFile installIdFile = new IdFile(EnvConfig.getPersistentRootPath().resolve("install_id.txt"));
         UUID installId = installIdFile.readOrGenerateAndRead();
 
-        NioEventLoopGroup bossGroup, workerGroup;
-        bossGroup = new NioEventLoopGroup();
-        workerGroup = new NioEventLoopGroup();
-        ExecutorService stateMachinePool = getInstrumentedDaemonPool("state_machine");
         ExecutorService taskPool = getInstrumentedDaemonPool("bgtask");
 
         ScheduledExecutorService cron = Executors.newScheduledThreadPool(2);
@@ -44,8 +39,9 @@ public class ComfyNameDaemon {
         }
 
         ExecutorService apps = Executors.newCachedThreadPool();
+        ExecutorService workerPool = Executors.newVirtualThreadPerTaskExecutor();
 
-        ComfyResolverThread d = new ComfyResolverThread(workerGroup, bossGroup, cron, stateMachinePool, dbPool);
+        ComfyResolverThread d = new ComfyResolverThread(apps, workerPool, cron, dbPool);
         apps.submit(d);
 
         Thread.sleep(50);
@@ -78,9 +74,9 @@ public class ComfyNameDaemon {
         HTTPServer server = new HTTPServer(EnvConfig.getMetricsServerPort()); // this is the prometheus /metrics server... it takes care of itself
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            // todo graceful drain shutdown
             apps.shutdownNow();
             cron.shutdownNow();
-            stateMachinePool.shutdownNow();
         }));
         log.info("[Startup] Startup complete!");
     }
