@@ -13,7 +13,6 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.request.LiveRequest;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.TestTruncatingTransport;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +73,6 @@ public class RecursiveResolverTest {
         );
         responses.put(InetAddress.getByName("192.168.1.24"), ns1GoogleDomainsResponse);
 
-        CompletableFuture<Message> fM = new CompletableFuture<>();
         LiveRequest req = new LiveRequest() {
             @Override
             public Message getMessage() {
@@ -85,11 +83,6 @@ public class RecursiveResolverTest {
                 ret.getQuestions().add(new Question("status.stripe.com", KnownRRType.A, KnownRRClass.IN));
                 ret.setHeader(h);
                 return ret;
-            }
-
-            @Override
-            protected void writeToTransport(Message m) {
-                fM.complete(m);
             }
 
             @Override
@@ -111,8 +104,7 @@ public class RecursiveResolverTest {
                     new InMemoryNegativeCache(), new TestTruncatingTransport(responses),
                     null,
                     new HashSet<>());
-            r.resolve(req);
-            Message message = fM.get();
+            Message message = r.resolve(() -> req);
             Assertions.assertEquals(1, message.getHeader().getANCount());
             Assertions.assertEquals("192.168.1.100",
                     ((ARData) message.getAnswerRecords().get(0).getRData())

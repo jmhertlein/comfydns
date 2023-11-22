@@ -32,15 +32,21 @@ public class TaskRunner implements Runnable {
 
     @Override
     public void run() {
+        Throwable error = null;
+        try {
+            log.info("Started running task {}", t.getDefinition().getId());
+            t.run(new TaskContext(resolver, dbPool));
+            log.info("Finished running task {}", t.getDefinition().getId());
+        } catch (Throwable t) {
+            error = t;
+        }
+
         try(Connection c = dbPool.getConnection().get()) {
-            try {
-                log.info("Started running task {}", t.getDefinition().getId());
-                t.run(new TaskContext(resolver, dbPool, c));
-                log.info("Finished running task {}", t.getDefinition().getId());
+            if(error == null) {
                 updateTask(c, true);
-            } catch (Throwable t) {
+            } else {
                 taskErrors.inc();
-                log.error("Error in task " + this.t.getDefinition().getId(), t);
+                log.error("Error in task " + this.t.getDefinition().getId(), error);
                 updateTask(c, false);
             }
         } catch (SQLException | InterruptedException | ExecutionException throwables) {

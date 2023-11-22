@@ -15,6 +15,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
 public class RefreshBlockListsTask implements Task {
@@ -75,41 +76,42 @@ public class RefreshBlockListsTask implements Task {
     }
 
     @Override
-    public void run(TaskContext ctx) throws SQLException, MalformedURLException {
+    public void run(TaskContext ctx) throws SQLException, MalformedURLException, ExecutionException, InterruptedException {
         OffsetDateTime now = OffsetDateTime.now();
-        Connection c = ctx.getConnection();
 
         UUID listId = UUID.fromString(def.getArgs().get("block_list_id").getAsString());
 
         log.debug("Starting manual block list refresh.");
 
-        BlockList list;
-        try (PreparedStatement ps = c.prepareStatement(
-                "select bl.id, bl.name, bl.url, bl.list_type, bl.auto_update, bl.update_frequency " +
-                        "from block_list bl " +
-                        "where id=?")
-        ) {
-            ps.setObject(1, listId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    log.error("No such block list with id={}", listId);
-                    throw new RuntimeException("No such block list id: " + listId);
+        try(Connection c = ctx.getDbPool().getConnection().get()) {
+            BlockList list;
+            try (PreparedStatement ps = c.prepareStatement(
+                    "select bl.id, bl.name, bl.url, bl.list_type, bl.auto_update, bl.update_frequency " +
+                            "from block_list bl " +
+                            "where id=?")
+            ) {
+                ps.setObject(1, listId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        log.error("No such block list with id={}", listId);
+                        throw new RuntimeException("No such block list id: " + listId);
+                    }
+                    list = new BlockList(rs);
                 }
-                list = new BlockList(rs);
             }
+
+            c.setAutoCommit(false);
+            try {
+                updateBlockList(now, c, list);
+            } catch (IOException | SQLException e) {
+                log.error(String.format("Error updating blocklist %s:%s", list.getId(), list.getName()), e);
+                throw new RuntimeException(String.format("Error updating blocklist %s:%s", list.getId(), list.getName()));
+            }
+
+
+            c.commit();
+            log.info("Finished manual block list refresh.");
         }
-
-        c.setAutoCommit(false);
-        try {
-            updateBlockList(now, c, list);
-        } catch (IOException | SQLException e) {
-            log.error(String.format("Error updating blocklist %s:%s", list.getId(), list.getName()), e);
-            throw new RuntimeException(String.format("Error updating blocklist %s:%s", list.getId(), list.getName()));
-        }
-
-
-        c.commit();
-        log.info("Finished manual block list refresh.");
     }
 
     @Override

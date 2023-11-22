@@ -22,20 +22,21 @@ public class ReloadAdblockingStateTask implements Task {
 
     @Override
     public void run(TaskContext ctx) throws UnsupportedRRTypeException, SQLException, InvalidMessageException, CacheAccessException, ExecutionException, InterruptedException {
-        Connection c = ctx.getConnection();
         TaskContext context;
-        if(ctx instanceof TaskContext) {
+        if (ctx instanceof TaskContext) {
             context = (TaskContext) ctx;
         } else {
             throw new RuntimeException("ReloadAdblockingStateTask requires a ResolverContext, was passed a " + ctx.getClass().getName());
         }
 
-        log.debug("Checking if adblocking is enabled.");
-        if(DBDomainBlocker.isEnabled(ctx.getConnection())) {
-            log.info("Ad blocking enabled.");
-            context.getResolver().setDomainBlocker(new DBDomainBlocker(context.getDbPool()));
-        } else {
-            context.getResolver().setDomainBlocker(new NoOpDomainBlocker());
+        try(Connection c = ctx.getDbPool().getConnection().get()) {
+            log.debug("Checking if adblocking is enabled.");
+            if (DBDomainBlocker.isEnabled(c)) {
+                log.info("Ad blocking enabled.");
+                context.getResolver().setDomainBlocker(new DBDomainBlocker(context.getDbPool()));
+            } else {
+                context.getResolver().setDomainBlocker(new NoOpDomainBlocker());
+            }
         }
     }
 

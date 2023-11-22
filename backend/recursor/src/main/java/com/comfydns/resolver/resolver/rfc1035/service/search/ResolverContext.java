@@ -6,8 +6,6 @@ import com.comfydns.resolver.resolver.rfc1035.cache.NegativeCache;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.NonTruncatingSyncTransport;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.TruncatingSyncTransport;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.async.NonTruncatingTransport;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.async.TruncatingTransport;
 import com.comfydns.resolver.resolver.rfc1035.cache.RRCache;
 
 import java.util.concurrent.ExecutorService;

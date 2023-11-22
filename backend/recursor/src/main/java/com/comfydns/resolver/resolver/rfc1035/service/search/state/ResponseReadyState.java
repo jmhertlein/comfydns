@@ -30,6 +30,6 @@ public class ResponseReadyState implements RequestState {
 
     @Override
     public Optional<Message> getResult() {
-        return m;
+        return Optional.of(m);
     }
 }

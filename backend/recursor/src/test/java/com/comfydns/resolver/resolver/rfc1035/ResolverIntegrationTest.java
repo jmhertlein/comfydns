@@ -17,14 +17,11 @@ import com.comfydns.resolver.resolver.rfc1035.message.field.rr.UnknownRRType;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.ARData;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.NSRData;
 import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.TXTRData;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
+import com.comfydns.resolver.resolver.rfc1035.message.struct.*;
 import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
 import com.comfydns.resolver.resolver.rfc1035.service.request.LiveRequest;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.async.AsyncNonTruncatingTransport;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.async.AsyncTruncatingTransport;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.TCPSyncTransport;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.UDPSyncTransport;
 import com.comfydns.resolver.resolver.trace.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -52,7 +49,7 @@ public class ResolverIntegrationTest {
     }
 
     @Test
-    public void simpleRootServerHit() throws IOException, UnsupportedRRTypeException, InvalidMessageException {
+    public void simpleRootServerHit() throws IOException, InvalidMessageException, MessageReadingException {
         DNSRootZone.Server s = DNSRootZone.getRandomRootServer();
         try (DatagramSocket socket = new DatagramSocket(45221)) {
             Message m = new Message();
@@ -80,12 +77,12 @@ public class ResolverIntegrationTest {
     }
 
     @Test
-    public void testResolver() throws UnknownHostException, InterruptedException, ExecutionException {
+    public void testResolver() throws InterruptedException, ExecutionException {
         assertHasAnswer(testQuery(new Question("status.stripe.com", KnownRRType.A, KnownRRClass.IN)));
     }
 
     @Test
-    public void testTCP() throws InterruptedException, ExecutionException, UnsupportedRRTypeException, InvalidMessageException {
+    public void testTCP() throws InterruptedException, ExecutionException, UnsupportedRRTypeException, InvalidMessageException, MessageReadingException {
         DNSRootZone.Server s = DNSRootZone.ROOT_SERVERS.get(1);
 
         Message m = new Message();
@@ -101,9 +98,7 @@ public class ResolverIntegrationTest {
 
         byte[] sendData = m.write();
         AsyncNonTruncatingTransport t = new AsyncNonTruncatingTransport();
-        CompletableFuture<byte[]> f = new CompletableFuture<>();
-        t.send(sendData, s.getAddress(), f::complete,
-                f::completeExceptionally);
+        t.send(sendData, s.getAddress());
 
         Message rcv = Message.read(f.get());
         System.out.println(rcv);
@@ -246,65 +241,52 @@ public class ResolverIntegrationTest {
     }
 
     private static List<Message> testQueries(RRCache cache, Question ... tests) throws ExecutionException, InterruptedException {
-        ExecutorService stateMachinePool = Executors.newCachedThreadPool();
-        try {
-            RecursiveResolver r = new RecursiveResolver(
-                    stateMachinePool, cache,
-                    new InMemoryAuthorityRRSource(),
-                    new InMemoryNegativeCache(), new AsyncTruncatingTransport(),
-                    new AsyncNonTruncatingTransport(),
-                    new HashSet<>());
+        RecursiveResolver r = new RecursiveResolver(
+                cache,
+                new InMemoryAuthorityRRSource(),
+                new InMemoryNegativeCache(), new UDPSyncTransport(),
+                new TCPSyncTransport(),
+                new HashSet<>());
 
-            List<Message> ret = new ArrayList<>();
-            for(Question test : tests) {
-                CompletableFuture<Message> fM = new CompletableFuture<>();
-                LiveRequest req = new LiveRequest() {
-                    @Override
-                    public Message getMessage() {
-                        Message ret = new Message();
-                        Header h = new Header();
-                        h.setQDCount(1);
-                        h.setRD(true);
-                        ret.getQuestions().add(test);
-                        ret.setHeader(h);
-                        return ret;
-                    }
+        List<Message> ret = new ArrayList<>();
+        for(Question test : tests) {
+            LiveRequest req = new LiveRequest() {
+                @Override
+                public Message getMessage() {
+                    Message ret = new Message();
+                    Header h = new Header();
+                    h.setQDCount(1);
+                    h.setRD(true);
+                    ret.getQuestions().add(test);
+                    ret.setHeader(h);
+                    return ret;
+                }
 
-                    @Override
-                    protected void writeToTransport(Message m) {
-                        fM.complete(m);
-                    }
+                @Override
+                protected String getRequestProtocolMetricsTag() {
+                    return "test";
+                }
 
-                    @Override
-                    protected String getRequestProtocolMetricsTag() {
-                        return "test";
-                    }
-
-                    @Override
-                    public boolean transportIsTruncating() {
-                        return false;
-                    }
-                };
+                @Override
+                public boolean transportIsTruncating() {
+                    return false;
+                }
+            };
 
 
-                r.resolve(req);
-                Message message = fM.get();
-                // call write just to exercise that code path
-                message.write();
-                System.out.println(message);
-                ret.add(message);
-            }
-
-            return ret;
-        } finally {
-            stateMachinePool.shutdown();
+            Message message = r.resolve(() -> req);
+            // call write just to exercise that code path
+            message.write();
+            System.out.println(message);
+            ret.add(message);
         }
+
+        return ret;
     }
 
     @Test
     public void testTraceQuery() throws ExecutionException, InterruptedException {
         ExecutorService stateMachinePool = Executors.newCachedThreadPool();
-        CompletableFuture<Message> fM = new CompletableFuture<>();
         Message m = new Message();
         Header h = new Header();
         h.setQDCount(1);
@@ -316,16 +298,15 @@ public class ResolverIntegrationTest {
         ));
         m.setHeader(h);
         TracingInternalRequest req = new TracingInternalRequest(m);
-        req.setOnAnswer(fM::complete);
         try {
             RecursiveResolver r = new RecursiveResolver(
-                    stateMachinePool, new InMemoryDNSCache(),
+                    new InMemoryDNSCache(),
                     new InMemoryAuthorityRRSource(),
-                    new InMemoryNegativeCache(), new AsyncTruncatingTransport(),
-                    new AsyncNonTruncatingTransport(),
+                    new InMemoryNegativeCache(), new UDPSyncTransport(),
+                    new TCPSyncTransport(),
                     new HashSet<>());
-            r.resolve(req);
-            Message message = fM.get();
+            Message message = r.resolve(() -> req);
+
             // call write just to exercise that code path
             message.write();
             System.out.println(message);

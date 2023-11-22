@@ -7,12 +7,10 @@ import java.util.function.Consumer;
 
 public class TracingInternalRequest extends LiveRequest {
     private final Message request;
-    private Consumer<Message> onAnswer;
     private final Tracer tracer;
 
     public TracingInternalRequest(Message request) {
         this.request = request;
-        this.onAnswer = (m) -> {};
         tracer = new Tracer();
         addListener(tracer);
     }
@@ -27,18 +25,10 @@ public class TracingInternalRequest extends LiveRequest {
     }
 
     @Override
-    protected void writeToTransport(Message m) {
-        onAnswer.accept(m);
-    }
-
-    @Override
     protected String getRequestProtocolMetricsTag() {
         return "trace";
     }
 
-    public void setOnAnswer(Consumer<Message> onAnswer) {
-        this.onAnswer = onAnswer;
-    }
 
     @Override
     public boolean isLocal() {

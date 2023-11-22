@@ -9,7 +9,7 @@ import java.net.InetAddress;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class TestTruncatingTransport implements TruncatingTransport {
+public class TestTruncatingTransport implements TruncatingSyncTransport {
     private final Map<InetAddress, Message> responses;
 
     public TestTruncatingTransport(Map<InetAddress, Message> responses) {
@@ -17,19 +17,15 @@ public class TestTruncatingTransport implements TruncatingTransport {
     }
 
     @Override
-    public void send(byte[] payload, InetAddress dest, Consumer<byte[]> cb, Consumer<Throwable> onError) {
+    public byte[] send(byte[] payload, InetAddress dest) throws Exception {
+        Message message = responses.get(dest);
+        Message read;
         try {
-            Message message = responses.get(dest);
-            Message read;
-            try {
-                read = Message.read(payload);
-            } catch (InvalidMessageException | UnsupportedRRTypeException e) {
-                throw new RuntimeException("oops");
-            }
-            message.getHeader().setId(read.getHeader().getId());
-            cb.accept(message.write());
-        } catch(Throwable t) {
-            onError.accept(t);
+            read = Message.read(payload);
+        } catch (InvalidMessageException e) {
+            throw new RuntimeException("oops");
         }
+        message.getHeader().setId(read.getHeader().getId());
+        return message.write();
     }
 }

@@ -7,13 +7,11 @@ import java.sql.Connection;
 
 public class TaskContext {
     private final RecursiveResolver resolver;
-    private final Connection c;
     private final SimpleConnectionPool dbPool;
 
-    public TaskContext(RecursiveResolver resolver, SimpleConnectionPool dbPool, Connection c) {
+    public TaskContext(RecursiveResolver resolver, SimpleConnectionPool dbPool) {
         this.resolver = resolver;
         this.dbPool = dbPool;
-        this.c = c;
     }
 
     public RecursiveResolver getResolver() {
@@ -24,7 +22,4 @@ public class TaskContext {
         return dbPool;
     }
 
-    public Connection getConnection() {
-        return c;
-    }
 }

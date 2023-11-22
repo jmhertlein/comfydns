@@ -18,14 +18,11 @@ import com.comfydns.resolver.resolver.rfc1035.service.search.*;
 import com.comfydns.resolver.resolver.rfc1035.service.search.state.InitialCheckingState;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.NonTruncatingSyncTransport;
 import com.comfydns.resolver.resolver.rfc1035.service.transport.TruncatingSyncTransport;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.async.NonTruncatingTransport;
-import com.comfydns.resolver.resolver.rfc1035.service.transport.async.TruncatingTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 
 public class RecursiveResolver {
     private static final Logger log = LoggerFactory.getLogger(RecursiveResolver.class);

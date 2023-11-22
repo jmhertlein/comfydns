@@ -39,13 +39,12 @@ public class TraceQueryTask implements Task {
         TracingInternalRequest req = new TracingInternalRequest(m);
         req.getMessage().validateHeader();
 
-        req.setOnAnswer(resp -> this.onAnswer(resp, req, context));
-
-        context.getResolver().resolve(req);
-        log.debug("Submitted trace query.");
+        log.debug("Submitting trace query.");
+        Message result = context.getResolver().resolve(() -> req);
+        handleAnswer(req, context);
     }
 
-    private void onAnswer(Message m, TracingInternalRequest req, TaskContext ctx) {
+    private void handleAnswer(TracingInternalRequest req, TaskContext ctx) {
         log.debug("Trace query returned.");
 
         Tracer tracer = req.getTracer();
