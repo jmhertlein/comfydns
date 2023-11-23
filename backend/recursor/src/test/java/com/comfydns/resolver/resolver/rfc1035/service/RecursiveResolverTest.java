@@ -13,6 +13,7 @@ import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
 import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolver.rfc1035.service.request.LiveRequest;
+import com.comfydns.resolver.resolver.rfc1035.service.transport.TestTruncatingTransport;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -96,22 +97,19 @@ public class RecursiveResolverTest {
             }
         };
 
-        ExecutorService stateMachinePool = Executors.newCachedThreadPool();
-        try {
-            RecursiveResolver r = new RecursiveResolver(
-                    stateMachinePool, new InMemoryDNSCache(),
-                    new InMemoryAuthorityRRSource(),
-                    new InMemoryNegativeCache(), new TestTruncatingTransport(responses),
-                    null,
-                    new HashSet<>());
-            Message message = r.resolve(() -> req);
-            Assertions.assertEquals(1, message.getHeader().getANCount());
-            Assertions.assertEquals("192.168.1.100",
-                    ((ARData) message.getAnswerRecords().get(0).getRData())
-                            .getAddress().getHostAddress());
-        } finally {
-            stateMachinePool.shutdown();
-        }
+
+        RecursiveResolver r = new RecursiveResolver(
+                new InMemoryDNSCache(),
+                new InMemoryAuthorityRRSource(),
+                new InMemoryNegativeCache(), new TestTruncatingTransport(responses),
+                null,
+                new HashSet<>());
+        Message message = r.resolve(() -> req);
+        Assertions.assertEquals(1, message.getHeader().getANCount());
+        Assertions.assertEquals("192.168.1.100",
+                ((ARData) message.getAnswerRecords().get(0).getRData())
+                        .getAddress().getHostAddress());
+
     }
 
     @Test

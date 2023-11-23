@@ -82,7 +82,7 @@ public class ResolverIntegrationTest {
     }
 
     @Test
-    public void testTCP() throws InterruptedException, ExecutionException, UnsupportedRRTypeException, InvalidMessageException, MessageReadingException {
+    public void testTCP() throws Exception {
         DNSRootZone.Server s = DNSRootZone.ROOT_SERVERS.get(1);
 
         Message m = new Message();
@@ -97,10 +97,10 @@ public class ResolverIntegrationTest {
         m.getQuestions().add(new Question("com", KnownRRType.A, KnownRRClass.IN));
 
         byte[] sendData = m.write();
-        AsyncNonTruncatingTransport t = new AsyncNonTruncatingTransport();
-        t.send(sendData, s.getAddress());
+        TCPSyncTransport t = new TCPSyncTransport();
+        byte[] buf = t.send(sendData, s.getAddress());
 
-        Message rcv = Message.read(f.get());
+        Message rcv = Message.read(buf);
         System.out.println(rcv);
     }
 

@@ -103,6 +103,7 @@ public class RecursiveResolver {
                         next.getName()
                 );
                 sCtx.incrementStateTransitionCount();
+                cur = next;
             }
 
             response = cur.getResult().get();

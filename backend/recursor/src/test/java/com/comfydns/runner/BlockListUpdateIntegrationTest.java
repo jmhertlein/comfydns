@@ -52,7 +52,7 @@ public class BlockListUpdateIntegrationTest {
         }
 
         try(Connection c = pool.getConnection().get()) {
-            TaskContext ctx = new TaskContext(null, pool, c);
+            TaskContext ctx = new TaskContext(null, pool);
             t.run(ctx);
         }
     }
