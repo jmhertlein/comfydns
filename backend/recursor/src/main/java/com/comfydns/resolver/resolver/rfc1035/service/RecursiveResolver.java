@@ -120,6 +120,12 @@ public class RecursiveResolver {
             response = sCtx.prepareOops("Sorry, something went wrong.");
         }
 
+        try {
+            req.onAnswer(response);
+        } catch (Throwable t) {
+            log.warn("Error recording metrics", t);
+        }
+
         return response;
     }
 }

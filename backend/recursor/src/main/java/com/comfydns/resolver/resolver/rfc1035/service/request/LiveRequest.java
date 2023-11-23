@@ -12,7 +12,6 @@ import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,17 +81,12 @@ public abstract class LiveRequest {
         return this.answered;
     }
 
-    @Deprecated
-    public void answer(Message m) {
+    public void onAnswer(Message m) {
         if(!this.started) {
             throw new IllegalStateException("We tried to answer a request that was never started: " + this.getId());
         }
-        if(m.getHeader().getRCode() == RCode.SERVER_FAILURE) {
-            log.info("[R] [{}]: {} | {}", getRemoteAddress(), m.getHeader().getRCode(), id);
-        }
 
         this.checkAnswered();
-        //this.writeToTransport(m);
         this.setAnswered();
         this.recordAnswer(m);
     }
@@ -108,6 +102,9 @@ public abstract class LiveRequest {
     protected abstract String getRequestProtocolMetricsTag();
 
     private void recordAnswer(Message m) {
+        if(m.getHeader().getRCode() == RCode.SERVER_FAILURE) {
+            log.info("[R] [{}]: {} | {}", getRemoteAddress(), m.getHeader().getRCode(), id);
+        }
         EventLogger.logRequestEnd(this, m.getHeader().getRCode());
         requestTimer.observeDuration();
         QType qType = m.getQuestions().get(0).getqType();
