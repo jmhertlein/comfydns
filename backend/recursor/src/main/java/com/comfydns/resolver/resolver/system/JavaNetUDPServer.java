@@ -38,7 +38,10 @@ public class JavaNetUDPServer implements Runnable {
                             Message response = resolver.resolve(() -> new JavaNetUDPRequest(p));
                             byte[] buf = response.write();
                             try {
-                                s.send(new DatagramPacket(buf, buf.length));
+                                DatagramPacket responsePacket = new DatagramPacket(buf, buf.length);
+                                responsePacket.setAddress(p.getAddress());
+                                responsePacket.setPort(p.getPort());
+                                s.send(responsePacket);
                             } catch (IOException e) {
                                 log.warn("Error while writing response to transport", e);
                             }

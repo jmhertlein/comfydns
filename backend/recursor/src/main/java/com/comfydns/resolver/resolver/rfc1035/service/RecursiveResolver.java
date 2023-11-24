@@ -123,7 +123,7 @@ public class RecursiveResolver {
         try {
             req.onAnswer(response);
         } catch (Throwable t) {
-            log.warn("Error recording metrics", t);
+            log.warn("Error recording response metrics", t);
         }
 
         return response;
