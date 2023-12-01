@@ -8,10 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
+import java.net.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JavaNetUDPServer implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(JavaNetUDPServer.class);
@@ -20,17 +19,20 @@ public class JavaNetUDPServer implements Runnable {
 
     private final ExecutorService workerPool;
 
+    private final AtomicBoolean shutdown;
+
     public JavaNetUDPServer(RecursiveResolver resolver, ExecutorService workerPool) {
         this.resolver = resolver;
         this.workerPool = workerPool;
+        shutdown = new AtomicBoolean(false);
     }
 
     @Override
     public void run() {
         int port = EnvConfig.getDnsServerPort();
-        while(true) { // keep re-opening socket
+        while(!shutdown.get()) {
             try (DatagramSocket s = new DatagramSocket(port)) {
-                while (true) {
+                while (!shutdown.get()) {
                     DatagramPacket p = new DatagramPacket(new byte[DNS.MAX_UDP_DATAGRAM_LENGTH], DNS.MAX_UDP_DATAGRAM_LENGTH);
                     try {
                         s.receive(p);
@@ -54,5 +56,9 @@ public class JavaNetUDPServer implements Runnable {
                 log.error("Error while opening UDP socket", e);
             }
         }
+    }
+
+    public void setShutdown() {
+        this.shutdown.set(true);
     }
 }

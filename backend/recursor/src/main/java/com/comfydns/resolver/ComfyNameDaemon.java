@@ -1,7 +1,6 @@
 package com.comfydns.resolver;
 
 import com.comfydns.resolver.resolve.block.DBDomainBlocker;
-import com.comfydns.resolver.resolve.block.DomainBlocker;
 import com.comfydns.resolver.resolve.block.NoOpDomainBlocker;
 import com.comfydns.resolver.resolve.rfc1035.cache.AuthorityRRSource;
 import com.comfydns.resolver.resolve.rfc1035.cache.NegativeCache;
@@ -20,7 +19,6 @@ import com.comfydns.resolver.task.UsageReportTask;
 import com.comfydns.util.config.EnvConfig;
 import com.comfydns.util.config.IdFile;
 import com.comfydns.util.db.CommonDatabaseUtils;
-import com.comfydns.util.db.Flag;
 import com.comfydns.util.db.SimpleConnectionPool;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.exporter.HTTPServer;
@@ -62,7 +60,11 @@ public class ComfyNameDaemon {
             return;
         }
 
-        RecursiveResolver resolver = startResolver(apps, workerPool, cron, dbPool);
+        new MemoryPoolsExports().register();
+        new GarbageCollectorExports().register();
+
+        RecursiveResolver resolver = initializeResolver(cron, dbPool);
+        Cancel cancelResolverListening = startListening(resolver, apps, workerPool);
 
         TaskDispatcher taskDispatcher = new TaskDispatcher(dbPool,
                 taskPool,
@@ -80,9 +82,31 @@ public class ComfyNameDaemon {
         HTTPServer server = new HTTPServer(EnvConfig.getMetricsServerPort()); // this is the prometheus /metrics server... it takes care of itself
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            // todo graceful drain shutdown
-            apps.shutdownNow();
-            cron.shutdownNow();
+            try {
+                // stop listening and close down apps thread pool
+                log.info("Stopping listening...");
+                cancelResolverListening.cancel();
+                apps.shutdown();
+                apps.awaitTermination(1, TimeUnit.SECONDS);
+                apps.shutdownNow();
+                log.info("Stopped listening.");
+
+
+                // wait for requests to drain
+                log.info("Waiting for requests to drain...");
+                workerPool.shutdown();
+                workerPool.awaitTermination(10, TimeUnit.SECONDS);
+                workerPool.shutdownNow();
+                log.info("Done waiting for requests to drain...");
+
+                // stop scheduled tasks
+                log.info("Waiting for scheduled tasks to drain...");
+                cron.shutdown();
+                cron.awaitTermination(1, TimeUnit.SECONDS);
+                cron.shutdownNow();
+                log.info("Done waiting on scheduled tasks.");
+                log.info("Shutdown complete.");
+            } catch (InterruptedException ignore) {}
         }));
         log.info("[Startup] Startup complete!");
     }
@@ -133,14 +157,10 @@ public class ComfyNameDaemon {
         return pool;
     }
 
-    private static RecursiveResolver startResolver(
-            ExecutorService appsPool, ExecutorService workerPool,
+    private static RecursiveResolver initializeResolver(
             ScheduledExecutorService cron,
             SimpleConnectionPool dbPool
     ) throws SQLException, ExecutionException, InterruptedException {
-        new MemoryPoolsExports().register();
-        new GarbageCollectorExports().register();
-
         AuthorityRRSource authorityRecords = new DBAuthorityRRSource(dbPool);
 
         RRCache cache = new DBDNSCache(dbPool);
@@ -161,21 +181,6 @@ public class ComfyNameDaemon {
             }
         }, 30, 30, TimeUnit.SECONDS);
 
-        DomainBlocker domainBlocker;
-
-        try(Connection c = dbPool.getConnection().get()) {
-            if(Flag.enabled("adblock", c)) {
-                log.info("Adblocking enabled.");
-                try {
-                    domainBlocker = new DBDomainBlocker(dbPool);
-                } catch (SQLException | ExecutionException | InterruptedException throwables) {
-                    throw new RuntimeException("Error initializing DBDomainBlocker", throwables);
-                }
-            } else {
-                domainBlocker = new NoOpDomainBlocker();
-            }
-        }
-
         Set<InetAddress> allowZoneTransferToAddresses = null;
         try {
             allowZoneTransferToAddresses = new HashSet<>(
@@ -193,7 +198,6 @@ public class ComfyNameDaemon {
                 new TCPSyncTransport(),
                 allowZoneTransferToAddresses);
 
-        resolver.setDomainBlocker(domainBlocker);
 
         try(Connection c = dbPool.getConnection().get()) {
             if(DBDomainBlocker.isEnabled(c)) {
@@ -202,10 +206,29 @@ public class ComfyNameDaemon {
                 resolver.setDomainBlocker(new NoOpDomainBlocker());
             }
         }
-
-        appsPool.submit(new JavaNetUDPServer(resolver, workerPool));
-        appsPool.submit(new JavaNetTCPServer(resolver, workerPool));
-        log.info("Resolver started.");
         return resolver;
+    }
+
+    @FunctionalInterface
+    private interface Cancel {
+        void cancel();
+    }
+
+    private static Cancel startListening(RecursiveResolver resolver,
+        ExecutorService appsPool, ExecutorService workerPool
+    ) {
+        JavaNetUDPServer udp = new JavaNetUDPServer(resolver, workerPool);
+        JavaNetTCPServer tcp = new JavaNetTCPServer(resolver, workerPool);
+        Future<?> udpFuture = appsPool.submit(udp);
+        Future<?> tcpFuture = appsPool.submit(tcp);
+        log.info("Resolver started.");
+        return () -> {
+            log.info("Cancel callback called.");
+            udp.setShutdown();
+            tcp.setShutdown();
+            udpFuture.cancel(true);
+            tcpFuture.cancel(true);
+            log.info("Cancel callback completed.");
+        };
     }
 }

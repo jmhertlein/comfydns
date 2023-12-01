@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JavaNetTCPServer implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(JavaNetTCPServer.class);
@@ -19,17 +20,20 @@ public class JavaNetTCPServer implements Runnable {
 
     private final ExecutorService workerPool;
 
+    private final AtomicBoolean shutdown;
+
     public JavaNetTCPServer(RecursiveResolver resolver, ExecutorService workerPool) {
         this.resolver = resolver;
         this.workerPool = workerPool;
+        shutdown = new AtomicBoolean(false);
     }
 
     @Override
     public void run() {
         int port = EnvConfig.getDnsServerPort();
-        while(true) {
+        while(!shutdown.get()) {
             try (ServerSocket s = new ServerSocket(port)) {
-                while (true) {
+                while (!shutdown.get()) {
                     Socket client = s.accept();
                     workerPool.submit(() -> {
                         try (client; InputStream in = client.getInputStream();
@@ -55,5 +59,9 @@ public class JavaNetTCPServer implements Runnable {
                 log.error("Error listening on tcp socket", e);
             }
         }
+    }
+
+    public void setShutdown() {
+        this.shutdown.set(true);
     }
 }
