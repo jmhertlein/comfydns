@@ -11,8 +11,8 @@ import com.comfydns.resolver.resolve.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolve.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolve.rfc1035.message.struct.RR;
 import com.comfydns.resolver.resolve.rfc1035.service.search.SearchContext;
-import com.comfydns.util.db.SimpleConnectionPool;
 import com.google.gson.Gson;
+import com.zaxxer.hikari.HikariDataSource;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
@@ -36,17 +36,17 @@ public class DBDNSCache implements RRCache {
             .map(t -> Integer.toString(t.getIntValue()))
             .collect(Collectors.joining(","));
 
-    private final SimpleConnectionPool pool;
+    private final HikariDataSource pool;
     private final ThreadLocal<Gson> gson;
 
-    public DBDNSCache(SimpleConnectionPool pool) {
+    public DBDNSCache(HikariDataSource pool) {
         this.pool = pool;
         this.gson = ThreadLocal.withInitial(Gson::new);
 
         CacheMetrics.currentCachedRecords.setChild(new Gauge.Child() {
             @Override
             public double get() {
-                try(Connection c = pool.getConnection().get();
+                try(Connection c = pool.getConnection();
                 PreparedStatement ps = c.prepareStatement("select count(*) as ct from cached_rr")) {
                     try(ResultSet rs = ps.executeQuery()) {
                         if(rs.next()) {
@@ -56,7 +56,7 @@ public class DBDNSCache implements RRCache {
                             return -1;
                         }
                     }
-                } catch (SQLException | InterruptedException | ExecutionException throwables) {
+                } catch (SQLException throwables) {
                     log.warn("Error counting cached_rr rows for metrics: exception", throwables);
                     return -1;
                 }
@@ -66,20 +66,20 @@ public class DBDNSCache implements RRCache {
 
     @Override
     public void prune(OffsetDateTime now) throws CacheAccessException {
-        try(Connection c = pool.getConnection().get();
+        try(Connection c = pool.getConnection();
             PreparedStatement ps = c.prepareStatement("delete from cached_rr where expires_at <= ?")) {
             ps.setObject(1, now);
             int rows = ps.executeUpdate();
             CacheMetrics.cachedRecordsPrunedTotal.inc(rows);
             log.debug("Deleted {} cached rr's.", rows);
-        } catch (SQLException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException throwables) {
             throw new CacheAccessException(throwables);
         }
     }
 
     @Override
     public void expunge(List<RR<?>> records) throws CacheAccessException {
-        try(Connection c = pool.getConnection().get();
+        try(Connection c = pool.getConnection();
             PreparedStatement ps = c.prepareStatement(
                     "delete from cached_rr where name=? and rrtype=? and rrclass=? and rdata=?::jsonb")) {
             for (RR<?> r : records) {
@@ -92,7 +92,7 @@ public class DBDNSCache implements RRCache {
             int rows = IntStream.of(ps.executeBatch()).sum();
             CacheMetrics.cachedRecordsPrunedTotal.inc(rows);
             log.debug("Expunged {} cached rr's.", rows);
-        } catch (SQLException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException throwables) {
             throw new CacheAccessException(throwables);
         }
     }
@@ -101,7 +101,7 @@ public class DBDNSCache implements RRCache {
     public void cache(RR<?> record, OffsetDateTime now, SearchContext sCtx) throws CacheAccessException {
         try(
             Histogram.Timer ignored = CacheMetrics.cacheWriteTimeSeconds.startTimer();
-            Connection c = pool.getConnection().get();
+            Connection c = pool.getConnection();
             PreparedStatement ps = c.prepareStatement("insert into cached_rr (id, name, rrtype, rrclass, ttl, rdata, created_at, expires_at, original_qname, original_query_id) values (DEFAULT, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?) on conflict on constraint cached_rr_name_rrtype_rrclass_rdata_key do update set ttl=excluded.ttl, created_at=excluded.created_at, expires_at=excluded.expires_at, original_qname=excluded.original_qname, original_query_id=excluded.original_query_id")
         ) {
             ps.setString(1, record.getName());
@@ -116,7 +116,7 @@ public class DBDNSCache implements RRCache {
             int rows = ps.executeUpdate();
             log.debug("Inserted {} rows", rows);
             CacheMetrics.recordCache(record);
-        } catch (SQLException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException throwables) {
             throw new CacheAccessException(throwables);
         }
     }
@@ -163,7 +163,7 @@ public class DBDNSCache implements RRCache {
                     "ttl - floor(extract(epoch from (?-created_at))) as ttl, " +
                     "rdata from cached_rr where name=? and ? < expires_at" + whereClause;
             List<RR<?>> ret = new ArrayList<>();
-            try (Connection c = pool.getConnection().get();
+            try (Connection c = pool.getConnection();
                  PreparedStatement ps = c.prepareStatement(sqlText)) {
                 ps.setObject(1, now);
                 ps.setString(2, name);
@@ -174,7 +174,7 @@ public class DBDNSCache implements RRCache {
                         ret.add(RR.read(rs));
                     }
                 }
-            } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException | InterruptedException | ExecutionException throwables) {
+            } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException throwables) {
                 throw new CacheAccessException(throwables);
             }
 
@@ -193,7 +193,7 @@ public class DBDNSCache implements RRCache {
                     "rdata from cached_rr where name=? and ? < expires_at and rrtype in (%s, %s)",
                     KnownRRType.A.getIntValue(), KnownRRType.AAAA.getIntValue());
             List<RR<?>> ret = new ArrayList<>();
-            try (Connection c = pool.getConnection().get();
+            try (Connection c = pool.getConnection();
                  PreparedStatement ps = c.prepareStatement(sqlText)) {
                 ps.setObject(1, now);
                 ps.setString(2, name);
@@ -203,7 +203,7 @@ public class DBDNSCache implements RRCache {
                         ret.add(RR.read(rs));
                     }
                 }
-            } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException | InterruptedException | ExecutionException throwables) {
+            } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException throwables) {
                 throw new CacheAccessException(throwables);
             }
 

@@ -19,7 +19,8 @@ import com.comfydns.resolver.task.UsageReportTask;
 import com.comfydns.util.config.EnvConfig;
 import com.comfydns.util.config.IdFile;
 import com.comfydns.util.db.CommonDatabaseUtils;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.GarbageCollectorExports;
@@ -51,9 +52,11 @@ public class ComfyNameDaemon {
         // scheduled background tasks (like the task dispatcher)
         ScheduledExecutorService cron = Executors.newScheduledThreadPool(2);
 
-        SimpleConnectionPool dbPool;
+        HikariConfig cfg;
+        HikariDataSource ds;
         try {
-            dbPool = CommonDatabaseUtils.setupPool(EnvConfig.buildDBConfig(), cron);
+            cfg = CommonDatabaseUtils.mapConfig(EnvConfig.buildDBConfig());
+            ds = new HikariDataSource(cfg);
         } catch (ClassNotFoundException | SQLException | IOException e) {
             log.error("Fatal database startup error.", e);
             System.exit(1);
@@ -63,16 +66,16 @@ public class ComfyNameDaemon {
         new MemoryPoolsExports().register();
         new GarbageCollectorExports().register();
 
-        RecursiveResolver resolver = initializeResolver(cron, dbPool);
+        RecursiveResolver resolver = initializeResolver(cron, ds);
         Cancel cancelResolverListening = startListening(resolver, apps, workerPool);
 
-        TaskDispatcher taskDispatcher = new TaskDispatcher(dbPool,
+        TaskDispatcher taskDispatcher = new TaskDispatcher(ds,
                 taskPool,
                 resolver);
         cron.scheduleWithFixedDelay(taskDispatcher, 10, 1, TimeUnit.SECONDS);
 
         cron.scheduleWithFixedDelay(
-                new ScheduledRefreshRunnable(dbPool),
+                new ScheduledRefreshRunnable(ds),
                 10, 60, TimeUnit.SECONDS);
 
         if(!EnvConfig.isUsageReportingDisabled()) {
@@ -104,7 +107,14 @@ public class ComfyNameDaemon {
                 cron.shutdown();
                 cron.awaitTermination(1, TimeUnit.SECONDS);
                 cron.shutdownNow();
+                taskPool.shutdown();
+                taskPool.awaitTermination(1, TimeUnit.SECONDS);
+                taskPool.shutdownNow();
                 log.info("Done waiting on scheduled tasks.");
+
+                log.info("Closing db pool...");
+                ds.close();
+                log.info("Closed db pool.");
                 log.info("Shutdown complete.");
             } catch (InterruptedException ignore) {}
         }));
@@ -159,7 +169,7 @@ public class ComfyNameDaemon {
 
     private static RecursiveResolver initializeResolver(
             ScheduledExecutorService cron,
-            SimpleConnectionPool dbPool
+            HikariDataSource dbPool
     ) throws SQLException, ExecutionException, InterruptedException {
         AuthorityRRSource authorityRecords = new DBAuthorityRRSource(dbPool);
 
@@ -199,7 +209,7 @@ public class ComfyNameDaemon {
                 allowZoneTransferToAddresses);
 
 
-        try(Connection c = dbPool.getConnection().get()) {
+        try(Connection c = dbPool.getConnection()) {
             if(DBDomainBlocker.isEnabled(c)) {
                 resolver.setDomainBlocker(new DBDomainBlocker(dbPool));
             } else {

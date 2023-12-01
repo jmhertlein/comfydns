@@ -8,9 +8,9 @@ import com.comfydns.resolver.resolve.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolve.rfc1035.message.field.rr.UnknownRRType;
 import com.comfydns.resolver.resolve.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolve.rfc1035.message.struct.RR;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.*;
-import org.postgresql.ds.PGConnectionPoolDataSource;
 
 import java.net.UnknownHostException;
 import java.sql.Connection;
@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class DBNegativeCacheIntegrationTest {
-    private static volatile SimpleConnectionPool pool;
+    private static volatile HikariDataSource pool;
     private static final ReentrantLock lock = new ReentrantLock();
 
     @BeforeAll
@@ -34,13 +34,9 @@ public class DBNegativeCacheIntegrationTest {
         try {
             if(pool == null) {
                 Class.forName("org.postgresql.Driver");
-                PGConnectionPoolDataSource pgPool = new PGConnectionPoolDataSource();
-                pgPool.setURL("jdbc:postgresql://" + "localhost" + "/");
-                pgPool.setApplicationName("comfydns-recursor-integration-test");
-
-                pgPool.setDatabaseName("comfydns_dev");
-                pgPool.setUser("comfydns");
-                pool = new SimpleConnectionPool(pgPool);
+                HikariConfig cfg = new HikariConfig();
+                cfg.setJdbcUrl("jdbc:postgresql://localhost/comfydns_dev?ApplicationName=comfydns-recursor-integration-test&user=comfydns");
+                pool = new HikariDataSource(cfg);
             }
         } finally {
             lock.unlock();
@@ -110,7 +106,7 @@ public class DBNegativeCacheIntegrationTest {
         now = now.plusSeconds(61);
         c.prune(now);
 
-        try(Connection cxn = pool.getConnection().get(); Statement s = cxn.createStatement()) {
+        try(Connection cxn = pool.getConnection(); Statement s = cxn.createStatement()) {
             try(ResultSet rs = s.executeQuery("select count(*) as row_ct from cached_negative where qname='josh.cafe' and qtype=1 and" +
                     " qclass=1")) {
                 if(rs.next()) {
@@ -125,7 +121,7 @@ public class DBNegativeCacheIntegrationTest {
 
     @AfterEach
     public void cleanup() throws SQLException, ExecutionException, InterruptedException {
-        try(Connection c = pool.getConnection().get(); Statement s = c.createStatement()) {
+        try(Connection c = pool.getConnection(); Statement s = c.createStatement()) {
             s.execute("delete from cached_negative");
         }
     }

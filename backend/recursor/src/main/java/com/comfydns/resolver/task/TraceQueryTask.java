@@ -49,7 +49,7 @@ public class TraceQueryTask implements Task {
 
         Tracer tracer = req.getTracer();
 
-        try(Connection c = ctx.getDbPool().getConnection().get()) {
+        try(Connection c = ctx.getDbPool().getConnection()) {
             c.setAutoCommit(false);
             UUID traceId;
             try(PreparedStatement ps = c.prepareStatement(
@@ -95,7 +95,7 @@ public class TraceQueryTask implements Task {
 
             c.commit();
             log.info("COMMIT trace {}", traceId);
-        } catch (SQLException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException throwables) {
             log.error("Error persisting trace", throwables);
         }
     }

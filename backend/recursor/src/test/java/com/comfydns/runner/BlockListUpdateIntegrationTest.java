@@ -2,11 +2,14 @@ package com.comfydns.runner;
 
 import com.comfydns.resolver.task.RefreshBlockListsTask;
 import com.comfydns.resolver.task.TaskContext;
-import com.comfydns.util.db.SimpleConnectionPool;
 import com.comfydns.resolver.task.TaskDefinition;
 import com.google.gson.JsonObject;
-import org.junit.jupiter.api.*;
-import org.postgresql.ds.PGConnectionPoolDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.net.MalformedURLException;
 import java.sql.Connection;
@@ -18,7 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BlockListUpdateIntegrationTest {
-    private static volatile SimpleConnectionPool pool;
+    private static volatile HikariDataSource pool;
     private static final ReentrantLock lock = new ReentrantLock();
 
     @BeforeAll
@@ -27,14 +30,11 @@ public class BlockListUpdateIntegrationTest {
         lock.lock();
         try {
             if(pool == null) {
+                HikariConfig cfg = new HikariConfig();
+                cfg.setJdbcUrl("jsbc:postgresql://localhost/comfydns_dev?ApplicationName=comfydns-runner-integration-test");
                 Class.forName("org.postgresql.Driver");
-                PGConnectionPoolDataSource pgPool = new PGConnectionPoolDataSource();
-                pgPool.setURL("jdbc:postgresql://" + "localhost" + "/");
-                pgPool.setApplicationName("comfydns-runner-integration-test");
-
-                pgPool.setDatabaseName("comfydns_dev");
-                pgPool.setUser("comfydns");
-                pool = new SimpleConnectionPool(pgPool);
+                cfg.setUsername("comfydns");
+                pool = new HikariDataSource(cfg);
             }
         } finally {
             lock.unlock();
@@ -46,12 +46,12 @@ public class BlockListUpdateIntegrationTest {
         RefreshBlockListsTask t = new RefreshBlockListsTask(new TaskDefinition(UUID.randomUUID(), "refresh_block_lists", null,
                 true, false, false, new JsonObject()));
 
-        try(Connection c = pool.getConnection().get(); Statement s = c.createStatement()) {
+        try(Connection c = pool.getConnection(); Statement s = c.createStatement()) {
             s.execute("insert into block_list (id, name, url, auto_update, update_frequency, created_at, updated_at) values " +
                     "(DEFAULT, 'easylist', 'https://raw.githubusercontent.com/justdomains/blocklists/master/lists/easylist-justdomains.txt', true, 'PT15M', now(), now());");
         }
 
-        try(Connection c = pool.getConnection().get()) {
+        try(Connection c = pool.getConnection()) {
             TaskContext ctx = new TaskContext(null, pool);
             t.run(ctx);
         }
@@ -59,7 +59,7 @@ public class BlockListUpdateIntegrationTest {
 
     @AfterEach
     public void cleanup() throws SQLException, ExecutionException, InterruptedException {
-        try(Connection c = pool.getConnection().get(); Statement s = c.createStatement()) {
+        try(Connection c = pool.getConnection(); Statement s = c.createStatement()) {
             s.execute("delete from blocked_name");
             s.execute("delete from block_list_snapshot");
             s.execute("delete from block_list");

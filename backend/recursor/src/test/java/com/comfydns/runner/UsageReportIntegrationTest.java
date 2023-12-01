@@ -1,7 +1,7 @@
 package com.comfydns.runner;
 
 import com.comfydns.resolver.task.UsageReportTask;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class UsageReportIntegrationTest {
-    private static volatile SimpleConnectionPool pool;
+    private static volatile HikariDataSource pool;
     private static final ReentrantLock lock = new ReentrantLock();
 
     @BeforeAll

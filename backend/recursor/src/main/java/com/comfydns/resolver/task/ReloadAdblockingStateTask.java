@@ -29,7 +29,7 @@ public class ReloadAdblockingStateTask implements Task {
             throw new RuntimeException("ReloadAdblockingStateTask requires a ResolverContext, was passed a " + ctx.getClass().getName());
         }
 
-        try(Connection c = ctx.getDbPool().getConnection().get()) {
+        try(Connection c = ctx.getDbPool().getConnection()) {
             log.debug("Checking if adblocking is enabled.");
             if (DBDomainBlocker.isEnabled(c)) {
                 log.info("Ad blocking enabled.");

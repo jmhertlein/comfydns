@@ -83,7 +83,7 @@ public class RefreshBlockListsTask implements Task {
 
         log.debug("Starting manual block list refresh.");
 
-        try(Connection c = ctx.getDbPool().getConnection().get()) {
+        try(Connection c = ctx.getDbPool().getConnection()) {
             BlockList list;
             try (PreparedStatement ps = c.prepareStatement(
                     "select bl.id, bl.name, bl.url, bl.list_type, bl.auto_update, bl.update_frequency " +

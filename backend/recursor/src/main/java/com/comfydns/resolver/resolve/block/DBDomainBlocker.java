@@ -3,7 +3,7 @@ package com.comfydns.resolver.resolve.block;
 import com.comfydns.resolver.resolve.rfc1035.cache.CacheAccessException;
 import com.comfydns.resolver.resolve.rfc1035.message.LabelCache;
 import com.comfydns.util.db.Flag;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariDataSource;
 import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,14 +29,14 @@ public class DBDomainBlocker implements DomainBlocker {
             .buckets(0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 1.0, 2, 5, 10)
             .register();
 
-    private final SimpleConnectionPool dbPool;
+    private final HikariDataSource dbPool;
 
     private final boolean blockByDefault;
 
-    public DBDomainBlocker(SimpleConnectionPool dbPool) throws SQLException, ExecutionException, InterruptedException {
+    public DBDomainBlocker(HikariDataSource dbPool) throws SQLException, ExecutionException, InterruptedException {
         this.dbPool = dbPool;
 
-        try(Connection c = dbPool.getConnection().get()) {
+        try(Connection c = dbPool.getConnection()) {
             blockByDefault = Flag.enabled("adblock_client_default_on", c);
         }
     }
@@ -45,7 +45,7 @@ public class DBDomainBlocker implements DomainBlocker {
     public boolean isBlocked(String name) throws CacheAccessException {
         Histogram.Timer timer = blockedNameReadTimeSeconds.startTimer();
         log.debug("Checking if {} is blocked", name);
-        try(Connection c = dbPool.getConnection().get();
+        try(Connection c = dbPool.getConnection();
             PreparedStatement ps = c.prepareStatement("select distinct name from blocked_name where name = any(?)")
         ) {
             Array arg = c.createArrayOf("varchar", LabelCache.genSuffixes(name).toArray());
@@ -62,7 +62,7 @@ public class DBDomainBlocker implements DomainBlocker {
 
             return !blockedNames.isEmpty();
 
-        } catch (InterruptedException | SQLException | ExecutionException e) {
+        } catch (SQLException e) {
             String msg = String.format("Error checking if domain %s is blocked", name);
             log.error(msg, e);
             throw new CacheAccessException(msg, e);
@@ -75,7 +75,7 @@ public class DBDomainBlocker implements DomainBlocker {
     public boolean blockForClient(InetAddress addr) throws CacheAccessException {
         Histogram.Timer timer = clientConfigReadTimeSeconds.startTimer();
         log.debug("Checking blocking for {}", addr);
-        try(Connection c = dbPool.getConnection().get();
+        try(Connection c = dbPool.getConnection();
         PreparedStatement ps = c.prepareStatement(
                 "select ip, block_ads from ad_block_client_config " +
                         "where ?::inet <<= ip order by masklen(ip) desc limit 1")) {
@@ -90,7 +90,7 @@ public class DBDomainBlocker implements DomainBlocker {
                     return blockByDefault;
                 }
             }
-        } catch (InterruptedException | ExecutionException | SQLException e) {
+        } catch (SQLException e) {
             String msg = String.format("Error checking if client %s has ad blocking enabled.", addr);
             log.error(msg, e);
             throw new CacheAccessException(msg, e);

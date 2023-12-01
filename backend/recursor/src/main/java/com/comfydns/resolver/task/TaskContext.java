@@ -1,13 +1,13 @@
 package com.comfydns.resolver.task;
 
 import com.comfydns.resolver.resolve.rfc1035.service.RecursiveResolver;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariDataSource;
 
 public class TaskContext {
     private final RecursiveResolver resolver;
-    private final SimpleConnectionPool dbPool;
+    private final HikariDataSource dbPool;
 
-    public TaskContext(RecursiveResolver resolver, SimpleConnectionPool dbPool) {
+    public TaskContext(RecursiveResolver resolver, HikariDataSource dbPool) {
         this.resolver = resolver;
         this.dbPool = dbPool;
     }
@@ -16,7 +16,7 @@ public class TaskContext {
         return resolver;
     }
 
-    public SimpleConnectionPool getDbPool() {
+    public HikariDataSource getDbPool() {
         return dbPool;
     }
 

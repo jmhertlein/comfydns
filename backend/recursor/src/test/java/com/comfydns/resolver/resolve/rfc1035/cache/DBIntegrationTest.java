@@ -12,8 +12,9 @@ import com.comfydns.resolver.resolve.rfc1035.message.field.rr.rdata.BlobRData;
 import com.comfydns.resolver.resolve.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolve.rfc1035.message.field.rr.rdata.WKSRData;
 import com.comfydns.resolver.resolve.rfc1035.message.struct.RR;
-import com.comfydns.util.db.SimpleConnectionPool;
 import com.google.gson.Gson;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.*;
 import org.postgresql.ds.PGConnectionPoolDataSource;
 
@@ -28,23 +29,19 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class DBIntegrationTest {
-    private static volatile SimpleConnectionPool pool;
+    private static volatile HikariDataSource pool;
     private static final ReentrantLock lock = new ReentrantLock();
 
     @BeforeAll
-    public static void filter() throws ClassNotFoundException, SQLException {
+    public static void filter() throws ClassNotFoundException {
         Assumptions.assumeTrue(Objects.equals(System.getenv("COMFYDNS_INTEGRATION"), "1"));
         lock.lock();
         try {
             if(pool == null) {
                 Class.forName("org.postgresql.Driver");
-                PGConnectionPoolDataSource pgPool = new PGConnectionPoolDataSource();
-                pgPool.setURL("jdbc:postgresql://" + "localhost" + "/");
-                pgPool.setApplicationName("comfydns-recursor-integration-test");
-
-                pgPool.setDatabaseName("comfydns_dev");
-                pgPool.setUser("comfydns");
-                pool = new SimpleConnectionPool(pgPool);
+                HikariConfig cfg = new HikariConfig();
+                cfg.setJdbcUrl("jdbc:postgresql://localhost/comfydns_dev?ApplicationName=comfydns-recursor-integration-test&user=comfydns");
+                pool = new HikariDataSource(cfg);
             }
         } finally {
             lock.unlock();
@@ -133,7 +130,7 @@ public class DBIntegrationTest {
         List<RR<?>> result = c.search("josh.cafe", KnownRRType.A, KnownRRClass.IN, now);
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals(59, result.get(0).getTtl());
-        try(Connection cxn = pool.getConnection().get(); Statement s = cxn.createStatement()) {
+        try(Connection cxn = pool.getConnection(); Statement s = cxn.createStatement()) {
             try(ResultSet rs = s.executeQuery("select count(*) as row_ct from cached_rr where name='josh.cafe' and rrtype=1 and" +
                     " rrclass=1")) {
                 if(rs.next()) {
@@ -150,7 +147,7 @@ public class DBIntegrationTest {
 
         c.prune(now);
 
-        try(Connection cxn = pool.getConnection().get(); Statement s = cxn.createStatement()) {
+        try(Connection cxn = pool.getConnection(); Statement s = cxn.createStatement()) {
             try(ResultSet rs = s.executeQuery("select count(*) as row_ct from cached_rr where name='josh.cafe' and rrtype=1 and" +
                     " rrclass=1")) {
                 if(rs.next()) {
@@ -194,7 +191,7 @@ public class DBIntegrationTest {
         records.add(new RR<>("host1.josh.cafe", KnownRRType.A, KnownRRClass.IN, 60,
                 new ARData((Inet4Address) Inet4Address.getByName("192.168.1.2"))));
 
-        try(Connection c = pool.getConnection().get();
+        try(Connection c = pool.getConnection();
         PreparedStatement ps = c.prepareStatement("insert into zone " +
                 "(id, name, gen_ptrs, created_at, updated_at) " +
                 "values (DEFAULT, ?, true, now(), now())")) {
@@ -203,7 +200,7 @@ public class DBIntegrationTest {
         }
 
 
-        try(Connection c = pool.getConnection().get();
+        try(Connection c = pool.getConnection();
                 PreparedStatement ps = c.prepareStatement("insert into rr" +
                         "(id, name, rrtype, rrclass, ttl, rdata, zone_id, created_at, updated_at) " +
                         "values (DEFAULT, ?, ?, ?, ?, ?::jsonb, (select id from zone), now(), now()) ")) {
@@ -218,7 +215,7 @@ public class DBIntegrationTest {
             ps.executeBatch();
         }
 
-        try(Connection c = pool.getConnection().get();
+        try(Connection c = pool.getConnection();
             PreparedStatement ps = c.prepareStatement(
                     "update zone set soa_rr_id=(select id from rr where rrtype=?)")) {
             ps.setInt(1, KnownRRType.SOA.getIntValue());
@@ -240,7 +237,7 @@ public class DBIntegrationTest {
 
     @AfterEach
     public void cleanup() throws SQLException, ExecutionException, InterruptedException {
-        try(Connection c = pool.getConnection().get(); Statement s = c.createStatement()) {
+        try(Connection c = pool.getConnection(); Statement s = c.createStatement()) {
             s.execute("delete from cached_rr");
             s.execute("delete from zone");
             s.execute("delete from rr");

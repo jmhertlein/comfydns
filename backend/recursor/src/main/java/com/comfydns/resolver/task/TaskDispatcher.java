@@ -1,7 +1,7 @@
 package com.comfydns.resolver.task;
 
 import com.comfydns.resolver.resolve.rfc1035.service.RecursiveResolver;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,11 +19,11 @@ import java.util.stream.IntStream;
 public class TaskDispatcher implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(TaskDispatcher.class);
 
-    private final SimpleConnectionPool dbPool;
+    private final HikariDataSource dbPool;
     private final ExecutorService taskPool;
     private final RecursiveResolver resolver;
 
-    public TaskDispatcher(SimpleConnectionPool dbPool,
+    public TaskDispatcher(HikariDataSource dbPool,
                           ExecutorService taskPool,
                           RecursiveResolver resolver) {
         this.dbPool = dbPool;
@@ -42,7 +42,7 @@ public class TaskDispatcher implements Runnable {
 
     public void doRun() throws SQLException, ExecutionException, InterruptedException {
         List<Task> tasks;
-        try(Connection c = dbPool.getConnection().get()) {
+        try(Connection c = dbPool.getConnection()) {
             c.setAutoCommit(false);
             tasks = loadTasks(c).stream()
                     .map(this::createTask)

@@ -1,7 +1,7 @@
 package com.comfydns.resolver.task;
 
 import com.comfydns.resolver.resolve.rfc1035.service.RecursiveResolver;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariDataSource;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +21,10 @@ public class TaskRunner implements Runnable {
     }
     private static final Logger log = LoggerFactory.getLogger(TaskRunner.class);
     private final Task t;
-    private final SimpleConnectionPool dbPool;
+    private final HikariDataSource dbPool;
     private final RecursiveResolver resolver;
 
-    public TaskRunner(Task t, SimpleConnectionPool dbPool, RecursiveResolver resolver) {
+    public TaskRunner(Task t, HikariDataSource dbPool, RecursiveResolver resolver) {
         this.t = t;
         this.dbPool = dbPool;
         this.resolver = resolver;
@@ -41,7 +41,7 @@ public class TaskRunner implements Runnable {
             error = t;
         }
 
-        try(Connection c = dbPool.getConnection().get()) {
+        try(Connection c = dbPool.getConnection()) {
             if(error == null) {
                 updateTask(c, true);
             } else {
@@ -49,7 +49,7 @@ public class TaskRunner implements Runnable {
                 log.error("Error in task " + this.t.getDefinition().getId(), error);
                 updateTask(c, false);
             }
-        } catch (SQLException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException throwables) {
             taskDBErrors.inc();
             log.error("Database error in task " + this.t.getDefinition().getId(), throwables);
         }

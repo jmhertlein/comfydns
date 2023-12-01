@@ -11,7 +11,7 @@ import com.comfydns.resolver.resolve.rfc1035.message.field.query.QType;
 import com.comfydns.resolver.resolve.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolve.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolve.rfc1035.message.struct.RR;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariDataSource;
 import io.prometheus.client.Histogram;
 
 import java.sql.Connection;
@@ -19,28 +19,31 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static com.comfydns.resolver.resolve.rfc1035.cache.impl.DBDNSCache.MB_TYPES;
 
 public class DBAuthorityRRSource implements AuthorityRRSource {
-    private final SimpleConnectionPool pool;
+    private final HikariDataSource pool;
 
-    public DBAuthorityRRSource(SimpleConnectionPool pool) {
+    public DBAuthorityRRSource(HikariDataSource pool) {
         this.pool = pool;
     }
 
     @Override
     public boolean isAuthoritativeFor(String domain) throws CacheAccessException {
-        try (Connection c = pool.getConnection().get();
+        try (Connection c = pool.getConnection();
                 PreparedStatement ps = c.prepareStatement(
                 "select name from zone where name=?")){
             ps.setString(1, domain);
             try(ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
-        } catch (SQLException | InterruptedException | ExecutionException e) {
+        } catch (SQLException e) {
             throw new CacheAccessException(e);
         }
     }
@@ -48,13 +51,13 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
     @Override
     public Set<String> getAuthoritativeForDomains() throws CacheAccessException {
         Set<String> domains = new HashSet<>();
-        try (Connection cxn = pool.getConnection().get();
+        try (Connection cxn = pool.getConnection();
                 PreparedStatement ps = cxn.prepareStatement(
                 "select name from zone"); ResultSet rs = ps.executeQuery()){
             while(rs.next()) {
                 domains.add(rs.getString("name"));
             }
-        } catch (SQLException | InterruptedException | ExecutionException e) {
+        } catch (SQLException e) {
             throw new CacheAccessException(e);
         }
 
@@ -65,7 +68,7 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
     @SuppressWarnings("unchecked")
     public List<RR<SOARData>> getSOAs() throws CacheAccessException {
         List<RR<SOARData>> rrs = new ArrayList<>();
-        try (Connection cxn = pool.getConnection().get();
+        try (Connection cxn = pool.getConnection();
                 PreparedStatement ps = cxn.prepareStatement(
                 "select * from rr where rrtype=?")){
             ps.setInt(1, KnownRRType.SOA.getIntValue());
@@ -79,7 +82,7 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
                     }
                 }
             }
-        } catch (SQLException | InterruptedException | ExecutionException | UnsupportedRRTypeException | InvalidMessageException e) {
+        } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException e) {
             throw new CacheAccessException(e);
         }
 
@@ -89,7 +92,7 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
     @Override
     public List<RR<?>> getZoneTransferPayload(String zoneName) throws CacheAccessException {
         List<RR<?>> ret = new ArrayList<>();
-        try (Connection c = pool.getConnection().get();
+        try (Connection c = pool.getConnection();
              PreparedStatement ps = c.prepareStatement(
                      "select name, rrtype, rrclass, ttl, " +
                              "rdata from rr where zone_id=(select id from zone where name=?) " +
@@ -101,7 +104,7 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
                     ret.add(RR.read(rs));
                 }
             }
-        } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException throwables) {
             throw new CacheAccessException(throwables);
         }
         return ret;
@@ -164,7 +167,7 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
                     "ttl, " +
                     "rdata from rr where name=?" + whereClause;
             List<RR<?>> ret = new ArrayList<>();
-            try (Connection c = pool.getConnection().get();
+            try (Connection c = pool.getConnection();
                  PreparedStatement ps = c.prepareStatement(sqlText)) {
                 ps.setString(1, name);
                 setup.setup(ps);
@@ -173,7 +176,7 @@ public class DBAuthorityRRSource implements AuthorityRRSource {
                         ret.add(RR.read(rs));
                     }
                 }
-            } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException | InterruptedException | ExecutionException throwables) {
+            } catch (SQLException | UnsupportedRRTypeException | InvalidMessageException throwables) {
                 throw new CacheAccessException(throwables);
             }
 

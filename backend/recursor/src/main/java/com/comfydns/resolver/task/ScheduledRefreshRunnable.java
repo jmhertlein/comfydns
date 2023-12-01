@@ -1,7 +1,7 @@
 package com.comfydns.resolver.task;
 
 import com.comfydns.resolver.resolve.block.BlockList;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,15 +10,14 @@ import java.net.MalformedURLException;
 import java.sql.*;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 import static com.comfydns.resolver.task.RefreshBlockListsTask.updateBlockList;
 
 public class ScheduledRefreshRunnable implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(ScheduledRefreshRunnable.class);
-    private final SimpleConnectionPool dbPool;
+    private final HikariDataSource dbPool;
 
-    public ScheduledRefreshRunnable(SimpleConnectionPool dbPool) {
+    public ScheduledRefreshRunnable(HikariDataSource dbPool) {
         this.dbPool = dbPool;
     }
 
@@ -27,7 +26,7 @@ public class ScheduledRefreshRunnable implements Runnable {
         OffsetDateTime now = OffsetDateTime.now();
         log.debug("Starting block list refresh check.");
 
-        try (Connection c = dbPool.getConnection().get()) {
+        try (Connection c = dbPool.getConnection()) {
             List<BlockList> lists = new ArrayList<>();
             Map<UUID, OffsetDateTime> lastUpdate = new HashMap<>();
             try(PreparedStatement ps = c.prepareStatement(
@@ -70,7 +69,7 @@ public class ScheduledRefreshRunnable implements Runnable {
 
             c.commit();
             log.debug("Finished block list refresh check.");
-        } catch (InterruptedException | ExecutionException | SQLException | MalformedURLException e) {
+        } catch (SQLException | MalformedURLException e) {
             e.printStackTrace();
         }
     }

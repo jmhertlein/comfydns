@@ -11,7 +11,7 @@ import com.comfydns.resolver.resolve.rfc1035.message.field.rr.KnownRRType;
 import com.comfydns.resolver.resolve.rfc1035.message.field.rr.RRClass;
 import com.comfydns.resolver.resolve.rfc1035.message.field.rr.rdata.SOARData;
 import com.comfydns.resolver.resolve.rfc1035.message.struct.RR;
-import com.comfydns.util.db.SimpleConnectionPool;
+import com.zaxxer.hikari.HikariDataSource;
 import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,16 +31,16 @@ import static com.comfydns.resolver.resolve.rfc1035.cache.impl.CacheMetrics.cach
 
 public class DBNegativeCache implements NegativeCache {
     private static final Logger log = LoggerFactory.getLogger(DBNegativeCache.class);
-    private final SimpleConnectionPool pool;
+    private final HikariDataSource pool;
 
-    public DBNegativeCache(SimpleConnectionPool pool) {
+    public DBNegativeCache(HikariDataSource pool) {
         this.pool = pool;
     }
 
     @Override
     public Optional<CachedNegative> cachedNegative(String qName, QType qType, QClass qClass, OffsetDateTime now) throws CacheAccessException {
         try (Histogram.Timer t = CacheMetrics.negativeCacheReadTimeSeconds.startTimer();
-             Connection cxn = pool.getConnection().get();
+             Connection cxn = pool.getConnection();
              PreparedStatement ps = cxn.prepareStatement(
                      "select r_rcode, r_name, r_class, r_ttl - floor(extract(epoch from (?-created_at))) as r_ttl, " +
                              "r_mname, r_rname, r_serial, r_refresh, r_retry, r_expire, r_minimum " +
@@ -58,7 +58,7 @@ public class DBNegativeCache implements NegativeCache {
                     return Optional.empty();
                 }
             }
-        } catch (SQLException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException throwables) {
             throw new CacheAccessException(throwables);
         }
     }
@@ -66,7 +66,7 @@ public class DBNegativeCache implements NegativeCache {
     @Override
     public void cacheNegative(String qName, QType qType, QClass qClass, RCode rCode, RR<SOARData> soaRR, OffsetDateTime now) throws CacheAccessException {
         try(Histogram.Timer t = CacheMetrics.negativeCacheWriteTimeSeconds.startTimer();
-            Connection cxn = pool.getConnection().get();
+            Connection cxn = pool.getConnection();
             PreparedStatement ps = cxn.prepareStatement("insert into cached_negative " +
                     "(id, " +
                     "qname, qtype, qclass," +
@@ -85,7 +85,7 @@ public class DBNegativeCache implements NegativeCache {
             ps.setObject(16, now.plusSeconds(soaRR.getRData().getMinimum()));
             ps.executeUpdate();
             cachedNegativeRecordsTotal.inc();
-        } catch (SQLException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException throwables) {
             throw new CacheAccessException(throwables);
         }
     }
@@ -94,27 +94,27 @@ public class DBNegativeCache implements NegativeCache {
     public void bustCacheFor(List<String> qNames) throws CacheAccessException {
         Set<String> names = qNames.stream().flatMap(qn -> LabelCache.genSuffixes(qn).stream())
                 .collect(Collectors.toSet());
-        try(Connection c = pool.getConnection().get();
+        try(Connection c = pool.getConnection();
             PreparedStatement ps = c.prepareStatement("delete from cached_negative where qname=?")) {
             for(String s : names) {
                 ps.setString(1, s);
                 ps.addBatch();
             }
             ps.executeBatch();
-        } catch (SQLException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException throwables) {
             throw new CacheAccessException(throwables);
         }
     }
 
     @Override
     public void prune(OffsetDateTime now) throws CacheAccessException {
-        try(Connection c = pool.getConnection().get();
+        try(Connection c = pool.getConnection();
             PreparedStatement ps = c.prepareStatement("delete from cached_negative where expires_at <= ?")) {
             ps.setObject(1, now);
             int rows = ps.executeUpdate();
             CacheMetrics.cachedNegativeRecordsPrunedTotal.inc(rows);
             log.debug("Deleted {} cached negatives.", rows);
-        } catch (SQLException | InterruptedException | ExecutionException throwables) {
+        } catch (SQLException throwables) {
             throw new CacheAccessException(throwables);
         }
     }
