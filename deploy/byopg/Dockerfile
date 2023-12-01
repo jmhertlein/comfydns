@@ -1,15 +1,14 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 # system prep
 ENV TZ America/Chicago
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt update && apt install -y openjdk-11-jdk-headless maven
+RUN apt update && apt install -y wget apt-transport-https gawk && mkdir -p /etc/apt/keyrings && wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc && echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && apt update && apt install -y temurin-21-jdk maven
 
 # build backend
 COPY ./backend /build
 WORKDIR /build
 RUN mvn clean package
-
 
 ## final image
 FROM ruby:3.2-slim
@@ -17,13 +16,14 @@ FROM ruby:3.2-slim
 ENV TZ America/Chicago
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt update && apt install -y openjdk-17-jre-headless curl
+RUN apt update && apt install -y wget apt-transport-https gawk && mkdir -p /etc/apt/keyrings && wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc && echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && apt update && apt install -y temurin-21-jre maven curl gnupg
 
 # rails
-ARG NODE_MAJOR_VERSION=18
-RUN curl -sL https://deb.nodesource.com/setup_$NODE_MAJOR_VERSION.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+ARG NODE_MAJOR=18
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
 RUN apt update -qq
-RUN apt-get install -y ruby-dev build-essential libvips patch zlib1g-dev liblzma-dev nodejs libpq-dev && \
+RUN apt-get install -y nodejs ruby-dev build-essential libvips patch zlib1g-dev liblzma-dev nodejs libpq-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man && \
     npm install -g yarn
