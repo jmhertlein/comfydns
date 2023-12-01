@@ -1,12 +1,12 @@
 package com.comfydns.resolver.task;
 
-import com.comfydns.resolver.resolver.rfc1035.message.field.query.QType;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.trace.*;
+import com.comfydns.resolver.resolve.rfc1035.message.field.query.QType;
+import com.comfydns.resolver.resolve.rfc1035.message.field.rr.KnownRRClass;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Header;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Message;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Question;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.RR;
+import com.comfydns.resolver.resolve.trace.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;

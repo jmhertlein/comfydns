@@ -1,6 +1,6 @@
 package com.comfydns.resolver;
 
-import com.comfydns.resolver.resolver.butil.PrettyByte;
+import com.comfydns.resolver.resolve.butil.PrettyByte;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

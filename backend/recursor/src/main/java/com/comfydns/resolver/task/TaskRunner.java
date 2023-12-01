@@ -1,6 +1,6 @@
 package com.comfydns.resolver.task;
 
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
+import com.comfydns.resolver.resolve.rfc1035.service.RecursiveResolver;
 import com.comfydns.util.db.SimpleConnectionPool;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;

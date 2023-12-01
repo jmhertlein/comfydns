@@ -1,17 +1,12 @@
 package com.comfydns.logprocess;
 
-import com.comfydns.resolver.resolver.logging.EventLogLineType;
-import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
-import com.google.gson.JsonElement;
+import com.comfydns.resolver.resolve.logging.EventLogLineType;
+import com.comfydns.resolver.resolve.rfc1035.message.field.header.RCode;
 import com.google.gson.JsonObject;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class RequestOutEvent {
     /*

@@ -1,10 +1,10 @@
 package com.comfydns.resolver.task;
 
-import com.comfydns.resolver.resolver.block.DBDomainBlocker;
-import com.comfydns.resolver.resolver.block.NoOpDomainBlocker;
-import com.comfydns.resolver.resolver.rfc1035.cache.CacheAccessException;
-import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
-import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException;
+import com.comfydns.resolver.resolve.block.DBDomainBlocker;
+import com.comfydns.resolver.resolve.block.NoOpDomainBlocker;
+import com.comfydns.resolver.resolve.rfc1035.cache.CacheAccessException;
+import com.comfydns.resolver.resolve.rfc1035.message.InvalidMessageException;
+import com.comfydns.resolver.resolve.rfc1035.message.UnsupportedRRTypeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

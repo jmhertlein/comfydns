@@ -1,16 +1,16 @@
 package com.comfydns.resolver;
 
-import com.comfydns.resolver.resolver.rfc1035.message.field.header.RCode;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.ARData;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.NSRData;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.rdata.TXTRData;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.RR;
-import com.comfydns.resolver.resolver.trace.MessageCodec;
+import com.comfydns.resolver.resolve.rfc1035.message.field.header.RCode;
+import com.comfydns.resolver.resolve.rfc1035.message.field.rr.KnownRRClass;
+import com.comfydns.resolver.resolve.rfc1035.message.field.rr.KnownRRType;
+import com.comfydns.resolver.resolve.rfc1035.message.field.rr.rdata.ARData;
+import com.comfydns.resolver.resolve.rfc1035.message.field.rr.rdata.NSRData;
+import com.comfydns.resolver.resolve.rfc1035.message.field.rr.rdata.TXTRData;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Header;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Message;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Question;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.RR;
+import com.comfydns.resolver.resolve.trace.MessageCodec;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;

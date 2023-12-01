@@ -1,7 +1,7 @@
 package com.comfydns.logprocess;
 
-import com.comfydns.resolver.resolver.logging.EventLogLineType;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
+import com.comfydns.resolver.resolve.logging.EventLogLineType;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Question;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import joptsimple.OptionParser;

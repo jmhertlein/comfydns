@@ -1,9 +1,7 @@
 package com.comfydns.resolver.task;
 
-import com.comfydns.resolver.resolver.rfc1035.service.RecursiveResolver;
+import com.comfydns.resolver.resolve.rfc1035.service.RecursiveResolver;
 import com.comfydns.util.db.SimpleConnectionPool;
-
-import java.sql.Connection;
 
 public class TaskContext {
     private final RecursiveResolver resolver;

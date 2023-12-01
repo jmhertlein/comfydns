@@ -1,6 +1,6 @@
 package com.comfydns.resolver.task;
 
-import com.comfydns.resolver.resolver.block.BlockList;
+import com.comfydns.resolver.resolve.block.BlockList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,14 +1,14 @@
 package com.comfydns.resolver;
 
-import com.comfydns.resolver.resolver.rfc1035.message.InvalidMessageException;
-import com.comfydns.resolver.resolver.rfc1035.message.UnsupportedRRTypeException;
-import com.comfydns.resolver.resolver.rfc1035.message.field.header.OpCode;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRClass;
-import com.comfydns.resolver.resolver.rfc1035.message.field.rr.KnownRRType;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Header;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Message;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.MessageReadingException;
-import com.comfydns.resolver.resolver.rfc1035.message.struct.Question;
+import com.comfydns.resolver.resolve.rfc1035.message.InvalidMessageException;
+import com.comfydns.resolver.resolve.rfc1035.message.UnsupportedRRTypeException;
+import com.comfydns.resolver.resolve.rfc1035.message.field.header.OpCode;
+import com.comfydns.resolver.resolve.rfc1035.message.field.rr.KnownRRClass;
+import com.comfydns.resolver.resolve.rfc1035.message.field.rr.KnownRRType;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Header;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Message;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.MessageReadingException;
+import com.comfydns.resolver.resolve.rfc1035.message.struct.Question;
 import okhttp3.*;
 
 import java.io.IOException;
