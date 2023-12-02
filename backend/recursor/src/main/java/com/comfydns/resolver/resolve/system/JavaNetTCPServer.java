@@ -51,12 +51,14 @@ public class JavaNetTCPServer implements Runnable {
                             out.write(len);
                             out.write(respBuf);
                         } catch (IOException e) {
-                            log.warn("IO error handling client", e);
+                            log.debug("IO error handling client", e);
+                            JavaNetMetrics.javaNetErrors.labels("tcp", "client", "client_io_exception");
                         }
                     });
                 }
             } catch (IOException e) {
                 log.error("Error listening on tcp socket", e);
+                JavaNetMetrics.javaNetErrors.labels("tcp", "server", "socket_listen_io_exception");
             }
         }
     }
