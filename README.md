@@ -27,7 +27,7 @@ docker run -it --name comfydns \
 
 Change “changeme” to be a simple passphrase of your choosing. You’ll use this to both create user accounts and recover your account if you forget your password.
 
-Now visit http://localhost:8080/ and create a login using the passphrase. 
+Now visit http://localhost:8080/user/sign_up and create a login using the passphrase. 
 
 # How is this different from PiHole?
 
