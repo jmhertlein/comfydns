@@ -46,17 +46,17 @@ public class JavaNetUDPServer implements Runnable {
                                 s.send(responsePacket);
                             } catch (IOException e) {
                                 log.debug("Error while writing response to transport", e);
-                                JavaNetMetrics.javaNetErrors.labels("udp", "client", "client_send_io_exception");
+                                JavaNetMetrics.javaNetErrors.labels("udp", "client", "client_send_io_exception").inc();
                             }
                         });
                     } catch (IOException e) {
                         log.warn("Error while listening on UDP socket", e);
-                        JavaNetMetrics.javaNetErrors.labels("udp", "server", "server_recv_io_exception");
+                        JavaNetMetrics.javaNetErrors.labels("udp", "server", "server_recv_io_exception").inc();
                     }
                 }
             } catch (SocketException e) {
                 log.error("Error while opening UDP socket", e);
-                JavaNetMetrics.javaNetErrors.labels("udp", "server", "server_socket_bind_exception");
+                JavaNetMetrics.javaNetErrors.labels("udp", "server", "server_socket_bind_exception").inc();
             }
         }
     }
