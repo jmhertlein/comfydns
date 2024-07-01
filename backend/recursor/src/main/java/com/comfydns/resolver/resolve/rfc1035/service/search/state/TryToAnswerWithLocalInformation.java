@@ -14,6 +14,7 @@ import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,12 +86,37 @@ public class TryToAnswerWithLocalInformation implements RequestState {
             }
         }
 
-        if(sCtx.getRequest().getMessage().getHeader().getRD()) {
+
+
+        if(shouldRecurse(sCtx)) {
             return new FindBestServerToAsk();
         } else {
-            log.debug("{}No local answer found and client did not request recursion.", sCtx.getRequestLogPrefix());
+            log.debug("{}No local answer found and client did not request recursion or recursion not allowed.", sCtx.getRequestLogPrefix());
             return new ResponseReadyState(sCtx.buildNameErrorResponse());
         }
+    }
+
+    private boolean shouldRecurse(SearchContext sCtx) {
+        if(!sCtx.getRequest().getMessage().getHeader().getRD()) {
+            return false;
+        }
+
+        String qName = sCtx.getCurrentQuestion().getQName();
+        if(sCtx.getCurrentQuestion().getqType() == KnownRRType.PTR && qName.endsWith("in-addr.arpa")) {
+            try {
+                String rawInvertedIP = qName.substring(0, qName.length() - "in-addr.arpa".length());
+                String forwardIP = String.join(".", List.of(rawInvertedIP.split("\\.")).reversed());
+
+                InetAddress inetAddress = InetAddress.ofLiteral(forwardIP);
+                if(inetAddress.isSiteLocalAddress()) {
+                    sCtx.forEachListener(l -> l.remark("PTR record is private IP, refusing to recurse."));
+                    return false;
+                }
+            } catch (IllegalArgumentException ignore) {
+            }
+        }
+
+        return true;
     }
 
     @Override

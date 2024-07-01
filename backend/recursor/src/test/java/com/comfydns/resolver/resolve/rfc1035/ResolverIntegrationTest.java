@@ -128,9 +128,8 @@ public class ResolverIntegrationTest {
     }
 
     @Test
-    @Disabled
     public void testPTRSearch() throws ExecutionException, InterruptedException {
-        assertHasAnswer(testQuery(new Question("129.238.22.165.in-addr.arpa", KnownRRType.PTR, KnownRRClass.IN)));
+        assertNameError(testQuery(new Question("189.22.168.192.in-addr.arpa", KnownRRType.PTR, KnownRRClass.IN)));
     }
 
     @Test
